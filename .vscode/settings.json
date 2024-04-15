@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "float.h": "c",
+        "math.h": "c",
+        "stdio.h": "c"
+    }
+}
