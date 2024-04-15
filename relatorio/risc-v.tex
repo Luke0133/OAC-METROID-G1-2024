@@ -1,0 +1,69 @@
+% definição de cores
+\definecolor{azulunb}{cmyk}{1, 0.65, 0, 0.35}
+\definecolor{verdeunb}{cmyk}{ 1, 0,    1, 0.2}
+% language definition
+\lstdefinelanguage[RISC-V]{Assembler}
+{
+	alsoletter={.}, % allow dots in keywords
+	alsodigit={0x}, % hex numbers are numbers too!
+	morekeywords=[1]{ % instructions and pseudoinstructions 
+		csrr, call,
+		divu, mul, mv, remu,
+		lb, lh, lw, lbu, lhu, li, la,
+		sb, sh, sw,
+		sll, slli, srl, srli, sra, srai,
+		add, addi, sub, lui, auipc,
+		xor, xori, or, ori, and, andi,
+		slt, slti, sltu, sltiu,
+		beq, beqz, bne, blt, bge, bltu, bgeu, bgt,
+		j, jr, jal, jalr, ret,
+		ecall, ebreak, nop
+	},
+	morekeywords=[2]{ % sections of our code and other directives
+		.include, .eqv,
+		.align, .ascii, .asciiz, .string, .byte, .data, .double, .extern,
+		.float, .globl, .half, .space, .text, .word
+	},
+	morekeywords=[3]{ % registers
+		zero, ra, sp, gp, tp, s0, fp,
+		t0, t1, t2, t3, t4, t5, t6,
+		s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11,
+		a0, a1, a2, a3, a4, a5, a6, a7,
+		ft0, ft1, ft2, ft3, ft4, ft5, ft6, ft7,
+		fs0, fs1, fs2, fs3, fs4, fs5, fs6, fs7, fs8, fs9, fs10, fs11,
+		fa0, fa1, fa2, fa3, fa4, fa5, fa6, fa7
+	},
+	morecomment=[l]{;},   % mark ; as line comment start
+	morecomment=[l]{\#},  % as well as # (even though it is unconventional)
+	morestring=[b]",      % mark " as string start/end
+	morestring=[b]'       % also mark ' as string start/end
+}
+
+% usage example:
+
+% define some basic colors
+\definecolor{mauve}{rgb}{0.58, 0, 0.82}
+\makeatletter
+\DeclareRobustCommand\em
+{\@nomath\em \ifdim \fontdimen\@ne\font >\z@
+	\eminnershape \else \slshape \fi}%
+\makeatother
+\lstset{
+	% listings sonderzeichen (for german weirdness)
+	literate={ö}{{\"o}}1
+	{ä}{{\"a}}1
+	{ü}{{\"u}}1,
+	backgroundcolor=\color{gray!10},
+	commentstyle=\em\color{verdeunb},  % comments are green
+	basicstyle=\small\ttfamily,                    % very small code
+	breaklines=true,                              % break long lines
+	keywordstyle=[1]\color{azulunb},        % instructions are blue
+	keywordstyle=[2]\color{orange!80!black},      % sections/other directives are orange
+	keywordstyle=[3]\color{red!75!black},         % registers are red
+	stringstyle=\color{mauve},                    % strings are from the telekom
+	identifierstyle=\color{teal},                 % user declared addresses are teal
+	frame=lr,                                      % black line on the left side of code
+	language=[RISC-V]{Assembler},                   % all code is RISC-V
+	tabsize=2,                                    % indent tabs with 4 spaces
+	showstringspaces=false                        % do not replace spaces with weird underlines
+}
