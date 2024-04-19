@@ -2,11 +2,11 @@
 
 
 .data
-.include "sprites\data\sampowdeath.data"
+.include "sprites/sampowidle.data"
 
 
 .text
-SETUP:		la a0,sampowdeath			# carrega o endereco do sprite 'map' em a0
+SETUP:		la a0,sampowidle			# carrega o endereco do sprite 'map' em a0
 		li a1,0				# x = 0
 		li a2,0				# y = 0
 		li a3,0				# frame = 0
