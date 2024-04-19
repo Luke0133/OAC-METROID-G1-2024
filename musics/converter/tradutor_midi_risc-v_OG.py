@@ -6,8 +6,11 @@
 
 import mido
 
-mid = mido.MidiFile('O seu arquivo midi vem aqui')
-y = open("resultado.txt", "w")
+#mid = mido.MidiFile('O seu arquivo midi vem aqui')
+
+mid = mido.MidiFile("metkraid.mid")
+
+y = open("metkraid.txt", "w")
 
 nlista = []
 plista = []
