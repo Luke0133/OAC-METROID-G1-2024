@@ -116,5 +116,5 @@ RENDER:
 
 # Sprites
 .data
-.include "sprites/walk_right.data"
-.include "sprites/map.data"
+.include "sprites/data/walk_right.data"
+.include "sprites/data/map.data"

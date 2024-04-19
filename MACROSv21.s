@@ -1,5 +1,5 @@
 #########################################################################
-# Definiçõe e Macros						v2.1	#
+# Definiï¿½ï¿½e e Macros						v2.1	#
 # Marcus Vinicius Lamar							#
 # 2020/1								#
 #########################################################################
@@ -7,7 +7,7 @@
 ######### Verifica se eh a DE1-SoC ###############
 .macro DE1(%reg,%salto)
 	li %reg, 0x10008000	# carrega tp
-	bne gp, %reg, %salto	# Na DE1 gp = 0 ! Não tem segmento .extern
+	bne gp, %reg, %salto	# Na DE1 gp = 0 ! Nï¿½o tem segmento .extern
 .end_macro
 
 ######### Verifica se tem ISA RV32IMF ###############
@@ -17,7 +17,7 @@
 	bnez %reg, %endereco
 .end_macro
 
-######### Verifica se não tem ISA RV32IMF ###############
+######### Verifica se nï¿½o tem ISA RV32IMF ###############
 .macro NAOTEM_F(%reg,%endereco)
 	csrr %reg, misa
 	andi %reg, %reg, 0x020
@@ -32,7 +32,7 @@
 	bnez %reg, %endereco
 .end_macro
 
-######### Verifica se não tem ISA RV32IMF ou RV32IM ###############
+######### Verifica se nï¿½o tem ISA RV32IMF ou RV32IM ###############
 .macro NAOTEM_M(%reg,%endereco)
 	csrr %reg, misa
 	srli %reg, %reg, 12
@@ -40,7 +40,7 @@
 	beqz %reg, %endereco
 .end_macro
 
-######### Macro para Multiplicação na ISA RV32I ######################
+######### Macro para Multiplicaï¿½ï¿½o na ISA RV32I ######################
 .macro MULTIPLY(%rd,%r1,%r2)
 		addi 	sp, sp, -12
 		sw	a0, 0(sp)
@@ -59,7 +59,7 @@
 		csrr	%rd,uscratch
 .end_macro
 
-######### Macro para Divisão unsigned por 10 na ISA RV32I ######################
+######### Macro para Divisï¿½o unsigned por 10 na ISA RV32I ######################
 ### https://stackoverflow.com/questions/5558492/divide-by-10-using-bit-shifts
 .macro DIVU10(%rd,%r1)
 		addi 	sp, sp, -16
@@ -94,7 +94,7 @@
 	csrr	%rd,uscratch
 .end_macro
 
-######### Macro para Divisão por 10 na ISA RV32I ######################
+######### Macro para Divisï¿½o por 10 na ISA RV32I ######################
 .macro DIV10(%rd,%r1)
 		addi 	sp,sp,-12
 		sw	a0,0(sp)
@@ -117,7 +117,7 @@ div10.pula2:	csrw	%rd,uscratch
 .end_macro		
 
 
-######### Macro para resto da divisão por 10 unsigned na ISA RV32I ######################
+######### Macro para resto da divisï¿½o por 10 unsigned na ISA RV32I ######################
 .macro REMU10(%rd,%r1)
 		addi 	sp,sp,-16
 		sw	a0,0(sp)
@@ -140,7 +140,7 @@ div10.pula2:	csrw	%rd,uscratch
 		csrr	%rd,uscratch
 .end_macro
 
-######### Macro para resto da divisão por 10 na ISA RV32I ######################
+######### Macro para resto da divisï¿½o por 10 na ISA RV32I ######################
 .macro REM10(%rd,%r1)
 		addi 	sp,sp,-16
 		sw	a0,0(sp)
@@ -221,7 +221,7 @@ div10.pula2:	csrw	%rd,uscratch
 
 # Seta o uso do exception handler SYSTEM.s
 .text
- 	la 	tp, ExceptionHandling	# carrega em tp o endereço base das rotinas do sistema ECALL
- 	csrw 	tp, utvec 		# seta utvec para o endereço tp
- 	csrsi 	ustatus, 1 		# seta o bit de habilitação de interrupção em ustatus (reg 0)																																																				
+ 	la 	tp, ExceptionHandling	# carrega em tp o endereï¿½o base das rotinas do sistema ECALL
+ 	csrw 	tp, utvec 		# seta utvec para o endereï¿½o tp
+ 	csrsi 	ustatus, 1 		# seta o bit de habilitaï¿½ï¿½o de interrupï¿½ï¿½o em ustatus (reg 0)																																																				
 
