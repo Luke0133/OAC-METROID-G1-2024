@@ -2,7 +2,7 @@
 
 
 .data
-.include "sprites/sampowidle.data"
+.include "sprites\data\sampowidle.data"
 
 
 .text
