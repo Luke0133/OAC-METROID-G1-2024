@@ -5,7 +5,7 @@
 .eqv frame_rate 90 # T ms por frame 
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
-PLYR_POS: .half 40, 200, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
+PLYR_POS: .half 40, 0, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
 
 .text
 
@@ -52,8 +52,9 @@ GAME_LOOP:
 		
 			
 	la a0, walk_right 		# Gets sprite address# Endereco do mapa
-	li a1, 40		# Topo esquerdo X
-	li a2, 160		# Topo esquerdo Y		
+	la t0,PLYR_POS
+	lh a1, 0(t0)		# Topo esquerdo X
+	lh a2, 2(t0)		# Topo esquerdo Y		
 	li a3, 24		# Largura da imagem
 	li a4, 32		# Altura da imagem	
 	mv a5, s0		# Frame
@@ -70,8 +71,9 @@ GAME_LOOP:
 	xori a5,a5,1			# inverte a3 (0 vira 1, 1 vira 0)
 	
 	la a0, walk_right 		# Gets sprite address# Endereco do mapa
-	li a1, 40		# Topo esquerdo X
-	li a2, 160		# Topo esquerdo Y		
+	la t0,PLYR_POS
+	lh a1, 0(t0)		# Topo esquerdo X
+	lh a2, 2(t0)		# Topo esquerdo Y		
 	li a3, 24		# Largura da imagem
 	li a4, 32		# Altura da imagem	
 	call RENDER			# imprime
@@ -162,11 +164,23 @@ INPUT_CHECK:
 		li a0,'d'
 		li a7, 1
 		ecall
+		
+		la t0,PLYR_POS
+		lh t1, 0(t0)		# Topo esquerdo X
+		addi t1,t1,4
+		sh t1, 0(t0)		# Topo esquerdo X
+		
 		j END_INPUT_CHECK
 	CHAR_LEFT:
 		li a0,'a'
 		li a7, 1
 		ecall
+		
+		la t0,PLYR_POS
+		lh t1, 0(t0)		# Topo esquerdo X
+		addi t1,t1,-4
+		sh t1, 0(t0)		# Topo esquerdo X
+		
 		j END_INPUT_CHECK
 	CHAR_CROUCH:
 		li a0,'s'
