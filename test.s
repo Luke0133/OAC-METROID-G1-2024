@@ -1,75 +1,120 @@
-.include "MACROSv21.s"
+.include "MACROSv21.s" # Macros para bitmap display
 
 
 .data
-.include "sprites\data\sampowidle.data"
+.eqv frame_rate 90 # T ms por frame 
+RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
+PLYR_POS: .half 40, 200, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
 
 .text
-SETUP:		la a0,sampowidle			# carrega o endereco do sprite 'map' em a0
-		li a1,0				# x = 0
-		li a2,0				# y = 0
-		li a3,0				# frame = 0
-		call PRINT			# imprime o sprite
-		li a3,1				# frame = 1
-		call PRINT			# imprime o sprite
-		# esse setup serve pra desenhar o "mapa" nos dois frames antes do "jogo" comecar
 
-GAME_LOOP:	
-		j GAME_LOOP			# continua o loop
+SETUP:		
+	la a0, map 		# Endereco do mapa
+	li a1, 0		# Topo esquerdo X
+	li a2, 0		# Topo esquerdo Y		
+	li a3, 320		# Largura da imagem
+	li a4, 240		# Altura da imagem	
+	li a5, 0		# Frame = 0
+	call RENDER	
+	la a0, map 		# Endereco do mapa
+	li a1, 0		# Topo esquerdo X
+	li a2, 0		# Topo esquerdo Y		
+	li a3, 320		# Largura da imagem
+	li a4, 240		# Altura da imagem	
+	li a5, 0		# Frame = 0
+	li a5, 1		# Frame = 1
+	call RENDER	
+	li s0, 0	
 
+ENGINE_SETUP:
+	li a7,30	# Ecall 30: Pega o tempo que passou
+	ecall 		# Syscall
+	la t0,RUN_TIME	# Carrega o endereco de RUN_TIME
+	sw a0,0(t0)	# Novo tempo eh guardado em RUN_TIME, a fim de ser comparado depois
+	j ENGINE_LOOP   # Comeca o loop do jogo 
 
+	# Esse loop ira se repetir enquanto o tempo 		
+	ENGINE_LOOP:
+		li a7,30		# Ecall 30: Pega o tempo que passou
+		ecall 			# syscall
+		la t0,RUN_TIME		# Carrega o endereco de RUN_TIME
+		lw t1,0(t0)		# Carrega o tempo guardado por ultimo (tempo antigo)
+		sub t1,a0,t1		# Tempo novo - Tempo antigo
+		li t2,frame_rate	# Carrega a frame_rate (T ms por frame)
+		bge t1,t2,GAME_LOOP	# Se o tempo novo - tempo antigo >= frame rate (T ms por frame), vai para o GAME_LOOP,
+		j ENGINE_LOOP		# caso contrario voltar para o inicio do loop
+	
+GAME_LOOP:
+#	call INPUT_CHECK	# Checa input do jogador
+	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 		
+			
+	la a0, walk_right 		# Gets sprite address# Endereco do mapa
+	li a1, 40		# Topo esquerdo X
+	li a2, 160		# Topo esquerdo Y		
+	li a3, 24		# Largura da imagem
+	li a4, 32		# Altura da imagem	
+	mv a5, s0		# Frame
+	
+	call RENDER
+		
+	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
+	sw s0,0(t0)
+	
+	##### LIMPEZA DE RASTRO
+	
+	mv a5, s0		# Frame
+	mv a5,s0			# carrega o frame atual (que esta na tela em a3)
+	xori a5,a5,1			# inverte a3 (0 vira 1, 1 vira 0)
+	
+	la a0, walk_right 		# Gets sprite address# Endereco do mapa
+	li a1, 40		# Topo esquerdo X
+	li a2, 160		# Topo esquerdo Y		
+	li a3, 24		# Largura da imagem
+	li a4, 32		# Altura da imagem	
+	call RENDER			# imprime
 
-#################################################
-#	a0 = endereço imagem			#
-#	a1 = x					#
-#	a2 = y					#
-#	a3 = frame (0 ou 1)			#
-#################################################
-#	t0 = endereco do bitmap display		#
-#	t1 = endereco da imagem			#
-#	t2 = contador de linha			#
-# 	t3 = contador de coluna			#
-#	t4 = largura				#
-#	t5 = altura				#
-#################################################
+	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
-PRINT:		li t0,0xFF0			# carrega 0xFF0 em t0
-		add t0,t0,a3			# adiciona o frame ao FF0 (se o frame for 1 vira FF1, se for 0 fica FF0)
-		slli t0,t0,20			# shift de 20 bits pra esquerda (0xFF0 vira 0xFF000000, 0xFF1 vira 0xFF100000)
-		
-		add t0,t0,a1			# adiciona x ao t0
-		
-		li t1,320			# t1 = 320
-		mul t1,t1,a2			# t1 = 320 * y
-		add t0,t0,t1			# adiciona t1 ao t0
-		
-		addi t1,a0,8			# t1 = a0 + 8
-		
-		mv t2,zero			# zera t2
-		mv t3,zero			# zera t3
-		
-		lw t4,0(a0)			# carrega a largura em t4
-		lw t5,4(a0)			# carrega a altura em t5
-		
-PRINT_LINHA:	lw t6,0(t1)			# carrega em t6 uma word (4 pixeis) da imagem
-		sw t6,0(t0)			# imprime no bitmap a word (4 pixeis) da imagem
-		
-		addi t0,t0,4			# incrementa endereco do bitmap
-		addi t1,t1,4			# incrementa endereco da imagem
-		
-		addi t3,t3,4			# incrementa contador de coluna
-		blt t3,t4,PRINT_LINHA		# se contador da coluna < largura, continue imprimindo
+RENDER:
+	#Propper rendering
 
-		addi t0,t0,320			# t0 += 320
-		sub t0,t0,t4			# t0 -= largura da imagem
-		# ^ isso serve pra "pular" de linha no bitmap display
+	li t0,0x0FF0	# t0 = 0x0FF0
+	add t0,t0,a5	# Printing address corresponds to 0x0FF0 + frame
+	slli t0,t0,20	#shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
+	
+	add t0,t0,a1	# t0 = 0xFF00 0000 + X or 0xFF10 0000 + X
+	
+	li t4,320	# t4 = 320
+	mul t4,t4,a2	# t4 = 320 * Y 
+	add t0,t0,t4	# t0 = 0xFF00 0000 + X + (Y * 320) or 0xFF10 0000 + X + (Y * 320)
+	
+	mv t2,zero	# t2 = 0
+	mv t3,zero	# t3 = 0
+	
+	PRINT_LINE:	
+		lw t4,0(a0)	# loads word(4 pixels) on t4
+		sw t4,0(t0)	# prints 4 pixels from t4
 		
-		mv t3,zero			# zera t3 (contador de coluna)
-		addi t2,t2,1			# incrementa contador de linha
-		bgt t5,t2,PRINT_LINHA		# se altura > contador de linha, continue imprimindo
+		addi t0,t0,4	# increments bitmap address
+		addi a0,a0,4	# increments image address
 		
-		ret				# retorna
-
+		addi t3,t3,4	# increments column counter
+		blt t3,a3,PRINT_LINE	# if column counter < width, repeat
+		
+		addi t0,t0,320
+		sub t0,t0,a3
+		
+		mv t3,zero		# t3 = 0
+		addi t2,t2,1		# increments line counter
+		bgt a4,t2,PRINT_LINE	#if height > line counter, repeat
+		ret	
+		
+				
 .include "SYSTEMv21.s"
+
+# Sprites
+.data
+.include "sprites/walk_right.data"
+.include "sprites/map.data"
