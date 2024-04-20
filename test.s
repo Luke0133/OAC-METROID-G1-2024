@@ -52,7 +52,7 @@ GAME_LOOP:
 		
 			
 	la a0, walk_right 		# Gets sprite address# Endereco do mapa
-	li a1, 40		# Topo esquerdo X
+	li a1, 84		# Topo esquerdo X
 	li a2, 160		# Topo esquerdo Y		
 	li a3, 24		# Largura da imagem
 	li a4, 32		# Altura da imagem	
@@ -70,11 +70,12 @@ GAME_LOOP:
 	xori a5,a5,1			# inverte a3 (0 vira 1, 1 vira 0)
 	
 	la a0, walk_right 		# Gets sprite address# Endereco do mapa
-	li a1, 40		# Topo esquerdo X
+	li a1, 84		# Topo esquerdo X
 	li a2, 160		# Topo esquerdo Y		
 	li a3, 24		# Largura da imagem
 	li a4, 32		# Altura da imagem	
 	call RENDER			# imprime
+	
 
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
