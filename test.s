@@ -6,6 +6,7 @@
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
 PLYR_POS: .half 40, 200, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
+life_pos: .half 40,200, 0, 0
 
 .text
 
@@ -118,3 +119,4 @@ RENDER:
 .data
 .include "sprites/data/walk_right.data"
 .include "sprites/data/map.data"
+.include "sprites/data/energy.data"
