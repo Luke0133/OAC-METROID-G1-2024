@@ -32,7 +32,7 @@ SETUP:
 	li s9, 0
 	li s10, 960
 	li s11, 240
-	call RENDER_MAP	
+	#call RENDER_MAP	
 	la a0, map 		# Endereco do mapa
 	li a1, 0		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
@@ -44,8 +44,9 @@ SETUP:
 	li s9, 0
 	li s10, 960
 	li s11, 240
-	call RENDER_MAP	
-	li s0, 0	
+	# call RENDER_MAP	
+	li s0, 0
+	call MUSIC.SETUP	
 
 ENGINE_SETUP:
 	li a7,30	# Ecall 30: Pega o tempo que passou
@@ -79,7 +80,7 @@ GAME_LOOP:
 	li a4, 32		# Altura da imagem	
 	mv a5, s0		# Frame
 	
-	call RENDER
+	# call RENDER
 		
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
@@ -96,7 +97,9 @@ GAME_LOOP:
 	lh a2, 2(t0)		# Topo esquerdo Y		
 	li a3, 24		# Largura da imagem
 	li a4, 32		# Altura da imagem	
-	call RENDER			# imprime
+	# call RENDER			# imprime
+
+	call MUSIC.PLAY
 
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
@@ -178,10 +181,11 @@ INPUT_CHECK:
 	END_INPUT_CHECK:
 		ret				
 
-.include "render.s"										
+# .include "render.s"										
 .include "SYSTEMv21.s"
 # Sprites
 .data
 .include "sprites/data/walk_right.data"
 .include "sprites/data/map.data"
-.include "sprites/data/
+# .include "sprites/data/
+.include "music.s"
