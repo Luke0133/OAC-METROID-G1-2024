@@ -9,42 +9,21 @@ PLYR_POS: .half 40, 0, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) 
 
 .text
 
-SETUP:		
-#	a0 = Image Address						   #
-#	a1 = X (topo esquerdo) de onde comecar a renderizar a sprite	   #	
-#	a2 = Y (topo esquerdo) de onde comecar a renderizar a sprite	   #	 		  
-#	a3 = largura a ser renderizada					   #
-# 	a4 = altura a ser renderizada					   #
-#	a5 = frame (0 ou 1)						   #
-# --->	a6 = operation (0 if normal printing, 1 if replacing trail)	   #
-#	s8? -> X inicial (topo esquerdo) da renderizacao da sprite	   #
-#       s9? -> Y inicial (topo esquerdo) da renderizacao da sprite 	   #	
-#	s10? -> largura da sprite do mapa				   #
-#	s11? -> altura da sprite do mapa		
-
-	la a0, map1 		# Endereco do mapa
+SETUP:
+	li a0, 0x66 		# Endereco do mapa
 	li a1, 0		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
 	li a3, 320		# Largura da imagem
 	li a4, 240		# Altura da imagem	
 	li a5, 0		# Frame = 0
-	li s8, 0
-	li s9, 0
-	li s10, 960
-	li s11, 240
-	call RENDER_MAP	
-	la a0, map1 		# Endereco do mapa
+	call RENDER_COLOR
+	li a0, 0x66 		# Endereco do mapa
 	li a1, 0		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
 	li a3, 320		# Largura da imagem
 	li a4, 240		# Altura da imagem	
-	li a5, 0		# Frame = 0
-	li a5, 1		# Frame = 1
-	li s8, 0
-	li s9, 0
-	li s10, 960
-	li s11, 240
-	call RENDER_MAP	
+	li a5, 1		# Frame = 0
+	call RENDER_COLOR
 	li s0, 0	
 
 ENGINE_SETUP:
@@ -183,4 +162,4 @@ INPUT_CHECK:
 # Sprites
 .data
 .include "sprites/walk_right.data"
-.include "sprites/map1.data"
+.include "tiles.data"
