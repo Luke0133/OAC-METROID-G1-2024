@@ -2,6 +2,7 @@
 
 
 .data
+.eqv tile_size 16
 .eqv frame_rate 90 # T ms por frame 
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
