@@ -3,5 +3,8 @@
         "float.h": "c",
         "math.h": "c",
         "stdio.h": "c"
+    },
+    "files.watcherExclude": {
+        "**/target": true
     }
 }
