@@ -81,86 +81,12 @@ GAME_LOOP:
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
 
-INPUT_CHECK:
-	li t1,0xFF200000 # Endereco do controle KDMMIO
-	lw t0,0(t1) # Le o bit de controle do teclado
-	andi t0,t0,0x0001
-	
-	bnez t0, CONTINUE_INPUT_CHECK
-	j END_INPUT_CHECK
-	CONTINUE_INPUT_CHECK:
-		lw t2,4(t1)	# Le o valor do input
-		
-		li t0, 'w'
-		bne t0,t2, INPUT_CHECK_D
-		j CHAR_LOOK_UP
-		
-		INPUT_CHECK_D:
-		li t0, 'd'
-		bne t0,t2,INPUT_CHECK_A
-		j CHAR_RIGHT
-		
-		INPUT_CHECK_A:
-		li t0, 'a'
-		bne t0,t2, INPUT_CHECK_S
-		j CHAR_LEFT
-		
-		INPUT_CHECK_S:
-		li t0, 's'
-		bne t0,t2, INPUT_CHECK_SPACE
-		j CHAR_CROUCH
-		
-		INPUT_CHECK_SPACE:
-		li t0, 32
-		bne t0,t2,INPUT_CHECK_NOPE
-		j CHAR_JUMP
-		
-		INPUT_CHECK_NOPE:
-		j END_INPUT_CHECK
-	
-	CHAR_LOOK_UP:
-		li a0,'w'
-		li a7, 1
-		ecall
-		j END_INPUT_CHECK
-	CHAR_RIGHT:
-		li a0,'d'
-		li a7, 1
-		ecall
-		
-		la t0,PLYR_POS
-		lh t1, 0(t0)		# Topo esquerdo X
-		addi t1,t1,4
-		sh t1, 0(t0)		# Topo esquerdo X
-		
-		j END_INPUT_CHECK
-	CHAR_LEFT:
-		li a0,'a'
-		li a7, 1
-		ecall
-		
-		la t0,PLYR_POS
-		lh t1, 0(t0)		# Topo esquerdo X
-		addi t1,t1,-4
-		sh t1, 0(t0)		# Topo esquerdo X
-		
-		j END_INPUT_CHECK
-	CHAR_CROUCH:
-		li a0,'s'
-		li a7, 1
-		ecall
-		j END_INPUT_CHECK
-	CHAR_JUMP:
-		li a0,32
-		li a7, 1
-		ecall
-		j END_INPUT_CHECK
-	END_INPUT_CHECK:
-		ret				
 
+.include "teclado.s"
 .include "render.s"										
 .include "SYSTEMv21.s"
 # Sprites
 .data
 .include "sprites/walk_right.data"
+.include "matrix.data"
 .include "tiles.data"
