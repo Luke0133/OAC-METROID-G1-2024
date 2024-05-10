@@ -78,7 +78,19 @@ GAME_LOOP:
 	mv a5, s0		# Frame
 	
 	call RENDER
-		
+
+	##### CARREGAR A VIDA ##########
+
+	la a0, health
+	li a1, 30 # Topo esquerdo X
+	li a2, 60 # Topo esquerdo Y
+	li a3, 24 # Largura da imagem
+	li a4, 8 # Altura da imagem
+	mv a5, s0 # Frame
+	call RENDER
+
+	###############################		
+
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
 	
@@ -138,4 +150,4 @@ RENDER:
 .data
 .include "sprites/data/walk_right.data"
 .include "sprites/data/map.data"
-.include "sprites/data/energy.data"
+.include "sprites/data/health.data"
