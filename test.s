@@ -5,10 +5,28 @@
 .eqv frame_rate 90 # T ms por frame 
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
+# Player Info
+.eqv PLYR_HEALTH 100
 PLYR_POS: .half 40, 200, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
-life_pos: .half 40,200, 0, 0
+LIFE_POS: .half 40,200, 0, 0
+PLYR_INFO: .half 0, 0 # Guarda a vida e numero de armas especiais
 
 .text
+
+BEGIN:
+	la t0,PLYR_INFO
+	lh t1, 0(t0) # pega a vida da samus
+	bnez t1, SETUP # se nao for zero, vai pro setup
+	li t1, PLYR_HEALTH # carrega a vida da samus
+	sh t1,0(t0) # guarda a vida da samus em PLYR_INFO
+	j SETUP
+
+# samus sofreu dano dos inimigos!!!
+# lh t1, 0(t0)
+# addi t1, t1, -20
+# sh t1, 0(t0)
+# bge zero, t1, KILL_PLYR
+# continue 
 
 SETUP:		
 	la a0, map 		# Endereco do mapa
@@ -26,7 +44,8 @@ SETUP:
 	li a5, 0		# Frame = 0
 	li a5, 1		# Frame = 1
 	call RENDER	
-	li s0, 0	
+	li s0, 0
+
 
 ENGINE_SETUP:
 	li a7,30	# Ecall 30: Pega o tempo que passou
@@ -113,7 +132,6 @@ RENDER:
 		bgt a4,t2,PRINT_LINE	#if height > line counter, repeat
 		ret	
 		
-				
 .include "SYSTEMv21.s"
 
 # Sprites
