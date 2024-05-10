@@ -89,7 +89,19 @@ GAME_LOOP:
 	mv a5, s0 # Frame
 	call RENDER
 
-	###############################		
+	###############################
+
+	##### RENDERIZAR TIRO ##########
+
+	la a0, beam
+	li a1, 150 # Topo esquerdo X
+	li a2, 160 # Topo esquerdo Y
+	li a3, 8 # Largura da imagem
+	li a4, 8 # Altura da imagem
+	mv a5, s0 # Frame
+	call RENDER
+
+	###############################				
 
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
@@ -151,3 +163,4 @@ RENDER:
 .include "sprites/data/walk_right.data"
 .include "sprites/data/map.data"
 .include "sprites/data/health.data"
+.include "sprites/data/beam.data"

@@ -87,6 +87,6 @@ GAME_LOOP:
 .include "SYSTEMv21.s"
 # Sprites
 .data
-.include "sprites/walk_right.data"
+.include "sprites/data/walk_right.data"
 .include "matrix.data"
 .include "tiles.data"
