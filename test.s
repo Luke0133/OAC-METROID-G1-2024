@@ -66,7 +66,7 @@ ENGINE_SETUP:
 		j ENGINE_LOOP		# caso contrario voltar para o inicio do loop
 	
 GAME_LOOP:
-#	call INPUT_CHECK	# Checa input do jogador
+	call INPUT_CHECK	# Checa input do jogador
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 		
 			
@@ -77,36 +77,6 @@ GAME_LOOP:
 	li a4, 32		# Altura da imagem	
 	mv a5, s0		# Frame
 	
-	call RENDER
-
-	##### CARREGAR A VIDA ##########
-
-	la a0, health
-	li a1, 30 # Topo esquerdo X
-	li a2, 60 # Topo esquerdo Y
-	li a3, 24 # Largura da imagem
-	li a4, 8 # Altura da imagem
-	mv a5, s0 # Frame
-	call RENDER
-
-	la a0, full_health
-	li a1, 80 # Topo esquerdo X
-	li a2, 60 # Topo esquerdo Y
-	li a3, 24 # Largura da imagem
-	li a4, 8 # Altura da imagem
-	mv a5, s0 # Frame
-	call RENDER
-
-	###############################
-
-	##### RENDERIZAR TIRO ##########
-
-	la a0, beam
-	li a1, 150 # Topo esquerdo X
-	li a2, 160 # Topo esquerdo Y
-	li a3, 8 # Largura da imagem
-	li a4, 8 # Altura da imagem
-	mv a5, s0 # Frame
 	call RENDER
 
 	###############################				
@@ -127,6 +97,37 @@ GAME_LOOP:
 	li a4, 32		# Altura da imagem	
 	call RENDER			# imprime
 	
+	##### CARREGAR A VIDA ##########
+
+	##### "EN" #############
+	la a0, health
+	li a1, 30 # Topo esquerdo X
+	li a2, 60 # Topo esquerdo Y
+	li a3, 24 # Largura da imagem
+	li a4, 8 # Altura da imagem
+	mv a5, s0 # Frame
+	call RENDER
+
+	###### LIFE POINTS ############
+	la a0, full_health
+	li a1, 60 # Topo esquerdo X
+	li a2, 60 # Topo esquerdo Y
+	li a3, 24 # Largura da imagem
+	li a4, 8 # Altura da imagem
+	mv a5, s0 # Frame
+	call RENDER
+
+	###############################
+
+	##### RENDERIZAR TIRO ##########
+
+	la a0, beam
+	li a1, 150 # Topo esquerdo X
+	li a2, 160 # Topo esquerdo Y
+	li a3, 8 # Largura da imagem
+	li a4, 8 # Altura da imagem
+	mv a5, s0 # Frame
+	call RENDER
 
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
@@ -165,11 +166,13 @@ RENDER:
 		ret	
 		
 .include "SYSTEMv21.s"
+.include "teclado.s"
 
 # Sprites
 .data
-.include "sprites/data/full_health.data"
+
 .include "sprites/data/walk_right.data"
 .include "sprites/data/map.data"
 .include "sprites/data/health.data"
 .include "sprites/data/beam.data"
+.include "sprites/data/full_health.data"
