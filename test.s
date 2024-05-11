@@ -89,6 +89,14 @@ GAME_LOOP:
 	mv a5, s0 # Frame
 	call RENDER
 
+	la a0, full_health
+	li a1, 80 # Topo esquerdo X
+	li a2, 60 # Topo esquerdo Y
+	li a3, 24 # Largura da imagem
+	li a4, 8 # Altura da imagem
+	mv a5, s0 # Frame
+	call RENDER
+
 	###############################
 
 	##### RENDERIZAR TIRO ##########
@@ -160,6 +168,7 @@ RENDER:
 
 # Sprites
 .data
+.include "sprites/data/full_health.data"
 .include "sprites/data/walk_right.data"
 .include "sprites/data/map.data"
 .include "sprites/data/health.data"
