@@ -21,13 +21,6 @@ BEGIN:
 	sh t1,0(t0) # guarda a vida da samus em PLYR_INFO
 	j SETUP
 
-# samus sofreu dano dos inimigos!!!
-# lh t1, 0(t0)
-# addi t1, t1, -20
-# sh t1, 0(t0)
-# bge zero, t1, KILL_PLYR
-# continue 
-
 SETUP:		
 	la a0, map 		# Endereco do mapa
 	li a1, 0		# Topo esquerdo X
@@ -131,6 +124,33 @@ GAME_LOOP:
 
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
+# samus sofreu dano dos inimigos!!!
+IF_HURT:
+		lh t1, 0(t0)
+		addi t1,t1,-20
+		sh t1, 0(t0)
+		bge zero, t1, KILL_PLYR
+		ret
+
+KILL_PLYR:
+		la a0, gameover 		# Endereco do mapa
+		li a1, 0		# Topo esquerdo X
+		li a2, 0		# Topo esquerdo Y		
+		li a3, 320		# Largura da imagem
+		li a4, 240		# Altura da imagem	
+		li a5, 0		# Frame = 0
+		call RENDER	
+		la a0, gameover 	# Endereco do mapa
+		li a1, 0		# Topo esquerdo X
+		li a2, 0		# Topo esquerdo Y		
+		li a3, 320		# Largura da imagem
+		li a4, 240		# Altura da imagem	
+		li a5, 0		# Frame = 0
+		li a5, 1		# Frame = 1
+		call RENDER	
+		li s0, 0
+		ret
+		
 RENDER:
 	#Propper rendering
 
@@ -164,7 +184,8 @@ RENDER:
 		addi t2,t2,1		# increments line counter
 		bgt a4,t2,PRINT_LINE	#if height > line counter, repeat
 		ret	
-		
+
+
 .include "SYSTEMv21.s"
 .include "teclado.s"
 
@@ -176,3 +197,4 @@ RENDER:
 .include "sprites/data/health.data"
 .include "sprites/data/beam.data"
 .include "sprites/data/full_health.data"
+.include "sprites/data/gameover.data"
