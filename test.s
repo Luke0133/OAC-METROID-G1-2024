@@ -11,6 +11,12 @@ PLYR_POS: .half 40, 200, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y
 LIFE_POS: .half 40,200, 0, 0
 PLYR_INFO: .half 0, 0 # Guarda a vida e numero de armas especiais
 
+#Enemies Info
+.eqv ZOOMER_HEALTH 50
+.eqv RIPPER_HEALTH 50
+.eqv RIDLEY_HEALTH 200
+
+
 .text
 
 BEGIN:
@@ -122,6 +128,43 @@ GAME_LOOP:
 	mv a5, s0 # Frame
 	call RENDER
 
+	###############################
+
+	##### RENDERING VILLAINS #######
+
+	#### Ridley ####
+	la a0, kraid_sit
+	li a1, 200 # Topo esquerdo X
+	li a2, 140 # Topo esquerdo Y
+	li a3, 32 # Largura da imagem
+	li a4, 40 # Altura da imagem
+	mv a5, s0 # Frame
+	call RENDER
+
+	#### Ripper ####
+	la a0, ripper
+	li a1, 260 # Topo esquerdo X
+	li a2, 140 # Topo esquerdo Y
+	li a3, 16 # Largura da imagem
+	li a4, 8 # Altura da imagem
+	mv a5, s0 # Frame
+	call RENDER
+
+	################################
+
+	#### Zoomer ####
+	#la a0, zoomer_vertical
+	#li a1, 260 # Topo esquerdo X
+	#li a2, 140 # Topo esquerdo Y
+	#li a3, 16 # Largura da imagem
+	#li a4, 8 # Altura da imagem
+	#mv a5, s0 # Frame
+	#call RENDER
+
+	################################
+
+	################################
+
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
 # samus sofreu dano dos inimigos!!!
@@ -132,6 +175,7 @@ IF_HURT:
 		bge zero, t1, KILL_PLYR
 		ret
 
+# vida de samus == 0!!!!!!!!!
 KILL_PLYR:
 		la a0, gameover 		# Endereco do mapa
 		li a1, 0		# Topo esquerdo X
@@ -150,7 +194,7 @@ KILL_PLYR:
 		call RENDER	
 		li s0, 0
 		ret
-		
+
 RENDER:
 	#Propper rendering
 
@@ -185,6 +229,21 @@ RENDER:
 		bgt a4,t2,PRINT_LINE	#if height > line counter, repeat
 		ret	
 
+####### THINKING ABOUT ENEMIES! ##########
+## Ridley:
+#-Up
+#-Down
+#-Attack
+#
+## Zoomer:
+#-Left
+#-Right 
+#-Up 
+#-Down 
+#
+## Ripper:
+#-Left 
+#-Right 
 
 .include "SYSTEMv21.s"
 .include "teclado.s"
@@ -198,3 +257,7 @@ RENDER:
 .include "sprites/data/beam.data"
 .include "sprites/data/full_health.data"
 .include "sprites/data/gameover.data"
+.include "sprites/data/kraid_sit.data"
+.include "sprites/data/ripper.data"
+.include "sprites/data/zoomer_vertical.data"
+.include "sprites/data/zoomer_horizontal.data"

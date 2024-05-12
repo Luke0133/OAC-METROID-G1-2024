@@ -80,8 +80,6 @@ GAME_LOOP:
 
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
-
-
 .include "teclado.s"
 .include "render.s"										
 .include "SYSTEMv21.s"
