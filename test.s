@@ -97,7 +97,6 @@ GAME_LOOP:
 	call RENDER			# imprime
 	
 	##### CARREGAR A VIDA ##########
-
 	##### "EN" #############
 	la a0, health
 	li a1, 30 # Topo esquerdo X
@@ -137,7 +136,7 @@ GAME_LOOP:
 	li a1, 200 # Topo esquerdo X
 	li a2, 140 # Topo esquerdo Y
 	li a3, 32 # Largura da imagem
-	li a4, 40 # Altura da imagem
+	li a4, 20 # Altura da imagem
 	mv a5, s0 # Frame
 	call RENDER
 
@@ -157,7 +156,7 @@ GAME_LOOP:
 	#li a1, 260 # Topo esquerdo X
 	#li a2, 140 # Topo esquerdo Y
 	#li a3, 16 # Largura da imagem
-	#li a4, 8 # Altura da imagem
+	#li a4, 4 # Altura da imagem
 	#mv a5, s0 # Frame
 	#call RENDER
 
