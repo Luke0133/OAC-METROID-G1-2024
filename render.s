@@ -1,6 +1,5 @@
+.text
 ##########################     RENDER IMAGE    ##########################
-#     -----------           instruction count            -----------    #
-#	RENDER uses 22 instructions					#
 #     -----------           argument registers           -----------    #
 #	a0 = Image Address						#
 #	a1 = X coordinate where rendering will start (top left)		#
@@ -8,48 +7,65 @@
 #	a3 = width of printing area (usually the size of the sprite)	#
 # 	a4 = height of printing area (usually the size of the sprite)	#
 #	a5 = frame (0 or 1)						#
-# --->	a6 = status of sprite (usually 0 for sprites that are alone)	#
-# --->	a7 = operation (0 if normal printing, 1 if replacing trail)	#
+#	a6 = status of sprite (usually 0 for sprites that are alone)	#
+#	a7 = operation (0 if normal printing, 1 if replacing trail)	#
 #     -----------          temporary registers           -----------    #
-# --->	t0 = bitmap display printing address				#
-# --->	t1 = image address						#
-# --->	t2 = line counter						#
-# --->	t3 = column counter						#
-# --->	t4 = temporary operations					#
+#	t0 = bitmap display printing address				#
+#	t1 = image address						#
+#	t2 = line counter						#
+# 	t3 = column counter						#
+# 	t4 = temporary operations					#
 #########################################################################
 RENDER:
-	li t0,0xFF0	# t0 = 0xFF0
-	add t0,t0,a5	# Rendering Address corresponds to 0x0FF0 + frame
-	slli t0,t0,20	# Shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
-	
+beqz a7,NORMAL
+	TRAIL_OP:	# Only when replacing trail; proceeds to NOT_TRAIL	
+		add a0,a0,a1	# Image address + X
+		li t3,320	# t4 = 320
+		mul t3,t3,a2	# t4 = t4 * Y
+		add a0,a0,t3	# a0 = Image address + X + 320 * Y
+	NORMAL:		# Executed even if on trail operation
+		mul t4,a6,a4	# Sprite offset (for files that have more than one sprite)
+		mul t4,t4,a3	# Sprite Line offset (skips the first %width lines)
+	#	addi a0,a0,8	# Skip image size info
+		add a0,a0,t4	# Adds offset to image address
+
+	#Propper rendering
+
+	li t0,0x0FF0	#t0 = 0x0FF0
+	add t0,t0,a5	#Printing address corresponds to 0x0FF0 + frame
+	slli t0,t0,20	#shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
 	add t0,t0,a1	# t0 = 0xFF00 0000 + X or 0xFF10 0000 + X
+	li t4,320	# t4 = 320
+	mul t4,t4,a2	# t4 = 320 * Y 
+	add t0,t0,t4	# t0 = 0xFF00 0000 + X + (Y * 320) or 0xFF10 0000 + X + (Y * 320)
+	mv t2,zero	# t2 = 0
+	mv t3,zero	# t3 = 0
 	
-	li t1,320	# t1 = 320
-	mul t1,t1,a2	# t1 = 320 * Y 
-	add t0,t0,t1	# t0 = 0xFF00 0000 + X + (Y * 320) or 0xFF10 0000 + X + (Y * 320)
-	
-	addi a0,a0,8			# t1 = a0 + 8
-	
-	mv t2,zero	# t2 = 0 (Resets line counter)
-	mv t3,zero	# t3 = 0 (Resets column counter)
-	
-	PRINT_LINE:
+	PRINT_LINE:	
 		lw t4,0(a0)	# loads word(4 pixels) on t4
+		## DEBUG
+		sw t4,0(a0)	# loads word(4 pixels) on t4
+		###
 		sw t4,0(t0)	# prints 4 pixels from t4
 		
 		addi t0,t0,4	# increments bitmap address
 		addi a0,a0,4	# increments image address
 		
-		addi t3,t3,4		# increments column counter
+		addi t3,t3,4	# increments column counter
 		blt t3,a3,PRINT_LINE	# if column counter < width, repeat
 		
-		addi t0,t0,320	# goes to next line on bitmap display
-		sub t0,t0,a3	# goes to right X on bitmap display (current address - width)
+		addi t0,t0,320
+		sub t0,t0,a3
 		
-		mv t3,zero		# t3 = 0
-		addi t2,t2,1		# increments line counter
-		bgt a4,t2,PRINT_LINE	# if height > line counter, repeat
-		ret	
+		beqz a7, NORMAL_PRINT
+		TRAIL_PRINT:
+			addi a0,a0,320	# a0 +=320	
+			sub a0,a0,a3	# a0 -= width
+		NORMAL_PRINT: 
+			mv t3,zero		# t3 = 0
+			addi t2,t2,1		# increments line counter
+			bgt a4,t2,PRINT_LINE	#if height > line counter, repeat
+			ret
 
 ############################## RENDER COLOR #############################
 #		 Renders a given color on a given space			#
@@ -68,6 +84,7 @@ RENDER:
 #	t2 = line counter						#
 #	t3 = column counter						#
 #########################################################################
+
 RENDER_COLOR:
 	li t0,0xFF0	# t0 = 0xFF0
 	add t0,t0,a5	# Rendering Address corresponds to 0x0FF0 + frame
@@ -126,6 +143,7 @@ RENDER_COLOR:
 ####################################################################################
 RENDER_MAP:
 # Guarda na pilha
+	mv t6, zero
 	addi sp,sp,-16
 	sw s3,12(sp)
 	sw s2,8(sp)
@@ -136,12 +154,13 @@ RENDER_MAP:
 #	     - checar offset p/ determinar coordenadas e corte (apenas nas laterais/topo e chao)
 # 	se acabou a coluna, voltaate acabar numero de colunas
 # 	se acabou a linha, reseta coluna e volta ate acabar numero de linhas
-	
+	mv s1,a1
+	mv s2,a2
 	addi s0,a0,3 	# skips first 3 bytes of information (goes to the actual matrix)
-	add s0, a0, s1 	# s0 = Matrix Address + Current X on Matrix
+	add s0, s0, s1 	# s0 = Matrix Address + Current X on Matrix
 	lbu s3,1(a0)	# s3 = matrix width
 	mul t0,s3,s2	# t0 = Matrix Width x Current Y on Matrix
-	add s0, a0, t0	# s0 = Address to current X and Y on Matrix
+	add s0, s0, t0	# s0 = Address to current X and Y on Matrix
 
 	mv t2,zero	# t2 = 0 (Resets line counter)
 	mv t3,zero	# t3 = 0 (Resets column counter)
@@ -185,7 +204,8 @@ RENDER_MAP_LOOP:
 	j CONTINUE_RENDER_MAP
 	NotDoorRightTop:
 	li t0, 4 
-	# la t0, NotDoorRight
+	bne t1,t0, NotDoorRight
+	# la t0, DoorRight
 	li t1,0
 	j CONTINUE_RENDER_MAP
 	NotDoorRight:
@@ -406,9 +426,12 @@ RENDER_MAP_LOOP:
 
 	NoOffset:
 	li t0, tile_size 	# Tile size = 16
-	mul t4,a1,t0		# Gets the X value relative to the screen
-	mul t5,a2,t0		# Gets the Y value relative to the screen
+	sub t4,s1,a1
+	mul t4,s1,t0		# Gets the X value relative to the screen
+	sub t5,s2,a2
+	mul t5,s2,t0		# Gets the Y value relative to the screen
 	bnez t1,NormalRender
+	
 	li a0, 0x00 		# Black
 	mv a1, t4			# Top Left X
 	mv a2, t5			# Top Left Y		
@@ -416,14 +439,19 @@ RENDER_MAP_LOOP:
 	li a4, tile_size	# Tile Height (Screen)	
 	# a5 permanece igual
 	call RENDER_COLOR
+	j EndRender
+	
 	NormalRender:
 	# a0 has the tile address
 	mv a1, t4			# Top Left X
 	mv a2, t5			# Top Left Y			
 	li a3, tile_size	# Tile Width (Screen)
 	li a4, tile_size	# Tile Height (Screen)	
+	li a6, 0
+	li a7, 0
 	call RENDER
 	
+	EndRender:
 	lw a4,28(sp)
 	lw a3,24(sp)
 	lw a2,20(sp)
@@ -433,9 +461,10 @@ RENDER_MAP_LOOP:
 	lw t3,4(sp)
 	lw ra,0(sp)
 	addi sp,sp,32
-	
+			
 	addi t3,t3,1		# increments column counter
 	addi s1,s1,1		# increments 1 to Current X
+	addi s0,s0,1		# Goes to next byte
 	li t0, 20 		# Largura da matriz para o tamanho de uma tela (320 pixels de largura)
 	bge t3,t0,CONTINUE_LINE	# if column counter >= width, repeat
 	j RENDER_MAP_LOOP	# if column counter < width, repeat
@@ -449,6 +478,7 @@ RENDER_MAP_LOOP:
 		
 		li t0, 15 			# Altura da matriz para o tamanho de uma tela (240 pixels de altura)
 		bge t2,t0,CONTINUE_COLUMN	# if height > line counter, repeat
+		
 		j RENDER_MAP_LOOP
 		CONTINUE_COLUMN:
 		# Operacao finalizada

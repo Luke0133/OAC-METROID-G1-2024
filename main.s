@@ -11,20 +11,20 @@ PLYR_POS: .half 40, 0, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) 
 .text
 
 SETUP:
-	li a0, 0x66 		# Endereco do mapa
-	li a1, 0		# Topo esquerdo X
+	la a0, Map1 		# Endereco do mapa
+	li a1, 35		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
-	li a3, 320		# Largura da imagem
-	li a4, 240		# Altura da imagem	
+	li a3, 0		# Largura da imagem
+	li a4, 0		# Altura da imagem	
 	li a5, 0		# Frame = 0
-	call RENDER_COLOR
-	li a0, 0x66 		# Endereco do mapa
-	li a1, 0		# Topo esquerdo X
+	call RENDER_MAP
+	la a0, Map1 		# Endereco do mapa
+	li a1, 35		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
-	li a3, 320		# Largura da imagem
-	li a4, 240		# Altura da imagem	
+	li a3, 0		# Largura da imagem
+	li a4, 0		# Altura da imagem	
 	li a5, 1		# Frame = 0
-	call RENDER_COLOR
+	call RENDER_MAP
 	li s0, 0	
 
 ENGINE_SETUP:
@@ -48,8 +48,6 @@ ENGINE_SETUP:
 GAME_LOOP:
 	call INPUT_CHECK	# Checa input do jogador
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
-	
-		
 			
 	la a0, walk_right 		# Gets sprite address# Endereco do mapa
 	la t0,PLYR_POS
@@ -58,9 +56,22 @@ GAME_LOOP:
 	li a3, 24		# Largura da imagem
 	li a4, 32		# Altura da imagem	
 	mv a5, s0		# Frame
+	li a6, 0
+	li a7, 0
 	
 	call RENDER
-		
+	
+
+	la a0, beam 		# Gets sprite address# Endereco do mapa
+	li a1, 64		# Topo esquerdo X
+	li a2, 64		# Topo esquerdo Y		
+	li a3, 8		# Largura da imagem
+	li a4, 8		# Altura da imagem	
+	mv a5, s0		# Frame
+	li a6, 0
+	li a7, 0
+	call RENDER		
+					
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
 	
@@ -70,21 +81,42 @@ GAME_LOOP:
 	mv a5,s0			# carrega o frame atual (que esta na tela em a3)
 	xori a5,a5,1			# inverte a3 (0 vira 1, 1 vira 0)
 	
+	
 	la a0, walk_right 		# Gets sprite address# Endereco do mapa
 	la t0,PLYR_POS
 	lh a1, 0(t0)		# Topo esquerdo X
 	lh a2, 2(t0)		# Topo esquerdo Y		
 	li a3, 24		# Largura da imagem
 	li a4, 32		# Altura da imagem	
-	call RENDER			# imprime
+	mv a5, s0		# Frame
+	li a6, 0
+	li a7, 0
+	
+	call RENDER
 
+
+	la a0, beam 		# Gets sprite address# Endereco do mapa
+	li a1, 64		# Topo esquerdo X
+	li a2, 64		# Topo esquerdo Y		
+	li a3, 8		# Largura da imagem
+	li a4, 8		# Altura da imagem	
+	mv a5, s0		# Frame
+	li a6, 0
+	li a7, 0
+	call RENDER
+
+
+	
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
+
+
 
 .include "teclado.s"
 .include "render.s"										
 .include "SYSTEMv21.s"
 # Sprites
 .data
-.include "sprites/data/walk_right.data"
+.include "sprites/walk_right.data"
 .include "matrix.data"
 .include "tiles.data"
+.include "beam.data"
