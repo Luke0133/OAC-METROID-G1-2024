@@ -107,13 +107,13 @@ GAME_LOOP:
 	call RENDER
 
 	###### LIFE POINTS ############
-	la a0, full_health
-	li a1, 60 # Topo esquerdo X
-	li a2, 60 # Topo esquerdo Y
-	li a3, 24 # Largura da imagem
-	li a4, 8 # Altura da imagem
-	mv a5, s0 # Frame
-	call RENDER
+	li a0,100
+	li a1,60
+	li a2,60
+	li a3,0xc9
+	li a4,1
+	li a7,101
+	ecall
 
 	###############################
 
@@ -136,7 +136,7 @@ GAME_LOOP:
 	li a1, 200 # Topo esquerdo X
 	li a2, 140 # Topo esquerdo Y
 	li a3, 32 # Largura da imagem
-	li a4, 20 # Altura da imagem
+	li a4, 40 # Altura da imagem
 	mv a5, s0 # Frame
 	call RENDER
 
@@ -195,39 +195,38 @@ KILL_PLYR:
 		ret
 
 RENDER:
-	#Propper rendering
-
-	li t0,0x0FF0	# t0 = 0x0FF0
-	add t0,t0,a5	# Printing address corresponds to 0x0FF0 + frame
-	slli t0,t0,20	#shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
+	li t0,0xFF0	# t0 = 0xFF0
+	add t0,t0,a5	# Rendering Address corresponds to 0x0FF0 + frame
+	slli t0,t0,20	# Shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
 	
 	add t0,t0,a1	# t0 = 0xFF00 0000 + X or 0xFF10 0000 + X
 	
-	li t4,320	# t4 = 320
-	mul t4,t4,a2	# t4 = 320 * Y 
-	add t0,t0,t4	# t0 = 0xFF00 0000 + X + (Y * 320) or 0xFF10 0000 + X + (Y * 320)
+	li t1,320	# t1 = 320
+	mul t1,t1,a2	# t1 = 320 * Y 
+	add t0,t0,t1	# t0 = 0xFF00 0000 + X + (Y * 320) or 0xFF10 0000 + X + (Y * 320)
 	
-	mv t2,zero	# t2 = 0
-	mv t3,zero	# t3 = 0
+	addi a0,a0,8			# t1 = a0 + 8
 	
-	PRINT_LINE:	
+	mv t2,zero	# t2 = 0 (Resets line counter)
+	mv t3,zero	# t3 = 0 (Resets column counter)
+	
+	PRINT_LINE:
 		lw t4,0(a0)	# loads word(4 pixels) on t4
 		sw t4,0(t0)	# prints 4 pixels from t4
 		
 		addi t0,t0,4	# increments bitmap address
 		addi a0,a0,4	# increments image address
 		
-		addi t3,t3,4	# increments column counter
+		addi t3,t3,4		# increments column counter
 		blt t3,a3,PRINT_LINE	# if column counter < width, repeat
 		
-		addi t0,t0,320
-		sub t0,t0,a3
+		addi t0,t0,320	# goes to next line on bitmap display
+		sub t0,t0,a3	# goes to right X on bitmap display (current address - width)
 		
 		mv t3,zero		# t3 = 0
 		addi t2,t2,1		# increments line counter
-		bgt a4,t2,PRINT_LINE	#if height > line counter, repeat
+		bgt a4,t2,PRINT_LINE	# if height > line counter, repeat
 		ret	
-
 ####### THINKING ABOUT ENEMIES! ##########
 ## Ridley:
 #-Up
@@ -246,6 +245,7 @@ RENDER:
 
 .include "SYSTEMv21.s"
 .include "teclado.s"
+#.include "render.s"
 
 # Sprites
 .data
