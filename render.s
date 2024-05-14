@@ -142,8 +142,16 @@ RENDER_COLOR:
 #  	t5 = temporary register for moving info					   #
 ####################################################################################
 RENDER_MAP:
+## DEBUG
+#	mv t6, zero
+#		mv t5,a0
+#		li a0, 3000
+#		li a7, 32
+#		ecall
+#		mv a0,t5
+	##
+	
 # Guarda na pilha
-	mv t6, zero
 	addi sp,sp,-16
 	sw s3,12(sp)
 	sw s2,8(sp)
@@ -211,7 +219,7 @@ RENDER_MAP_LOOP:
 	NotDoorRight:
 	li t0, 198 
 	bne t1,t0, NotDoorFrame
-	# la t0, DoorFrame
+	la t0, DoorFrame
 	j CONTINUE_RENDER_MAP
 	NotDoorFrame:
 	li t0, 64 
@@ -311,7 +319,7 @@ RENDER_MAP_LOOP:
 	NotLavaT:
 	li t0, 90
 	bne t1,t0, NotPipe1H
-	la t0, Pipe1V
+	la t0, Pipe1H
 	j CONTINUE_RENDER_MAP
 	NotPipe1H:
 	li t0, 82
@@ -427,9 +435,10 @@ RENDER_MAP_LOOP:
 	NoOffset:
 	li t0, tile_size 	# Tile size = 16
 	sub t4,s1,a1
-	mul t4,s1,t0		# Gets the X value relative to the screen
+	mul t4,t4,t0		# Gets the X value relative to the screen
+	li t0, 15
 	sub t5,s2,a2
-	mul t5,s2,t0		# Gets the Y value relative to the screen
+	mul t5,t5,t0		# Gets the Y value relative to the screen
 	bnez t1,NormalRender
 	
 	li a0, 0x00 		# Black
@@ -469,6 +478,14 @@ RENDER_MAP_LOOP:
 	bge t3,t0,CONTINUE_LINE	# if column counter >= width, repeat
 	j RENDER_MAP_LOOP	# if column counter < width, repeat
 	CONTINUE_LINE:
+	## DEBUG
+#		mv t5,a0
+#		li a0, 3000
+#		li a7, 32
+#		ecall
+#		mv a0,t5
+	##
+	
 		add s0,s0,s3			# s0 = Current Address on Matrix + Matrix Width
 		addi s0,s0,-20			# s0 = New Current Address on Matrix 
 		

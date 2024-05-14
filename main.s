@@ -1,6 +1,5 @@
 .include "MACROSv21.s" # Macros para bitmap display
 
-
 .data
 .eqv tile_size 16
 .eqv frame_rate 90 # T ms por frame 
@@ -11,15 +10,33 @@ PLYR_POS: .half 40, 0, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) 
 .text
 
 SETUP:
+## DEBUG
+	li a0, 0x66 		# Endereco do mapa
+	li a1, 0		# Topo esquerdo X
+	li a2, 0		# Topo esquerdo Y		
+	li a3, 320		# Largura da imagem
+	li a4, 240		# Altura da imagem	
+	li a5, 0		# Frame = 0
+	call RENDER_COLOR
+##
 	la a0, Map1 		# Endereco do mapa
-	li a1, 35		# Topo esquerdo X
+	li a1, 40		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
 	li a3, 0		# Largura da imagem
 	li a4, 0		# Altura da imagem	
 	li a5, 0		# Frame = 0
 	call RENDER_MAP
+## DEBUG
+	li a0, 0x66 		# Endereco do mapa
+	li a1, 0		# Topo esquerdo X
+	li a2, 0		# Topo esquerdo Y		
+	li a3, 320		# Largura da imagem
+	li a4, 240		# Altura da imagem	
+	li a5, 1		# Frame = 0
+	call RENDER_COLOR
+##
 	la a0, Map1 		# Endereco do mapa
-	li a1, 35		# Topo esquerdo X
+	li a1, 40		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
 	li a3, 0		# Largura da imagem
 	li a4, 0		# Altura da imagem	
