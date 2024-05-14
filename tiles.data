@@ -21,7 +21,7 @@
 # 14. Ground1D: 88		29. LavaT: 102 -- can kill	44. Tile3B: 124
 # 15. Ground2A: 98		30. Pipe1H: 90			45. Tile3C: 70
 
-
+.word 0 # Aligning bytes
 BreakBlock: # 16 x 16 = 256 bytes
 .byte 0,0,227,227,0,227,227,0,227,227,227,227,227,0,0,0,
 0,227,227,0,0,227,227,227,0,227,227,227,227,160,0,0,
