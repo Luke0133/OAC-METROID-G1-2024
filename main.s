@@ -5,8 +5,14 @@
 .eqv frame_rate 90 # T ms por frame 
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
-PLYR_POS: .half 40, 0, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
+PLYR_INFO: # Stores Player's informations
+PLYR_POS: .half 40, 0  # Stores Player's current and old top left X respectively, both related to the screen  
+	  .byte 0, 0   # Stores Player's current and old top left Y respectively, both related to the screen 
+PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 
+DELETE: .word 0
+.include "sprites/walk_right.data"
+		
 .text
 
 SETUP:
@@ -18,12 +24,12 @@ SETUP:
 	li a4, 240		# Altura da imagem	
 	li a5, 0		# Frame = 0
 	call RENDER_COLOR
-##
+
 	la a0, Map1 		# Endereco do mapa
-	li a1, 40		# Topo esquerdo X
-	li a2, 0		# Topo esquerdo Y		
-	li a3, 0		# Largura da imagem
-	li a4, 0		# Altura da imagem	
+	li a1, 0		# starting X on Matrix (top left)
+	li a2, 0		# starting Y on Matrix (top left)		
+	li a3, 0		# X offset (0, 4, 8, 12)
+	li a4, 4		# Y offset (0, 4, 8, 12)	
 	li a5, 0		# Frame = 0
 	call RENDER_MAP
 ## DEBUG
@@ -36,11 +42,11 @@ SETUP:
 	call RENDER_COLOR
 ##
 	la a0, Map1 		# Endereco do mapa
-	li a1, 40		# Topo esquerdo X
-	li a2, 0		# Topo esquerdo Y		
-	li a3, 0		# Largura da imagem
-	li a4, 0		# Altura da imagem	
-	li a5, 1		# Frame = 0
+	li a1, 0		# starting X on Matrix (top left)
+	li a2, 0		# starting Y on Matrix (top left)		
+	li a3, 0		# X offset (0, 4, 8, 12)
+	li a4, 4		# Y offset (0, 4, 8, 12)	
+	li a5, 1		# Frame = 1
 	call RENDER_MAP
 	li s0, 0	
 
@@ -65,7 +71,7 @@ ENGINE_SETUP:
 GAME_LOOP:
 	call INPUT_CHECK	# Checa input do jogador
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
-			
+									
 	la a0, walk_right 		# Gets sprite address# Endereco do mapa
 	la t0,PLYR_POS
 	lh a1, 0(t0)		# Topo esquerdo X
@@ -76,30 +82,18 @@ GAME_LOOP:
 	li a6, 0
 	li a7, 0
 	
-	call RENDER
-	
-
-	la a0, beam 		# Gets sprite address# Endereco do mapa
-	li a1, 64		# Topo esquerdo X
-	li a2, 64		# Topo esquerdo Y		
-	li a3, 8		# Largura da imagem
-	li a4, 8		# Altura da imagem	
-	mv a5, s0		# Frame
-	li a6, 0
-	li a7, 0
-	call RENDER		
-					
+	call RENDER					
+									
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
 	
 	##### LIMPEZA DE RASTRO
 	
 	mv a5, s0		# Frame
-	mv a5,s0			# carrega o frame atual (que esta na tela em a3)
-	xori a5,a5,1			# inverte a3 (0 vira 1, 1 vira 0)
+	mv a5,s0		# carrega o frame atual (que esta na tela em a3)
+	xori a5,a5,1		# inverte a3 (0 vira 1, 1 vira 0)
 	
-	
-	la a0, walk_right 		# Gets sprite address# Endereco do mapa
+	la a0, walk_right 	# Gets sprite address
 	la t0,PLYR_POS
 	lh a1, 0(t0)		# Topo esquerdo X
 	lh a2, 2(t0)		# Topo esquerdo Y		
@@ -110,19 +104,6 @@ GAME_LOOP:
 	li a7, 0
 	
 	call RENDER
-
-
-	la a0, beam 		# Gets sprite address# Endereco do mapa
-	li a1, 64		# Topo esquerdo X
-	li a2, 64		# Topo esquerdo Y		
-	li a3, 8		# Largura da imagem
-	li a4, 8		# Altura da imagem	
-	mv a5, s0		# Frame
-	li a6, 0
-	li a7, 0
-	call RENDER
-
-
 	
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
@@ -133,7 +114,7 @@ GAME_LOOP:
 .include "SYSTEMv21.s"
 # Sprites
 .data
-.include "sprites/data/walk_right.data"
-.include "sprites/data/matrix.data"
-.include "sprites/data/tiles.data"
-.include "sprites/data/beam.data"
+
+.include "matrix.data"
+.include "tiles.data"
+.include "beam.data"
