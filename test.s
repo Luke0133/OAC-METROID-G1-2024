@@ -235,22 +235,24 @@ IF_HURT:
 
 # vida de samus == 0!!!!!!!!!
 KILL_PLYR:
+
+		la a0, gameover
+		li a1,40
+		li a2,0
+		li a3,0
+		li a4,0
+		li a5,0
+		call RENDER_MAP
+
 		la a0, gameover 		# Endereco do mapa
-		li a1, 0		# Topo esquerdo X
+		li a1, 40		# Topo esquerdo X
 		li a2, 0		# Topo esquerdo Y		
-		li a3, 320		# Largura da imagem
-		li a4, 240		# Altura da imagem	
-		li a5, 0		# Frame = 0
-		call RENDER	
-		la a0, gameover 	# Endereco do mapa
-		li a1, 0		# Topo esquerdo X
-		li a2, 0		# Topo esquerdo Y		
-		li a3, 320		# Largura da imagem
-		li a4, 240		# Altura da imagem	
-		li a5, 0		# Frame = 0
-		li a5, 1		# Frame = 1
-		call RENDER	
-		li s0, 0
+		li a3, 0		# Largura da imagem
+		li a4, 0		# Altura da imagem	
+		li a5, 1		# Frame = 0
+		call RENDER_MAP
+		li s0, 0	
+		
 		ret
 
 

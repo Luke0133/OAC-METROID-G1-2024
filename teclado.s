@@ -35,8 +35,13 @@ INPUT_CHECK:
         
         CHECK_INPUT.K:
         li t1, 'k'	# Loads ascii value of 'k' key
-        bne t0,t1, NO_INPUT
+        bne t0,t1, CHECK_INPUT.T
         j INPUT.K 	# If 'k' key was pressed
+
+        CHECK_INPUT.T:
+        li t1, 't'	# Loads ascii value of 'k' key
+        bne t0,t1, NO_INPUT
+        j INPUT.O 	# If 'k' key was pressed
 
 	NO_INPUT:
        		j END_INPUT_CHECK
@@ -65,5 +70,10 @@ INPUT_CHECK:
 	
 	INPUT.K: # Shoots
 	        j END_INPUT_CHECK
+        
+        INPUT.O: #for testing
+                call KILL_PLYR
+                #j END_INPUT_CHECK
+
 	END_INPUT_CHECK:
 		ret		
