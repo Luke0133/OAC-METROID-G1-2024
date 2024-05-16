@@ -18,7 +18,7 @@ PLYR_INFO: .byte 0, 0 # Guarda a vida, numero de armas especiais
 
 ## ZOOMER ##
 ZOOMER_STATUS: .byte 0,0 # Numero da sprite, direcao do movimento (0 = s, 1 = w, 2 = d, 3 = a)
-ZOOMER_POS: .half 80, 180, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
+ZOOMER_POS: .half 240, 108, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
 ZOOMER_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 ZOOMER_INFO: .byte 0
 .eqv ZOOMER_HEALTH 50
@@ -154,7 +154,7 @@ GAME_LOOP:
 	call INPUT_CHECK	# Checa input do jogador
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 			
-	##### samus - sprite 0 ######
+	####### sprite 0 da sam vertical ###########
 	la a0,sam_walk_vertical
 	la t0,PLYR_POS
 	lh a1, 0(t0)
@@ -209,6 +209,53 @@ GAME_LOOP:
 	mv a5, s0		# Frame
 	
 	la t0, PLYR_STATUS
+	lb a6, 0(t0) 
+
+	li a7, 0
+	
+	call RENDER
+
+
+	#############################
+
+	####### sprite 0 do zoomer ###########
+
+	la a0, zoomer_horizontal
+	la t0,ZOOMER_POS
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 16
+	li a4, 16
+	mv a5,s0
+
+	la t0, ZOOMER_STATUS
+	lb a6, 0(t0) 
+
+	li a7, 0
+
+	call RENDER
+
+	############################################
+
+	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
+	sw s0,0(t0)
+	
+	##### LIMPEZA DE RASTRO
+	
+	mv a5, s0		# Frame
+	mv a5,s0			# carrega o frame atual (que esta na tela em a3)
+	xori a5,a5,1			# inverte a3 (0 vira 1, 1 vira 0)
+	
+	
+	la a0, zoomer_horizontal		# Gets sprite address# Endereco do mapa
+	la t0,ZOOMER_POS
+	lh a1, 0(t0)		# Topo esquerdo X
+	lh a2, 2(t0)		# Topo esquerdo Y		
+	li a3, 16		# Largura da imagem
+	li a4, 16		# Altura da imagem	
+	mv a5, s0		# Frame
+	
+	la t0, ZOOMER_STATUS
 	lb a6, 0(t0) 
 
 	li a7, 0
