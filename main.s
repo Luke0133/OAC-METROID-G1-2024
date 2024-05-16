@@ -11,7 +11,6 @@ PLYR_POS: .half 40, 0  # Stores Player's current and old top left X respectively
 PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 
 DELETE: .word 0
-.include "sprites/walk_right.data"
 		
 .text
 
@@ -115,6 +114,7 @@ GAME_LOOP:
 # Sprites
 .data
 
-.include "matrix.data"
-.include "tiles.data"
-.include "beam.data"
+.include "sprites/data/matrix.data"
+.include "sprites/data/tiles.data"
+.include "sprites/data/beam.data"
+.include "sprites/data/walk_right.data"

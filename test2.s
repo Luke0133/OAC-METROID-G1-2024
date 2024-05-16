@@ -22,7 +22,7 @@ SETUP:
 	la a0, Map1 		# Endereco do mapa
 	li a1, 40		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
-	li a3, 0		# Largura da imagem
+	li a3, 4		# Largura da imagem
 	li a4, 0		# Altura da imagem	
 	li a5, 0		# Frame = 0
 	call RENDER_MAP
@@ -38,7 +38,7 @@ SETUP:
 	la a0, Map1 		# Endereco do mapa
 	li a1, 40		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
-	li a3, 0		# Largura da imagem
+	li a3, 4		# Largura da imagem
 	li a4, 0		# Altura da imagem	
 	li a5, 1		# Frame = 0
 	call RENDER_MAP
@@ -129,7 +129,8 @@ GAME_LOOP:
 
 
 .include "teclado.s"
-.include "render.s"										
+#.include "render.s"
+.include "render2.s"										
 .include "SYSTEMv21.s"
 # Sprites
 .data
