@@ -59,10 +59,10 @@ SETUP:
 	call RENDER_COLOR
 ##
 	la a0, Map1 		# Endereco do mapa
-	li a1, 40		# Topo esquerdo X
-	li a2, 0		# Topo esquerdo Y		
-	li a3, 4		# Largura da imagem
-	li a4, 0		# Altura da imagem	
+	li a1, 40		# starting X on Matrix (top left)
+	li a2, 0		# starting Y on Matrix (top left)		
+	li a3, 0		# X offset (0, 4, 8, 12)
+	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 0		# Frame = 0
 	call RENDER_MAP
 ## DEBUG
@@ -75,10 +75,10 @@ SETUP:
 	call RENDER_COLOR
 ##
 	la a0, Map1 		# Endereco do mapa
-	li a1, 40		# Topo esquerdo X
-	li a2, 0		# Topo esquerdo Y		
-	li a3, 4		# Largura da imagem
-	li a4, 0		# Altura da imagem	
+	li a1, 40		# starting X on Matrix (top left)
+	li a2, 0		# starting Y on Matrix (top left)		
+	li a3, 0		# X offset (0, 4, 8, 12)
+	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 1		# Frame = 0
 	call RENDER_MAP
 	li s0, 0	
@@ -277,24 +277,29 @@ IF_HURT:
 
 # vida de samus == 0!!!!!!!!!
 KILL_PLYR:
-
-		la a0, gameover
-		li a1,40
-		li a2,0
-		li a3,0
-		li a4,0
-		li a5,0
+		###### decompor o gameover em tiles ###########
+		
+		la a0, gameover 		# Endereco do mapa
+		li a1, 0		# Topo esquerdo X
+		li a2, 0		# Topo esquerdo Y		
+		li a3, 0		# Largura da imagem
+		li a4, 0		# Altura da imagem	
+		li a5, 0		# Frame = 0
+		li a6,0
 		call RENDER_MAP
 
 		la a0, gameover 		# Endereco do mapa
-		li a1, 40		# Topo esquerdo X
+		li a1, 0		# Topo esquerdo X
 		li a2, 0		# Topo esquerdo Y		
 		li a3, 0		# Largura da imagem
 		li a4, 0		# Altura da imagem	
 		li a5, 1		# Frame = 0
+		li a6,0
 		call RENDER_MAP
-		li s0, 0	
-		
+		li s0, 0
+
+		j KILL_PLYR	
+
 		ret
 
 

@@ -9,9 +9,10 @@ PLYR_INFO: # Stores Player's informations
 PLYR_POS: .half 40, 0  # Stores Player's current and old top left X respectively, both related to the screen  
 	  .byte 0, 0   # Stores Player's current and old top left Y respectively, both related to the screen 
 PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
+PLYR_STATUS: .byte 0,0,0 # Numero da sprite, direcao do movimento (0 = s, 1 = w, 2 = d, 3 = a), jogador atacando = 1
 
 DELETE: .word 0
-.include "sprites/walk_right.data"
+.include "sprites/data/walk_right.data"
 		
 .text
 
@@ -28,11 +29,11 @@ SETUP:
 	la a0, Map1 		# Endereco do mapa
 	li a1, 0		# starting X on Matrix (top left)
 	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 0		# X offset (0, 4, 8, 12)
-	li a4, 4		# Y offset (0, 4, 8, 12)	
+	li a3, 4		# X offset (0, 4, 8, 12)
+	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 0		# Frame = 0
 	call RENDER_MAP
-	
+
 ## DEBUG
 	li a0, 0x66 		# Endereco do mapa
 	li a1, 0		# Topo esquerdo X
@@ -45,8 +46,8 @@ SETUP:
 	la a0, Map1 		# Endereco do mapa
 	li a1, 0		# starting X on Matrix (top left)
 	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 0		# X offset (0, 4, 8, 12)
-	li a4, 4		# Y offset (0, 4, 8, 12)	
+	li a3, 4		# X offset (0, 4, 8, 12)
+	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 1		# Frame = 1
 	call RENDER_MAP
 	li s0, 0	
@@ -108,6 +109,33 @@ GAME_LOOP:
 	
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
+# vida de samus == 0!!!!!!!!!
+KILL_PLYR:
+		###### decompor o gameover em tiles ###########
+		
+		la a0, gameover 		# Endereco do mapa
+		li a1, 4		# Topo esquerdo X
+		li a2, 0		# Topo esquerdo Y		
+		li a3, 0		# Largura da imagem
+		li a4, 0		# Altura da imagem	
+		li a5, 0		# Frame = 0
+		li a6,0
+		call RENDER_MAP
+
+		la a0, gameover 		# Endereco do mapa
+		li a1, 4		# Topo esquerdo X
+		li a2, 0		# Topo esquerdo Y		
+		li a3, 0		# Largura da imagem
+		li a4, 0		# Altura da imagem	
+		li a5, 1		# Frame = 0
+		li a6,0
+		call RENDER_MAP
+		li s0, 0
+
+		j KILL_PLYR	
+
+		ret
+
 
 
 .include "teclado.s"
@@ -116,6 +144,7 @@ GAME_LOOP:
 # Sprites
 .data
 
-.include "matrix.data"
-.include "tiles.data"
-.include "beam.data"
+.include "sprites/data/gameover.data"
+.include "sprites/data/matrix.data"
+.include "sprites/data/tiles.data"
+.include "sprites/data/beam.data"
