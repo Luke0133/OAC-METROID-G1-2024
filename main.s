@@ -7,6 +7,10 @@
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
 ### SAMUS INFO ###
+MOVEX: .byte 0
+MOVEY: .byte 0
+JUMP: .byte 0
+
 PLYR_STATUS: .byte 0,0,0 # Numero da sprite, direcao do movimento (0 = s, 1 = w, 2 = d, 3 = a), jogador atacando = 1
 PLYR_POS: .half 40, 180, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
 PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 

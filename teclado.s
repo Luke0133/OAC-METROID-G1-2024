@@ -37,7 +37,7 @@ INPUT_CHECK:
         li t1, 'k'	# Loads ascii value of 'k' key
         bne t0,t1, CHECK_INPUT.T
         j INPUT.K 	# If 'k' key was pressed
-
+        
         CHECK_INPUT.T:
         li t1, 't'	# Loads ascii value of 'k' key
         bne t0,t1, CHECK_INPUT.P
@@ -48,8 +48,10 @@ INPUT_CHECK:
         bne t0,t1, NO_INPUT
         j INPUT.P 	# If 'k' key was pressed
 
+
 	NO_INPUT:
-       		j END_INPUT_CHECK
+       		#j END_INPUT_CHECK
+                j INPUT.ZERO
 
 	INPUT.W:
 	        j END_INPUT_CHECK
@@ -69,10 +71,10 @@ INPUT_CHECK:
 	        addi t1, t1, 4
 	        sh t1,0(t0)
 
-                #la t0, PLYR_STATUS
-                #lb t1, 0(t0)
-                #addi t1,zero,1
-                #sb t1, 0(t0)
+               # la t0, PLYR_STATUS
+               # lb t1, 0(t0)
+               # addi t1,zero,1
+               # sb t1, 0(t0)
                 
 	        j END_INPUT_CHECK
 	
@@ -91,6 +93,12 @@ INPUT_CHECK:
                 lb t1, 0(t0)
                 addi t1,zero,1
                 sb t1, 0(t0)
+                j END_INPUT_CHECK
+        
+        INPUT.ZERO:
+                la t0, MOVEX 
+                sh zero, 0(t0) # zera moveX, moveY
+                sb zero, 4(t0) # zera jump
                 j END_INPUT_CHECK
 
 	END_INPUT_CHECK:
