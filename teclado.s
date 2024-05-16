@@ -69,10 +69,10 @@ INPUT_CHECK:
 	        addi t1, t1, 4
 	        sh t1,0(t0)
 
-                la t0, PLYR_STATUS
-                lb t1, 0(t0)
-                addi t1,zero,1
-                sb t1, 0(t0)
+                #la t0, PLYR_STATUS
+                #lb t1, 0(t0)
+                #addi t1,zero,1
+                #sb t1, 0(t0)
                 
 	        j END_INPUT_CHECK
 	
@@ -83,7 +83,7 @@ INPUT_CHECK:
 	        j END_INPUT_CHECK
         
         INPUT.T: #for testing
-                call KILL_PLYR
+                #call KILL_PLYR
                 j END_INPUT_CHECK
 
         INPUT.P: #for testing
