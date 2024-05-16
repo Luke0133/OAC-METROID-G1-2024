@@ -85,7 +85,7 @@ INPUT_CHECK:
 	        j END_INPUT_CHECK
         
         INPUT.T: #for testing
-                #call KILL_PLYR
+                call KILL_PLYR
                 j END_INPUT_CHECK
 
         INPUT.P: #for testing

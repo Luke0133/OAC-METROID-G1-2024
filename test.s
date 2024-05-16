@@ -11,6 +11,7 @@ RUN_TIME: .word 0 # Guarda quanto tempo passou
 MOVEX: .byte 0
 MOVEY: .byte 0
 JUMP: .byte 0
+
 PLYR_STATUS: .byte 0,0,0 # Numero da sprite, direcao do movimento (0 = s, 1 = w, 2 = d, 3 = a), jogador atacando = 1
 PLYR_POS: .half 40, 180, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
 PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
@@ -106,6 +107,11 @@ ENGINE_SETUP:
 	
 GAME_LOOP:
 
+		mv t5,a0
+		li a0, 500
+		li a7, 32
+		ecall
+		mv a0,t5
 	##### CARREGAR A VIDA ##########
 	##### "EN" #############
 	la a0, health
@@ -281,8 +287,9 @@ IF_HURT:
 # vida de samus == 0!!!!!!!!!
 KILL_PLYR:
 		###### decompor o gameover em tiles ###########
-		# .word 94, 12
+		# .word 92, 12
 
+		li a7,0
 		## DEBUG
 		li a0, 0x00 		# Endereco do mapa
 		li a1, 0		# Topo esquerdo X
@@ -291,7 +298,7 @@ KILL_PLYR:
 		li a4, 240		# Altura da imagem	
 		li a5, 0		# Frame = 0
 		call RENDER_COLOR
-
+		
 		## DEBUG
 		li a0, 0x00 		# Endereco do mapa
 		li a1, 0		# Topo esquerdo X
@@ -305,28 +312,28 @@ KILL_PLYR:
 		la a0, gameover 		# Endereco do mapa
 		li a1, 80		# Topo esquerdo X
 		li a2, 80		# Topo esquerdo Y		
-		li a3, 94		# Largura da imagem
+		li a3, 92		# Largura da imagem
 		li a4, 12		# Altura da imagem	
 		li a5, 0		# Frame = 0
 		li a6,0
 		call RENDER
-
+#
 		la a0, gameover 		# Endereco do mapa
 		li a1, 80		# Topo esquerdo X
 		li a2, 80		# Topo esquerdo Y		
-		li a3, 94		# Largura da imagem
+		li a3, 92		# Largura da imagem
 		li a4, 12		# Altura da imagem	
 		li a5, 1		# Frame = 0
-		li a6,0
+		li a6, 0
 		call RENDER
 
-		############################################
+		#############################################
 
 		li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 		sw s0,0(t0)
-		
-		##### LIMPEZA DE RASTRO
-		
+		#
+		###### LIMPEZA DE RASTRO
+		#
 		mv a5, s0		# Frame
 		mv a5,s0			# carrega o frame atual (que esta na tela em a3)
 		xori a5,a5,1			# inverte a3 (0 vira 1, 1 vira 0)
@@ -335,7 +342,7 @@ KILL_PLYR:
 		la a0, gameover 		# Gets sprite address# Endereco do mapa
 		li a1, 80		# Topo esquerdo X
 		li a2, 80		# Topo esquerdo Y		
-		li a3, 94		# Largura da imagem
+		li a3, 92		# Largura da imagem
 		li a4, 12		# Altura da imagem	
 		mv a5, s0		# Frame = 0
 		li a6,0
@@ -352,6 +359,7 @@ KILL_PLYR:
 
 # Sprites
 .data
+.word 0
 .include "sprites/data/walk_right.data"
 .include "sprites/data/matrix.data"
 .include "sprites/data/tiles.data"
