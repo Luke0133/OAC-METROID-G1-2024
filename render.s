@@ -441,7 +441,7 @@ RENDER_MAP_LOOP:
 	# Obs.: don't use t4 and t5 until stack is saved, unless it's related to rendering coordinates
 	li t6,0
 	bnez a3, X_Offset 	# If there's a X offset
-	j NoOffset
+	j Y_Offset
 	X_Offset:
 		bne s1,a1, TryRightOffset # Left Border
 		li t6,1

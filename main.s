@@ -25,10 +25,10 @@ SETUP:
 	li a5, 0		# Frame = 0
 	call RENDER_COLOR
 
-	la a0, Map1 		# Endereco do mapa
-	li a1, 37		# starting X on Matrix (top left)
-	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 12		# X offset (0, 4, 8, 12)
+	la a0, Map2 		# Endereco do mapa
+	li a1, 0		# starting X on Matrix (top left)
+	li a2, 30		# starting Y on Matrix (top left)		
+	li a3, 0		# X offset (0, 4, 8, 12)
 	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 0		# Frame = 0
 	call RENDER_MAP
@@ -41,10 +41,10 @@ SETUP:
 	li a5, 1		# Frame = 0
 	call RENDER_COLOR
 ##
-	la a0, Map1 		# Endereco do mapa
-	li a1, 37		# starting X on Matrix (top left)
-	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 12		# X offset (0, 4, 8, 12)
+	la a0, Map2 		# Endereco do mapa
+	li a1, 0		# starting X on Matrix (top left)
+	li a2, 30		# starting Y on Matrix (top left)		
+	li a3, 0		# X offset (0, 4, 8, 12)
 	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 1		# Frame = 1
 	call RENDER_MAP
