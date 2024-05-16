@@ -11,6 +11,7 @@ PLYR_POS: .half 40, 0  # Stores Player's current and old top left X respectively
 PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 
 DELETE: .word 0
+.include "sprites/walk_right.data"
 		
 .text
 
@@ -31,6 +32,7 @@ SETUP:
 	li a4, 4		# Y offset (0, 4, 8, 12)	
 	li a5, 0		# Frame = 0
 	call RENDER_MAP
+	
 ## DEBUG
 	li a0, 0x66 		# Endereco do mapa
 	li a1, 0		# Topo esquerdo X
@@ -114,7 +116,6 @@ GAME_LOOP:
 # Sprites
 .data
 
-.include "sprites/data/matrix.data"
-.include "sprites/data/tiles.data"
-.include "sprites/data/beam.data"
-.include "sprites/data/walk_right.data"
+.include "matrix.data"
+.include "tiles.data"
+.include "beam.data"

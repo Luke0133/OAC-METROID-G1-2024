@@ -29,7 +29,7 @@ beqz a7,NORMAL
 	NORMAL:		# Executed even if on crop mode
 		mul t4,a6,a4	# Sprite offset (for files that have more than one sprite)
 		mul t4,t4,a3	# Sprite Line offset (skips the first %width lines)
-# not used #	addi a0,a0,8	# Skip image size info
+		# not used #	addi a0,a0,8	# Skip image size info
 		add a0,a0,t4	# Adds offset to image address
 
 	#Propper rendering
@@ -38,14 +38,23 @@ beqz a7,NORMAL
 	add t0,t0,a5	# Rendering Address corresponds to 0x0FF0 + frame
 	slli t0,t0,20	# Shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
 	add t0,t0,a1	# t0 = 0xFF00 0000 + X or 0xFF10 0000 + X
+	
 	li t1,320	# t1 = 320
 	mul t1,t1,a2	# t1 = 320 * Y 
 	add t0,t0,t1	# t0 = 0xFF00 0000 + X + (Y * 320) or 0xFF10 0000 + X + (Y * 320)
-	
 	mv t2,zero	# t2 = 0 (Resets line counter)
 	mv t3,zero	# t3 = 0 (Resets column counter)
 	
-	PRINT_LINE:	
+	PRINT_LINE:
+		#####debug#####
+		#mv t6, zero
+		#mv t5,a0
+		#li a0, 5
+		#li a7, 32
+		##ecall
+		#mv a0,t5
+		##############
+				
 		lw t4,0(a0)	# loads word(4 pixels) on t4
 		sw t4,0(t0)	# prints 4 pixels from t4
 		

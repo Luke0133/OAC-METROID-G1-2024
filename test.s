@@ -1,15 +1,16 @@
 .include "MACROSv21.s" # Macros para bitmap display
 
-
 .data
+.eqv tile_size 16
 .eqv frame_rate 90 # T ms por frame 
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
-# Player Info
+
+PLYR_STATUS: .byte 1,0,0 # Numero da sprite, direcao do movimento (0 = s, 1 = w, 2 = d, 3 = a), jogador atacando = 1
+PLYR_POS: .half 40, 180, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
+PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
+PLYR_INFO: .byte 0, 0 # Guarda a vida, numero de armas especiais
 .eqv PLYR_HEALTH 100
-PLYR_POS: .half 40, 200, 0, 0 # Guarda a posicao do jogador (topo esquerdo X e Y) e sua antiga posicao (topo esquerdo X e Y)
-LIFE_POS: .half 40,200, 0, 0
-PLYR_INFO: .half 0, 0 # Guarda a vida e numero de armas especiais
 
 #Enemies Info
 .eqv ZOOMER_HEALTH 50
@@ -17,34 +18,50 @@ PLYR_INFO: .half 0, 0 # Guarda a vida e numero de armas especiais
 .eqv RIDLEY_HEALTH 200
 
 
+
 .text
 
 BEGIN:
 	la t0,PLYR_INFO
-	lh t1, 0(t0) # pega a vida da samus
+	lb t1, 0(t0) # pega a vida da samus
 	bnez t1, SETUP # se nao for zero, vai pro setup
 	li t1, PLYR_HEALTH # carrega a vida da samus
-	sh t1,0(t0) # guarda a vida da samus em PLYR_INFO
-	j SETUP
+	sb t1,0(t0) # guarda a vida da samus em PLYR_INFO
 
-SETUP:		
-	la a0, map 		# Endereco do mapa
+SETUP:
+## DEBUG
+	li a0, 0x66 		# Endereco do mapa
 	li a1, 0		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
 	li a3, 320		# Largura da imagem
 	li a4, 240		# Altura da imagem	
 	li a5, 0		# Frame = 0
-	call RENDER	
-	la a0, map 		# Endereco do mapa
+	call RENDER_COLOR
+##
+	la a0, Map1 		# Endereco do mapa
+	li a1, 40		# Topo esquerdo X
+	li a2, 0		# Topo esquerdo Y		
+	li a3, 4		# Largura da imagem
+	li a4, 0		# Altura da imagem	
+	li a5, 0		# Frame = 0
+	call RENDER_MAP
+## DEBUG
+	li a0, 0x66 		# Endereco do mapa
 	li a1, 0		# Topo esquerdo X
 	li a2, 0		# Topo esquerdo Y		
 	li a3, 320		# Largura da imagem
 	li a4, 240		# Altura da imagem	
-	li a5, 0		# Frame = 0
-	li a5, 1		# Frame = 1
-	call RENDER	
-	li s0, 0
-
+	li a5, 1		# Frame = 0
+	call RENDER_COLOR
+##
+	la a0, Map1 		# Endereco do mapa
+	li a1, 40		# Topo esquerdo X
+	li a2, 0		# Topo esquerdo Y		
+	li a3, 4		# Largura da imagem
+	li a4, 0		# Altura da imagem	
+	li a5, 1		# Frame = 0
+	call RENDER_MAP
+	li s0, 0	
 
 ENGINE_SETUP:
 	li a7,30	# Ecall 30: Pega o tempo que passou
@@ -65,20 +82,74 @@ ENGINE_SETUP:
 		j ENGINE_LOOP		# caso contrario voltar para o inicio do loop
 	
 GAME_LOOP:
+
+	##### CARREGAR A VIDA ##########
+	##### "EN" #############
+	la a0, health
+	li a1, 24 # Topo esquerdo X
+	li a2, 60 # Topo esquerdo Y
+	li a3, 24 # Largura da imagem
+	li a4, 8 # Altura da imagem
+	mv a5, s0 # Frame
+	li a6, 0
+	li a7, 0
+	call RENDER
+
+	###### LIFE POINTS ############
+	
+	#a3 = bgr fundo e bgr frente no a4
+	li a0,100 # a0 = inteiro
+	li a1,60 # a1 = coluna
+	li a2,60 # a2 = linha 
+	li a3,0x00ff # a3 = cores 
+	li a4,1 # a4 = frame
+	li a7,101 #syscal pra print integer
+	ecall
+
+	li a0,100 # a0 = inteiro
+	li a1,60 # a1 = coluna
+	li a2,60 # a2 = linha 
+	li a3,0x00ff # a3 = cores 
+	li a4,0 # a4 = frame
+	li a7,101 #syscal pra print integer
+	ecall
+	
+	###############################
+
+
 	call INPUT_CHECK	# Checa input do jogador
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
-		
 			
-	la a0, walk_right 		# Gets sprite address# Endereco do mapa
-	li a1, 84		# Topo esquerdo X
-	li a2, 160		# Topo esquerdo Y		
-	li a3, 24		# Largura da imagem
-	li a4, 32		# Altura da imagem	
-	mv a5, s0		# Frame
+	##### samus - sprite 0 ######
+	la a0,sam_walk_vertical
+	la t0,PLYR_POS
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 20
+	li a4, 32
+	mv a5, s0
+	li a6, 0
+	li a7, 0
 	
 	call RENDER
 
-	###############################				
+	#############################
+
+	####### sprite 1 da sam vertical ###########
+
+	la a0, sam_walk_vertical
+	li a1, 60
+	li a2, 80
+	li a3, 20
+	li a4, 32
+	mv a5,s0
+	la t0, PLYR_STATUS
+	lb a6, 0(t0) 
+	li a7, 0
+
+	call RENDER
+
+	############################################
 
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
@@ -89,82 +160,70 @@ GAME_LOOP:
 	mv a5,s0			# carrega o frame atual (que esta na tela em a3)
 	xori a5,a5,1			# inverte a3 (0 vira 1, 1 vira 0)
 	
-	la a0, walk_right 		# Gets sprite address# Endereco do mapa
-	li a1, 84		# Topo esquerdo X
-	li a2, 160		# Topo esquerdo Y		
-	li a3, 24		# Largura da imagem
-	li a4, 32		# Altura da imagem	
-	call RENDER			# imprime
 	
-	##### CARREGAR A VIDA ##########
-	##### "EN" #############
-	la a0, health
-	li a1, 30 # Topo esquerdo X
-	li a2, 60 # Topo esquerdo Y
-	li a3, 24 # Largura da imagem
-	li a4, 8 # Altura da imagem
-	mv a5, s0 # Frame
+	la a0, sam_walk_vertical 		# Gets sprite address# Endereco do mapa
+	la t0,PLYR_POS
+	lh a1, 0(t0)		# Topo esquerdo X
+	lh a2, 2(t0)		# Topo esquerdo Y		
+	li a3, 20		# Largura da imagem
+	li a4, 32		# Altura da imagem	
+	mv a5, s0		# Frame
+	li a6, 0
+	li a7, 0
+	
 	call RENDER
 
-	###### LIFE POINTS ############
-	li a0,100
-	li a1,60
-	li a2,60
-	li a3,0xc9
-	li a4,1
-	li a7,101
-	ecall
+	
+	########## tiro ################
 
-	###############################
-
-	##### RENDERIZAR TIRO ##########
-
-	la a0, beam
-	li a1, 150 # Topo esquerdo X
-	li a2, 160 # Topo esquerdo Y
-	li a3, 8 # Largura da imagem
-	li a4, 8 # Altura da imagem
-	mv a5, s0 # Frame
+	la a0, beam 		# Gets sprite address# Endereco do mapa
+	li a1, 76		# Topo esquerdo X
+	li a2, 180		# Topo esquerdo Y		
+	li a3, 8		# Largura da imagem
+	li a4, 8		# Altura da imagem	
+	mv a5, s0		# Frame
+	li a6, 0
+	li a7, 0
+	call RENDER		
+					
+	####################
+	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
+	sw s0,0(t0)
+	
+	##### LIMPEZA DE RASTRO
+	
+	mv a5, s0		# Frame
+	mv a5,s0			# carrega o frame atual (que esta na tela em a3)
+	xori a5,a5,1			# inverte a3 (0 vira 1, 1 vira 0)
+	
+	
+	la a0, sam_walk_vertical 		# Gets sprite address# Endereco do mapa
+	la t0,PLYR_POS
+	lh a1, 0(t0)		# Topo esquerdo X
+	lh a2, 2(t0)		# Topo esquerdo Y		
+	li a3, 20		# Largura da imagem
+	li a4, 32		# Altura da imagem	
+	mv a5, s0		# Frame
+	li a6, 0
+	li a7, 0
+	
 	call RENDER
 
-	###############################
 
-	##### RENDERING VILLAINS #######
-
-	#### Ridley ####
-	la a0, kraid_sit
-	li a1, 200 # Topo esquerdo X
-	li a2, 140 # Topo esquerdo Y
-	li a3, 32 # Largura da imagem
-	li a4, 40 # Altura da imagem
-	mv a5, s0 # Frame
+	la a0, beam 		# Gets sprite address# Endereco do mapa
+	li a1, 76		# Topo esquerdo X
+	li a2, 190		# Topo esquerdo Y		
+	li a3, 8		# Largura da imagem
+	li a4, 8		# Altura da imagem	
+	mv a5, s0		# Frame
+	li a6, 0
+	li a7, 0
 	call RENDER
 
-	#### Ripper ####
-	la a0, ripper
-	li a1, 260 # Topo esquerdo X
-	li a2, 140 # Topo esquerdo Y
-	li a3, 16 # Largura da imagem
-	li a4, 8 # Altura da imagem
-	mv a5, s0 # Frame
-	call RENDER
 
-	################################
-
-	#### Zoomer ####
-	#la a0, zoomer_vertical
-	#li a1, 260 # Topo esquerdo X
-	#li a2, 140 # Topo esquerdo Y
-	#li a3, 16 # Largura da imagem
-	#li a4, 4 # Altura da imagem
-	#mv a5, s0 # Frame
-	#call RENDER
-
-	################################
-
-	################################
-
+	
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
+
 
 # samus sofreu dano dos inimigos!!!
 IF_HURT:
@@ -194,69 +253,24 @@ KILL_PLYR:
 		li s0, 0
 		ret
 
-RENDER:
-	li t0,0xFF0	# t0 = 0xFF0
-	add t0,t0,a5	# Rendering Address corresponds to 0x0FF0 + frame
-	slli t0,t0,20	# Shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
-	
-	add t0,t0,a1	# t0 = 0xFF00 0000 + X or 0xFF10 0000 + X
-	
-	li t1,320	# t1 = 320
-	mul t1,t1,a2	# t1 = 320 * Y 
-	add t0,t0,t1	# t0 = 0xFF00 0000 + X + (Y * 320) or 0xFF10 0000 + X + (Y * 320)
-	
-	addi a0,a0,8			# t1 = a0 + 8
-	
-	mv t2,zero	# t2 = 0 (Resets line counter)
-	mv t3,zero	# t3 = 0 (Resets column counter)
-	
-	PRINT_LINE:
-		lw t4,0(a0)	# loads word(4 pixels) on t4
-		sw t4,0(t0)	# prints 4 pixels from t4
-		
-		addi t0,t0,4	# increments bitmap address
-		addi a0,a0,4	# increments image address
-		
-		addi t3,t3,4		# increments column counter
-		blt t3,a3,PRINT_LINE	# if column counter < width, repeat
-		
-		addi t0,t0,320	# goes to next line on bitmap display
-		sub t0,t0,a3	# goes to right X on bitmap display (current address - width)
-		
-		mv t3,zero		# t3 = 0
-		addi t2,t2,1		# increments line counter
-		bgt a4,t2,PRINT_LINE	# if height > line counter, repeat
-		ret	
-####### THINKING ABOUT ENEMIES! ##########
-## Ridley:
-#-Up
-#-Down
-#-Attack
-#
-## Zoomer:
-#-Left
-#-Right 
-#-Up 
-#-Down 
-#
-## Ripper:
-#-Left 
-#-Right 
 
-.include "SYSTEMv21.s"
 .include "teclado.s"
-#.include "render.s"
+.include "render.s"										
+.include "SYSTEMv21.s"
 
 # Sprites
 .data
-
 .include "sprites/data/walk_right.data"
-.include "sprites/data/map.data"
-.include "sprites/data/health.data"
+.include "sprites/data/matrix.data"
+.include "sprites/data/tiles.data"
 .include "sprites/data/beam.data"
+.include "sprites/data/sam_walk_vertical.data"
+
+.include "sprites/data/health.data"
 .include "sprites/data/full_health.data"
 .include "sprites/data/gameover.data"
 .include "sprites/data/kraid_sit.data"
 .include "sprites/data/ripper.data"
 .include "sprites/data/zoomer_vertical.data"
 .include "sprites/data/zoomer_horizontal.data"
+
