@@ -121,66 +121,95 @@ RENDER_COLOR:
 		ret	
 		
 ###############################         RENDER MAP         ##############################
-#    Takes a given map matrix and renders tiles acoording to the value stored on it   	#
-#     ------------               argument registers              ------------      	#
+#    Takes a given map matrix and renders tiles acoording to the value stored on it.   	#
+#	-- t2 and t3 are recieved as arguments:						#
+#	  > t2: line where rendering will begin (Y related to Matrix)			#
+#	  > t3: column where rendering will begin (X related to Matrix)			#
+#	-- the arguments t2 and t3 are related to the full matrix, and not the 20 x 15  # 
+#	   screen matrix. They'll later be converted to the line and column related to  #
+#	   the screen sized matrix. 							#
+#	Obs.: If you aren't rendering a sprite's trail, set t2 and t3 to 0		# 	
+#     ------------               argument registers                  ------------      	#
 #	a0 = Map Matrix Address						  	   	#
 #	a1 = starting X on Matrix (top left)					   	#
 #	a2 = starting Y on Matrix (top left)    				   	#	
 #	a3 = X offset (0, 4, 8, 12)	  	   				   	#
 #	a4 = Y offset (0, 4, 8, 12)	  	   				   	#	 		  
 #	a5 = frame (0 or 1)						  	   	#
-#     ------------          saved registers (uses stack)         ------------      	#
-#	s0 = current X and Y address on Matrix				   	   	#
-#	s1 = current X on Matrix			           		   	#
-#	s2 = current Y on Matrix			   	  		   	#
-#	s3 = Matrix Width				   	  		   	#			
-#     ------------              temporary registers              ------------      	#
-#	t0 = operacoes temporarias			           		   	#
-#	t1 = tile a ser renderizado			   	  		   	#				
-#	t2 = contador de linhas	(relativo a matriz)				   	#
-#  	t3 = contador de colunas (relativo a matriz)				   	#
+#	a6 = width (Related to Matrix) of rendering area				#
+#	a7 = height (Related to Matrix) of rendering area				#
+#     ------------            saved registers (uses stack)           ------------      	#
+#	s0 = current X and Y address on Matrix		   	  		   	#
+#	s1 = Matrix Width				   	  		   	#
+#	s2 = Y where line loop will stop						#
+#	s3 = X where column loop will stop						#			
+#     ------------                temporary registers                ------------      	#
+#	t0 = temporary operations			           		   	#
+#	t1 = tile to be rendered 			   	  		   	#				
+#	t2 = line counter (and also current Y) related to Matrix		   	#
+#  	t3 = column counter (and also current X) related to Matrix			#
 #  	t4 = temporary register for moving info						#
 #  	t5 = temporary register for moving info					   	#
 #  	t6 = temporary register for moving info					   	#
 #########################################################################################
 RENDER_MAP:
 ## DEBUG
-#	mv t6, zero
-#		mv t5,a0
-#		li a0, 3000
-#		li a7, 32
-#		ecall
-#		mv a0,t5
-	##
+#	mv t5,a0
+#	li a0, 3000
+#	li a7, 32
+#	ecall
+#	mv a0,t5
+#############################
 	
-# Guarda na pilha
+# Storing Registers on Stack
 	addi sp,sp,-16
 	sw s3,12(sp)
 	sw s2,8(sp)
 	sw s1,4(sp)
 	sw s0,0(sp)
-
-# 	renderizar tile
-#	     - checar offset p/ determinar coordenadas e corte (apenas nas laterais/topo e chao)
-# 	se acabou a coluna, voltaate acabar numero de colunas
-# 	se acabou a linha, reseta coluna e volta ate acabar numero de linhas
-	mv s1,a1
-	mv s2,a2
+# End of Stack Operations
 	addi s0,a0,3 	# skips first 3 bytes of information (goes to the actual matrix)
-	add s0, s0, s1 	# s0 = Matrix Address + Current X on Matrix
-	lbu s3,1(a0)	# s3 = matrix width
-	mul t0,s3,s2	# t0 = Matrix Width x Current Y on Matrix
+	add s0, s0, a1 	# s0 = Matrix Address + Current X on Matrix
+	lbu s1,1(a0)	# s1 = matrix width
+	mul t0,s1,a2    # t0 = Matrix Width x Current Y on Matrix
 	add s0, s0, t0	# s0 = Address to current X and Y on Matrix
+	
+	RENDER_MAP_GetCurrentX:
+	add s3,t3,a6 	# s3 will be compared with t3 (column counter) to go to next line
+#	addi s3,s3,-1   # sub is necessary (eg.: starts on X = 19, width = 2, ends on X = 21-1 = 20)
+	beqz t3,RENDER_MAP_NoTrailX
+		sub t3,t3,a1	# t3 now is the column counter related to the screen matrix
+		j RENDER_MAP_GetCurrentY
+	RENDER_MAP_NoTrailX:
+	beqz a3, RENDER_MAP_GetCurrentY # If there's no X offset
+	li t0, m_screen_width
+	blt a6,t0 RENDER_MAP_GetCurrentY # If width of rendering area is smaller than the screen's width, ignore
+		addi s3,t0,1	# if rendering a full screen (20 wide) with offset, will need to render 21 tiles
+		
+	RENDER_MAP_GetCurrentY:
+	add s2,t2,a7 	# s2 will be compared with t2 (column counter) to go to next line 
+#	addi s2,s2,-1   # sub is necessary (eg.: starts on Y = 6, height = 3, ends on X = 9-1 = 8)
+	beqz t2,RENDER_MAP_NoTrailY
+		sub t2,t2,a2	# t2 now is the column counter related to the screen matrix
+		j RENDER_MAP_LOOP
+	RENDER_MAP_NoTrailY:
+	beqz a4, RENDER_MAP_LOOP # If there's an X offset
+	li t0, m_screen_height
+	blt a7,t0 RENDER_MAP_LOOP # If height of rendering area is smaller than the screen's height, ignore
+		addi s2,t0,1	# if rendering a full screen (15 wide) with offset, will need to render 16 tiles
+#	mv t2,zero	# t2 = 0 (Resets line counter)
+#	mv t3,zero	# t3 = 0 (Resets column counter)
 
-	mv t2,zero	# t2 = 0 (Resets line counter)
-	mv t3,zero	# t3 = 0 (Resets column counter)
+	
+	
 RENDER_MAP_LOOP:
+## DEBUG
 #	mv t5,a0
-#	li a0, 1000
+#	li a0, 500
 #	li a7, 32
 #	ecall
 #	mv a0,t5
-
+######################
 	lbu t1,0(s0)	# loads byte stored on matrix for checking what is the tile
 	
 	bnez t1,NotBackground
@@ -405,13 +434,16 @@ RENDER_MAP_LOOP:
 	la t0, Tile3C
 	
 	NoTile:
-	li t1,0
+	li t1,0 # If no valid tile is detected, the background color will be applied
+	 
 	CONTINUE_RENDER_MAP:
-	# Guarda na pilha
-	addi sp,sp,-44
-	sw s3,40(sp)
-	sw s2,36(sp)
-	sw s1,32(sp)
+# Storing Registers on Stack
+	addi sp,sp,-52
+	sw s3,48(sp)
+	sw s2,44(sp)
+	sw s1,40(sp)
+	sw a7,36(sp)
+	sw a6,32(sp)
 	sw a4,28(sp)
 	sw a3,24(sp)
 	sw a2,20(sp)
@@ -420,52 +452,42 @@ RENDER_MAP_LOOP:
 	sw t2,8(sp)
 	sw t3,4(sp)
 	sw ra,0(sp)
-	
-	mv a0, t0
-#	s0 = current X and Y address on Matrix				   	   #
-#	s1 = current X on Matrix			           		   #
-#	s2 = current Y on Matrix			   	  		   #
-#	s3 = Matrix Width				   	  		   #	
-#	a1 = starting X on Matrix (top left)					   #
-#	a2 = starting Y on Matrix (top left)    				   #	
-#	a3 = X offset (0, 4, 8, 12)	  	   				   #
-#	a4 = Y offset (0, 4, 8, 12)	  	   				   #	 
+# End of Stack Operations
+	mv a0, t0 # Moves t0 (storing tile address) to a0
 	
 	# Defining rendering coordinates
 	li t0, tile_size 	# Tile size = 16
-	sub t4,s1,a1		# t4 = Current X on matrix - Starting X on matrix
-	mul t4,t4,t0		# t4 gets the X value relative to the screen
-#	addi t0, t0,-1		# For some reason, getting Y related to screen needs to be tile size - 1 (t0 = 15)
-	sub t5,s2,a2		# t5 = Current Y on matrix - Starting Y on matrix
-	mul t5,t5,t0		# t5 gets the Y value relative to the screen
+	mul t4,t3,t0		# t4 gets the X value relative to the screen (t3 (current X) * tile size)
+	mul t5,t2,t0		# t5 gets the Y value relative to the screen (t2 (current Y) * tile size)
 	# Obs.: don't use t4 and t5 until stack is saved, unless it's related to rendering coordinates
 	li t6,0
 	bnez a3, X_Offset 	# If there's a X offset
-	j Y_Offset
+	j Check_Y_Offset
 	X_Offset:
-		bne s1,a1, TryRightOffset # Left Border
-		li t6,1
-		j NoOffset
+		bnez t3, TryRightOffset  # If t3 (current colum, i.e., current X) = 0, it's on the left border
+		li t6,1			 # t6 = 1: Cropping leftmost tile
+		j START_RENDER_MAP  	 # start rendering process
 		TryRightOffset:
-		addi t0, a1, 20
-		bne s1, t0, NoX_Offset
-		li t6,2
+		li t0, m_screen_width    # screen width related to matrix = 20
+		bne t3, t0, NoX_Offset   # If t3 = 20, it's on the right border
+		li t6,2			 # t6 = 2: Cropping rightmost tile
 		NoX_Offset:
-		j NoOffset
-	beqz a4, Y_Offset		# Or a Y offset, go to offset operations
-	j NoOffset
+		j START_RENDER_MAP	 # start rendering process
+	Check_Y_Offset:
+	bnez a4, Y_Offset		 # Or a Y offset, go to offset operations
+	j START_RENDER_MAP
 	Y_Offset:
-		bne s2,a2, TryBottomOffset
-		li t6,1
-		j NoOffset
+		bnez t2, TryBottomOffset # If t3 (current colum, i.e., current X) = 0, it's on the top border
+		li t6,1			 # t6 = 1: Cropping uppermost tile
+		j START_RENDER_MAP	 # start rendering process
 		TryBottomOffset:
-		addi t0, a2, 15
-		bne s2, t0, NoY_Offset
-		li t6,2
+		li t0, m_screen_height   # screen height related to matrix = 15
+		bne t2, t0, NoY_Offset   # If t2 = 15, it's on the lower border
+		li t6,2			 # t6 = 2: Cropping lowermost tile
 		NoY_Offset:
-		j NoOffset		# Otherwise, jump to NoOffset
+		j START_RENDER_MAP	 # start rendering process
 	
-	NoOffset:
+	START_RENDER_MAP:
 	bnez t1,NormalRender
 	# Color Render
 		li a0, 0x00 		# Black
@@ -547,9 +569,12 @@ RENDER_MAP_LOOP:
 		call RENDER
 	
 	EndRender:
-	lw s3,40(sp)
-	lw s2,36(sp)
-	lw s1,32(sp)
+# Procedure finished: Loading Registers from Stack
+	lw s3,48(sp)
+	lw s2,44(sp)
+	lw s1,40(sp)
+	lw a7,36(sp)
+	lw a6,32(sp)
 	lw a4,28(sp)
 	lw a3,24(sp)
 	lw a2,20(sp)
@@ -558,59 +583,55 @@ RENDER_MAP_LOOP:
 	lw t2,8(sp)
 	lw t3,4(sp)
 	lw ra,0(sp)
-	addi sp,sp,44
+	addi sp,sp,52
+# End of Stack Operations
 			
-	addi t3,t3,1		# increments column counter
-	addi s1,s1,1		# increments 1 to Current X
-	addi s0,s0,1		# Goes to next byte
-	li t0, 20 		# Largura da matriz para o tamanho de uma tela (320 pixels de largura)
-	beqz a3, No_X_Offset
-	addi t0,t0,1
-	No_X_Offset:
-	bge t3,t0,CONTINUE_LINE	# if column counter >= width, repeat
+	addi t3,t3,1	# Increments column counter (current X on Matrix)
+	addi s0,s0,1	# Goes to next byte
+################
+#	li t0, m_screen_width 		# Largura da matriz para o tamanho de uma tela (320 pixels de largura)
+################
+#	beqz a3, No_X_Offset
+#	addi t0,t0,1
+#	No_X_Offset:
+#	bge t3,t0,CONTINUE_LINE	# if column counter >= width, repeat
+	bge t3,s3,CONTINUE_LINE	# if column counter >= width, repeat
 	j RENDER_MAP_LOOP	# if column counter < width, repeat
 	CONTINUE_LINE:
-	## DEBUG
-#		mv t5,a0
-#		li a0, 3000
-#		li a7, 32
-#		ecall
-#		mv a0,t5
-	##
-	
-		add s0,s0,s3			# s0 = Current Address on Matrix + Matrix Width
-		sub s0,s0,t0			# s0 = New Current Address on Matrix 
-		mv s1,a1
-		
-		mv t3,zero			# t3 = 0 (resets column counter)
-		addi t2,t2,1			# increments line counter
-		addi s2,s2,1			# increments 1 to Current Y
-		
-		li t0, 15 			# Altura da matriz para o tamanho de uma tela (240 pixels de altura)
-		beqz a4, No_Y_Offset
-		addi t0,t0,1
-		No_Y_Offset:
-		bge t2,t0,CONTINUE_COLUMN	# if height > line counter, repeat
-		
-		j RENDER_MAP_LOOP
+## DEBUG
+#	mv t5,a0
+#	li a0, 1000
+#	li a7, 32
+#	ecall
+#	mv a0,t5
+##
+		add s0,s0,s1	# s0 = Current Address on Matrix + Matrix Width
+		li t0, m_screen_width
+		bge s3,t0, MINUS_WIDTH
+		sub s0,s0,a6	# s0 = New Current Address on Matrix 
+		j CONTINUE_LINE2
+		MINUS_WIDTH:
+		sub s0,s0,s3
+		CONTINUE_LINE2:
+		mv t3,zero	# t3 = 0 (resets column counter)
+		addi t2,t2,1	# Increments line counter (current Y on Matrix)
+################		
+	#	li t0, m_screen_height 			# Altura da matriz para o tamanho de uma tela (240 pixels de altura)
+################
+#		beqz a4, No_Y_Offset	  # If there's an Y offset, we need to check for 21 tiles to be rendered (2 lines being cropped)
+#			addi t0,t0,1	  # t0 += 1
+#		No_Y_Offset:
+#		bge t2,t0,CONTINUE_COLUMN # If height > line counter, repeat
+		bge t2,s2,CONTINUE_COLUMN # If height > line counter, repeat
+		j RENDER_MAP_LOOP	  # Return to beggining of loop
 		CONTINUE_COLUMN:
-		# Operacao finalizada
-			lw s3,12(sp)
-			lw s2,8(sp)
-			lw s1,4(sp)
-			lw s0,0(sp)
-			addi sp,sp,16		
-			ret
+	# Procedure finished: Loading Registers from Stack
+		lw s3,12(sp)
+		lw s2,8(sp)
+		lw s1,4(sp)
+		lw s0,0(sp)
+		addi sp,sp,16	
+	# End of Stack Operations: Return to caller		
+		ret
 
-#	la a0, DoorFrame 		# Gets sprite address# Endereco do mapa
-#	li a1, 80		# Topo esquerdo X
-#	li a2, 80		# Topo esquerdo Y		
-#	li a3, 16		# Largura da imagem
-#	li a4, 4		# Altura da imagem	
-#	mv a5, s0		# Frame
-#	li a6, 0
-#	li a7, 1
-#	li s1, 0
-#	li s2, 12
-#	li s3, 16
-#	call RENDER
+
