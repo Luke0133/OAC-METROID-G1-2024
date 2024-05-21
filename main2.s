@@ -47,6 +47,7 @@ RIDLEY_MATRIX: .byte 0, 0, 0, 0 # Stores Ridley's top left new and old X and new
 RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - Freefall)
 .eqv RIDLEY_HEALTH 200
 
+last_key: .byte 0 #0=0,1=w,2=a,3=s,4=d
 # BOMBA 1
 ## COORDENADAS
 ## RENDERIZAR/STATUS
@@ -120,7 +121,6 @@ ENGINE_SETUP:
 GAME_LOOP:
 
 	call INPUT_CHECK	# Checa input do jogador
-	
 	###### LIFE POINTS ############
 	
 	#a3 = bgr fundo e bgr frente no a4
@@ -142,7 +142,33 @@ GAME_LOOP:
 	
 	###############################
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
-									
+
+	la t0,last_key
+	lb t1,0(t0)
+	li t2,4
+	bne t1,t2,continue 
+	
+	la a0, Map2 		# Map Address
+    li a1, 0		# starting X on Matrix (top left)
+	li a2, 29		# starting Y on Matrix (top left)		
+    li a3, 0		# X offset (0, 4, 8, 12)
+    li a4, 8		# Y offset (0, 4, 8, 12)	
+    mv a5, s0		# Frame = 0
+    li a6, m_screen_width	# Screen Width = 20
+    li a7, m_screen_height	# Screen Height = 15
+	la t0, PLYR_POS
+    lh t1, 2(t0)
+    mv t3, t1
+    lb t1, 6(t0)
+    mv t2,t1
+    call RENDER_MAP
+	
+	la t0,last_key
+	lb t1,0(t0)
+	li t2,0
+	sw t2,0(t0)
+
+	continue:
 	la a0, sam_walk_vertical 		# Gets sprite address# Endereco do mapa
 	la t0,PLYR_POS
 	lh a1, 0(t0)		# Topo esquerdo X
@@ -178,27 +204,6 @@ GAME_LOOP:
 	
 	call RENDER
 
-	la t0, PLYR_STATUS
-	lb t1,2(t0)
-	li t2, 0
-	bne t1,t2,ENGINE_LOOP
-
-	
-	la a0, Map2 		# Map Address
-    li a1, 0		# starting X on Matrix (top left)
-	li a2, 29		# starting Y on Matrix (top left)		
-    li a3, 0		# X offset (0, 4, 8, 12)
-    li a4, 8		# Y offset (0, 4, 8, 12)	
-    mv a5, s0		# Frame = 0
-    li a6, m_screen_width	# Screen Width = 20
-    li a7, m_screen_height	# Screen Height = 15
-    lh t1, 2(t0)
-    mv t3, t1
-    lb t1, 6(t0)
-    mv t2,t1
-    call RENDER_MAP
-	
-	
 	
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
