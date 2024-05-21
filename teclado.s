@@ -81,6 +81,10 @@ INPUT_CHECK:
                 li t1, 0
                 sb t1,2(t0)
 
+                la t0,last_key
+                li t1,4
+                sb t1,0(t0)
+
                 j END_INPUT_CHECK
 	
 	INPUT.SPACE:
