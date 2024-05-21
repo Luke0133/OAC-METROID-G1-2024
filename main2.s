@@ -153,7 +153,22 @@ GAME_LOOP:
 	li a2, 29		# starting Y on Matrix (top left)		
     li a3, 0		# X offset (0, 4, 8, 12)
     li a4, 8		# Y offset (0, 4, 8, 12)	
-    mv a5, s0		# Frame = 0
+    mv a5, zero		# Frame = 0
+    li a6, m_screen_width	# Screen Width = 20
+    li a7, m_screen_height	# Screen Height = 15
+	la t0, PLYR_POS
+    lh t1, 2(t0)
+    mv t3, t1
+    lb t1, 6(t0)
+    mv t2,t1
+    call RENDER_MAP
+
+	la a0, Map2 		# Map Address
+    li a1, 0		# starting X on Matrix (top left)
+	li a2, 29		# starting Y on Matrix (top left)		
+    li a3, 0		# X offset (0, 4, 8, 12)
+    li a4, 8		# Y offset (0, 4, 8, 12)	
+    li a5, 1		# Frame = 0
     li a6, m_screen_width	# Screen Width = 20
     li a7, m_screen_height	# Screen Height = 15
 	la t0, PLYR_POS
