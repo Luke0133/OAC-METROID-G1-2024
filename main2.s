@@ -120,6 +120,27 @@ ENGINE_SETUP:
 GAME_LOOP:
 
 	call INPUT_CHECK	# Checa input do jogador
+	
+	###### LIFE POINTS ############
+	
+	#a3 = bgr fundo e bgr frente no a4
+	li a0,100 # a0 = inteiro
+	li a1,60 # a1 = coluna
+	li a2,60 # a2 = linha 
+	li a3,0x00ff # a3 = cores 
+	li a4,1 # a4 = frame
+	li a7,101 #syscal pra print integer
+	ecall
+
+	li a0,100 # a0 = inteiro
+	li a1,60 # a1 = coluna
+	li a2,60 # a2 = linha 
+	li a3,0x00ff # a3 = cores 
+	li a4,0 # a4 = frame
+	li a7,101 #syscal pra print integer
+	ecall
+	
+	###############################
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 									
 	la a0, sam_walk_vertical 		# Gets sprite address# Endereco do mapa
@@ -156,6 +177,28 @@ GAME_LOOP:
 	li a7, 0
 	
 	call RENDER
+
+	la t0, PLYR_STATUS
+	lb t1,2(t0)
+	li t2, 0
+	bne t1,t2,ENGINE_LOOP
+
+	
+	la a0, Map2 		# Map Address
+    li a1, 0		# starting X on Matrix (top left)
+	li a2, 29		# starting Y on Matrix (top left)		
+    li a3, 0		# X offset (0, 4, 8, 12)
+    li a4, 8		# Y offset (0, 4, 8, 12)	
+    mv a5, s0		# Frame = 0
+    li a6, m_screen_width	# Screen Width = 20
+    li a7, m_screen_height	# Screen Height = 15
+    lh t1, 2(t0)
+    mv t3, t1
+    lb t1, 6(t0)
+    mv t2,t1
+    call RENDER_MAP
+	
+	
 	
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
