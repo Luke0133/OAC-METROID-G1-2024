@@ -168,10 +168,10 @@ RENDER_MAP:
 	sw s1,4(sp)
 	sw s0,0(sp)
 # End of Stack Operations
-	addi s0,a0,3 	# skips first 3 bytes of information (goes to the actual matrix)
-	add s0, s0, a1 	# s0 = Matrix Address + Current X on Matrix
+	addi t0,a0,3 	# skips first 3 bytes of information (goes to the actual matrix)
+	add s0, t0, a1 	# s0 = Matrix Address + Starting X on Matrix
 	lbu s1,1(a0)	# s1 = matrix width
-	mul t0,s1,a2    # t0 = Matrix Width x Current Y on Matrix
+	mul t0,s1,a2    # t0 = Matrix Width x Starting Y on Matrix
 	add s0, s0, t0	# s0 = Address to current X and Y on Matrix
 	
 	RENDER_MAP_GetCurrentX:
@@ -179,6 +179,8 @@ RENDER_MAP:
 #	addi s3,s3,-1   # sub is necessary (eg.: starts on X = 19, width = 2, ends on X = 21-1 = 20)
 	beqz t3,RENDER_MAP_NoTrailX
 		sub t3,t3,a1	# t3 now is the column counter related to the screen matrix
+		add s3,t3,a6
+		add s0, s0, t3 	# s0 = Matrix Address + Current X on Matrix
 		j RENDER_MAP_GetCurrentY
 	RENDER_MAP_NoTrailX:
 	beqz a3, RENDER_MAP_GetCurrentY # If there's no X offset
@@ -191,6 +193,9 @@ RENDER_MAP:
 #	addi s2,s2,-1   # sub is necessary (eg.: starts on Y = 6, height = 3, ends on X = 9-1 = 8)
 	beqz t2,RENDER_MAP_NoTrailY
 		sub t2,t2,a2	# t2 now is the column counter related to the screen matrix
+		add s2,t2,a7
+		mul t0,s1,t2    # t0 = Matrix Width x Current Y on Matrix
+		add s0, s0, t0	# s0 = Address to current X and Y on Matrix
 		j RENDER_MAP_LOOP
 	RENDER_MAP_NoTrailY:
 	beqz a4, RENDER_MAP_LOOP # If there's an X offset
@@ -609,11 +614,13 @@ RENDER_MAP_LOOP:
 		li t0, m_screen_width
 		bge s3,t0, MINUS_WIDTH
 		sub s0,s0,a6	# s0 = New Current Address on Matrix 
+		sub t3,t3,a6	# t3 = 0 (resets column counter)
 		j CONTINUE_LINE2
 		MINUS_WIDTH:
 		sub s0,s0,s3
-		CONTINUE_LINE2:
 		mv t3,zero	# t3 = 0 (resets column counter)
+		CONTINUE_LINE2:
+		
 		addi t2,t2,1	# Increments line counter (current Y on Matrix)
 ################		
 	#	li t0, m_screen_height 			# Altura da matriz para o tamanho de uma tela (240 pixels de altura)

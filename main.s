@@ -66,17 +66,20 @@ SETUP:
 	li a4, 240		# Altura da imagem	
 	li a5, 0		# Frame = 0
 	call RENDER_COLOR
+#	li a0,1000
+#	li a7,32
+#	ecall
 ##
-	la a0, Map2 		# Map Address
-	li a1, 0		# starting X on Matrix (top left)
-	li a2, 29		# starting Y on Matrix (top left)		
+	la a0, Map1 		# Map Address
+	li a1, 10		# starting X on Matrix (top left)
+	li a2, 0		# starting Y on Matrix (top left)		
 	li a3, 0		# X offset (0, 4, 8, 12)
-	li a4, 8		# Y offset (0, 4, 8, 12)	
+	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 0		# Frame = 0
-	li a6, m_screen_width	# Screen Width = 20
-	li a7, m_screen_height	# Screen Height = 15
-	mv t3, zero		# Starting X for rendering (top left, related to Matrix)
-	mv t2, zero		# Starting Y for rendering (top left, related to Matrix)
+	li a6, 3	# Screen Width = 20
+	li a7, 4	# Screen Height = 15
+	li t3, 20		# Starting X for rendering (top left, related to Matrix)
+	li t2, 8		# Starting Y for rendering (top left, related to Matrix)
 	call RENDER_MAP
 ## DEBUG
 	li a0, 0x66 		# Endereco do mapa
@@ -87,16 +90,16 @@ SETUP:
 	li a5, 1		# Frame = 0
 	call RENDER_COLOR
 ##
-	la a0, Map2 		# Map Address
-	li a1, 0		# starting X on Matrix (top left)
-	li a2, 29		# starting Y on Matrix (top left)		
+	la a0, Map1 		# Map Address
+	li a1, 10		# starting X on Matrix (top left)
+	li a2, 0		# starting Y on Matrix (top left)		
 	li a3, 0		# X offset (0, 4, 8, 12)
-	li a4, 8		# Y offset (0, 4, 8, 12)	
+	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 1		# Frame = 1
-	li a6, m_screen_width	# Screen Width = 20
-	li a7, m_screen_height	# Screen Height = 15
-	mv t3, zero		# Starting X for rendering (top left, related to Matrix)
-	mv t2, zero		# Starting Y for rendering (top left, related to Matrix)
+	li a6, 3	# Screen Width = 20
+	li a7, 4	# Screen Height = 15
+	li t3, 20		# Starting X for rendering (top left, related to Matrix)
+	li t2, 8		# Starting Y for rendering (top left, related to Matrix)
 	call RENDER_MAP
 
 ENGINE_SETUP:
