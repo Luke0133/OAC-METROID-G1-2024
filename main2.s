@@ -15,6 +15,8 @@ PLYR_POS: .half 40, 0  # Stores Player's current and old top left X respectively
 PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Facing Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
 		   0,0 # Ball Mode (0 - Disabled, 1 - Enabled), Attacking (0 - no, 1 - yes) 
+last_key: .byte 0 #0=0,1=w,2=a,3=s,4=d
+
 .eqv PLYR_HEALTH 100
 .eqv SAM_WALK 20
 .eqv SAM_SHOOT 28
@@ -47,7 +49,6 @@ RIDLEY_MATRIX: .byte 0, 0, 0, 0 # Stores Ridley's top left new and old X and new
 RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - Freefall)
 .eqv RIDLEY_HEALTH 200
 
-last_key: .byte 0 #0=0,1=w,2=a,3=s,4=d
 # BOMBA 1
 ## COORDENADAS
 ## RENDERIZAR/STATUS
@@ -145,8 +146,8 @@ GAME_LOOP:
 
 	la t0,last_key
 	lb t1,0(t0)
-	li t2,4
-	bne t1,t2,continue 
+	li t2,0
+	beq t1,t2,continue 
 	
 	la a0, Map2 		# Map Address
     li a1, 0		# starting X on Matrix (top left)

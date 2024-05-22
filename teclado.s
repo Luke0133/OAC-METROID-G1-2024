@@ -62,6 +62,11 @@ INPUT_CHECK:
 	        lh t1, 0(t0)
 	        addi t1, t1, -4 
 	        sh t1, 0(t0)
+
+                la t0,last_key
+                li t1,2
+                sb t1,0(t0)
+
 	        j END_INPUT_CHECK
 	
 	INPUT.S:
