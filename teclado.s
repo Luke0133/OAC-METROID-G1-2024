@@ -78,15 +78,33 @@ INPUT_CHECK:
                 addi t1, t1, 4
 	        sh t1,0(t0)
 
+                la t3, asc
+                lb t1, 0(t3)
+                li t2,3
+
                 la t0, PLYR_STATUS
                 lb t1, 0(t0)
-                addi t1,zero,1
+                li t2, 3
+
+                beq t1,t2,desc
+                la t2, desc 
+                lb t1, 0(t2)
+                li t2, 1
+                bge t2,t1,desc
+
+                asc: lb t1, 0(t0)
+                addi t1,t1,1
+                sb t1, 0(t0)
+                j last
+
+                desc: lb t1, 0(t0)
+                addi t1,t1,-1
                 sb t1, 0(t0)
 
-                li t1, 0
-                sb t1,2(t0)
+                #li t1, 0
+                #sb t1,2(t0)
 
-                la t0,last_key
+                last: la t0,last_key
                 li t1,4
                 sb t1,0(t0)
 
