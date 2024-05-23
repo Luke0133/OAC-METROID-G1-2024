@@ -60,6 +60,7 @@ INPUT_CHECK:
 	INPUT.A: # Moves player left
 	        la t0, PLYR_POS 
 	        lh t1, 0(t0)
+	        sh t1, 2(t0)
 	        addi t1, t1, -4 
 	        sh t1, 0(t0)
 
@@ -108,9 +109,11 @@ INPUT_CHECK:
 	INPUT.D: # Moves player right
 		la t0, PLYR_POS 
 	        lh t1, 0(t0)
+	        sh t1, 2(t0)
                 addi t1, t1, 4
 	        sh t1,0(t0)
-
+		
+		
                 la t0, PLYR_STATUS #pega o numero da sprite
                 sb zero, 2(t0) #olha pra direita
                 lb t1, 0(t0) # carrega o numero da sprite
@@ -167,8 +170,8 @@ INPUT_CHECK:
         
         INPUT.ZERO:
                 #la t0, MOVEX 
-                #sh zero, 0(t0) # zera moveX, moveY
-                #sb zero, 4(t0) # zera jump
+          #      sh zero, 0(t0) # zera moveX, moveY
+           #     sb zero, 4(t0) # zera jump
                 j END_INPUT_CHECK
 
 	END_INPUT_CHECK:

@@ -120,7 +120,7 @@ ENGINE_SETUP:
 		j ENGINE_LOOP		# caso contrario voltar para o inicio do loop
 	
 GAME_LOOP:
-
+	
 	call INPUT_CHECK	# Checa input do jogador
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 
@@ -149,36 +149,8 @@ GAME_LOOP:
 	lb t1,0(t0)
 	li t2,0
 	beq t1,t2,continue 
-	
-	la a0, Map2 		# Map Address
-    li a1, 0		# starting X on Matrix (top left)
-	li a2, 29		# starting Y on Matrix (top left)		
-    li a3, 0		# X offset (0, 4, 8, 12)
-    li a4, 8		# Y offset (0, 4, 8, 12)	
-    mv a5, zero		# Frame = 0
-    li a6, m_screen_width	# Screen Width = 20
-    li a7, m_screen_height	# Screen Height = 15
-	la t0, PLYR_POS
-    lh t1, 2(t0)
-    mv t3, t1
-    lb t1, 6(t0)
-    mv t2,t1
-    call RENDER_MAP
 
-	la a0, Map2 		# Map Address
-    li a1, 0		# starting X on Matrix (top left)
-	li a2, 29		# starting Y on Matrix (top left)		
-    li a3, 0		# X offset (0, 4, 8, 12)
-    li a4, 8		# Y offset (0, 4, 8, 12)	
-    li a5, 1		# Frame = 0
-    li a6, m_screen_width	# Screen Width = 20
-    li a7, m_screen_height	# Screen Height = 15
-	la t0, PLYR_POS
-    lh t1, 2(t0)
-    mv t3, t1
-    lb t1, 6(t0)
-    mv t2,t1
-    call RENDER_MAP
+
 	
 	la t0,last_key
 	lb t1,0(t0)
@@ -206,14 +178,57 @@ GAME_LOOP:
 	mv a5, s0		# Frame
 	
 	la t0, PLYR_STATUS
-	lb a6, 0(t0) 
+	lb a6, 0(t0)
 	
+	
+	
+#	mv t5,a0
+#	li a0, 3000
+#	li a7, 32
+#	ecall
+#	mv a0,t5
 	li a7, 0
-	
 	call RENDER					
 									
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
+	
+	li a0,3000
+	li a7,32
+	ecall
+	
+	xori a5,s0,1
+	
+	la a0, Map2 		# Map Address
+    li a1, 0		# starting X on Matrix (top left)
+	li a2, 29		# starting Y on Matrix (top left)		
+    li a3, 0		# X offset (0, 4, 8, 12)
+    li a4, 8		# Y offset (0, 4, 8, 12)	
+   
+    li a6, 2	# Screen Width = 20
+    li a7, 2	# Screen Height = 15
+	la t0, PLYR_POS
+    lh t1, 2(t0)
+    mv t3, t1
+    lb t1, 5(t0)
+    mv t2,t1
+    call RENDER_MAP
+
+	la a0, Map2 		# Map Address
+    li a1, 0		# starting X on Matrix (top left)
+	li a2, 29		# starting Y on Matrix (top left)		
+    li a3, 0		# X offset (0, 4, 8, 12)
+    li a4, 8		# Y offset (0, 4, 8, 12)	
+    li a5, 1		# Frame = 0
+    li a6, 2	# Screen Width = 20
+    li a7, 2	# Screen Height = 15
+	la t0, PLYR_POS
+    lh t1, 2(t0)
+    mv t3, t1
+    lb t1, 5(t0)
+    mv t2,t1
+    call RENDER_MAP
+	
 	
 	##### LIMPEZA DE RASTRO
 	
@@ -241,3 +256,4 @@ DELETE: .word 0
 .include "sprites/data/zoomer_horizontal.data"
 .include "sprites/data/matrix.data"
 .include "sprites/data/tiles.data"
+

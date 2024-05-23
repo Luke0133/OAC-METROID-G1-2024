@@ -46,13 +46,13 @@ beqz a7,NORMAL
 	mv t3,zero	# t3 = 0 (Resets column counter)
 	
 	PRINT_LINE:	
-		lw t4,0(a0)	# loads word(4 pixels) on t4
-		sw t4,0(t0)	# prints 4 pixels from t4
+		lb t4,0(a0)	# loads word(4 pixels) on t4
+		sb t4,0(t0)	# prints 4 pixels from t4
 		
-		addi t0,t0,4	# increments bitmap address
-		addi a0,a0,4	# increments image address
+		addi t0,t0,1	# increments bitmap address
+		addi a0,a0,1	# increments image address
 		
-		addi t3,t3,4		# increments column counter
+		addi t3,t3,1		# increments column counter
 		blt t3,a3,PRINT_LINE	# if column counter < width, repeat
 		
 		addi t0,t0,320	# goes to next line on bitmap display
