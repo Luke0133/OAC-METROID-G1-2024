@@ -185,40 +185,82 @@ GAME_LOOP:
 	sw t2,0(t0)
 
 	continue:
-	la a0, sam_walk_vertical 		# Gets sprite address# Endereco do mapa
-	la t0,PLYR_POS
-	lh a1, 0(t0)		# Topo esquerdo X
-	lb a2, 4(t0)		# Topo esquerdo Y		
-	li a3, 20		# Largura da imagem
-	li a4, 32		# Altura da imagem	
-	mv a5, s0		# Frame
-	la t0, PLYR_STATUS
-	lb a6, 0(t0) 
-	li a7, 0
 	
-	call RENDER					
-									
-	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
-	sw s0,0(t0)
-	
-	##### LIMPEZA DE RASTRO
-	
-	mv a5, s0		# Frame
-	mv a5,s0		# carrega o frame atual (que esta na tela em a3)
-	xori a5,a5,1		# inverte a3 (0 vira 1, 1 vira 0)
-	
-	la a0, sam_walk_vertical 	# Gets sprite address
-	la t0,PLYR_POS
-	lh a1, 0(t0)		# Topo esquerdo X
-	lb a2, 4(t0)		# Topo esquerdo Y		
-	li a3, 20		# Largura da imagem
-	li a4, 32		# Altura da imagem	
-	mv a5, s0		# Frame
-	la t0, PLYR_STATUS
-	lb a6, 0(t0) 
-	li a7, 0
-	
-	call RENDER
+	check_dir: la t0, PLYR_STATUS
+	lb t1, 2(t0)
+	beq zero,t1,render_dir # se ta olhando a direita
+	render_left:
+		la a0, sam_walk_vertical_esq 		# Gets sprite address# Endereco do mapa
+		la t0,PLYR_POS
+		lh a1, 0(t0)		# Topo esquerdo X
+		lb a2, 4(t0)		# Topo esquerdo Y		
+		li a3, 20		# Largura da imagem
+		li a4, 32		# Altura da imagem	
+		mv a5, s0		# Frame
+		la t0, PLYR_STATUS
+		lb a6, 0(t0) 
+		li a7, 0
+		
+		call RENDER					
+										
+		li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
+		sw s0,0(t0)
+		
+		##### LIMPEZA DE RASTRO
+		
+		mv a5, s0		# Frame
+		mv a5,s0		# carrega o frame atual (que esta na tela em a3)
+		xori a5,a5,1		# inverte a3 (0 vira 1, 1 vira 0)
+		
+		la a0, sam_walk_vertical_esq 	# Gets sprite address
+		la t0,PLYR_POS
+		lh a1, 0(t0)		# Topo esquerdo X
+		lb a2, 4(t0)		# Topo esquerdo Y		
+		li a3, 20		# Largura da imagem
+		li a4, 32		# Altura da imagem	
+		mv a5, s0		# Frame
+		la t0, PLYR_STATUS
+		lb a6, 0(t0) 
+		li a7, 0
+		
+		call RENDER
+		j ENGINE_LOOP
+
+	render_dir:
+		la a0, sam_walk_vertical 		# Gets sprite address# Endereco do mapa
+		la t0,PLYR_POS
+		lh a1, 0(t0)		# Topo esquerdo X
+		lb a2, 4(t0)		# Topo esquerdo Y		
+		li a3, 20		# Largura da imagem
+		li a4, 32		# Altura da imagem	
+		mv a5, s0		# Frame
+		la t0, PLYR_STATUS
+		lb a6, 0(t0) 
+		li a7, 0
+		
+		call RENDER					
+										
+		li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
+		sw s0,0(t0)
+		
+		##### LIMPEZA DE RASTRO
+		
+		mv a5, s0		# Frame
+		mv a5,s0		# carrega o frame atual (que esta na tela em a3)
+		xori a5,a5,1		# inverte a3 (0 vira 1, 1 vira 0)
+		
+		la a0, sam_walk_vertical 	# Gets sprite address
+		la t0,PLYR_POS
+		lh a1, 0(t0)		# Topo esquerdo X
+		lb a2, 4(t0)		# Topo esquerdo Y		
+		li a3, 20		# Largura da imagem
+		li a4, 32		# Altura da imagem	
+		mv a5, s0		# Frame
+		la t0, PLYR_STATUS
+		lb a6, 0(t0) 
+		li a7, 0
+		
+		call RENDER
 
 	
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
@@ -234,6 +276,7 @@ DELETE: .word 0
 .include "sprites/data/walk_right.data"
 .include "sprites/data/beam.data"
 .include "sprites/data/sam_walk_vertical.data"
+.include "sprites/data/sam_walk_vertical_esq.data"
 .include "sprites/data/health.data"
 .include "sprites/data/full_health.data"
 .include "sprites/data/gameover.data"

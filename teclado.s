@@ -63,8 +63,41 @@ INPUT_CHECK:
 	        addi t1, t1, -4 
 	        sh t1, 0(t0)
 
-                la t0,last_key
-                li t1,2
+                
+                la t0, PLYR_STATUS #pega o numero da sprite
+                li t1,1
+                sb t1, 2(t0) #olha pra esquerda
+                lb t1, 0(t0) # carrega o numero da sprite
+                li t2, 3 #aux pra sprite final
+
+                beqz t1, ascx #se t1 = 0, vai ser asc
+                beq t1,t2,descx #t1 = 3 => desc
+
+                la t2, desc 
+                li t1,1
+                sb t1,0(t2) #desc => 1
+
+
+                #la t2, desc 
+                #lb t1, 0(t2)
+                #li t2, 1
+                #bge t2,t1,desc # se desc=1, vai pra desc
+
+                ascx: 
+                la t2, desc 
+                sb zero,0(t2) #desc => 0
+                lb t1, 0(t0)
+                addi t1,t1,1
+                sb t1, 0(t0)
+
+                j last
+
+                descx: lb t1, 0(t0)
+                addi t1,t1,-1
+                sb t1, 0(t0)
+
+                last: la t0,last_key
+                li t1,4
                 sb t1,0(t0)
 
 	        j END_INPUT_CHECK
@@ -78,31 +111,41 @@ INPUT_CHECK:
                 addi t1, t1, 4
 	        sh t1,0(t0)
 
-                la t3, asc
-                lb t1, 0(t3)
-                li t2,3
+                #MOVE O BYTE
+                #la t3, asc
+                #lb t1, 0(t3)
+                #li t2,3
 
-                la t0, PLYR_STATUS
-                lb t1, 0(t0)
-                li t2, 3
+                la t0, PLYR_STATUS #pega o numero da sprite
+                sb zero, 2(t0) #olha pra direita
+                lb t1, 0(t0) # carrega o numero da sprite
+                li t2, 3 #aux pra sprite final
 
-                beq t1,t2,desc
+                beqz t1, ascx #se t1 = 0, vai ser asc
+                beq t1,t2,descx #t1 = 3 => desc
+
                 la t2, desc 
-                lb t1, 0(t2)
-                li t2, 1
-                bge t2,t1,desc
+                li t1,1
+                sb t1,0(t2) #desc => 1
 
-                asc: lb t1, 0(t0)
+
+                #la t2, desc 
+                #lb t1, 0(t2)
+                #li t2, 1
+                #bge t2,t1,desc # se desc=1, vai pra desc
+
+                ascx: 
+                la t2, desc 
+                sb zero,0(t2) #desc => 0
+                lb t1, 0(t0)
                 addi t1,t1,1
                 sb t1, 0(t0)
+
                 j last
 
-                desc: lb t1, 0(t0)
+                descx: lb t1, 0(t0)
                 addi t1,t1,-1
                 sb t1, 0(t0)
-
-                #li t1, 0
-                #sb t1,2(t0)
 
                 last: la t0,last_key
                 li t1,4
