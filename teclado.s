@@ -70,8 +70,8 @@ INPUT_CHECK:
                 lb t1, 0(t0) # carrega o numero da sprite
                 li t2, 3 #aux pra sprite final
 
-                beqz t1, ascx #se t1 = 0, vai ser asc
-                beq t1,t2,descx #t1 = 3 => desc
+                beqz t1, asc_esq #se t1 = 0, vai ser asc
+                beq t1,t2,desc_esq #t1 = 3 => desc
 
                 la t2, desc 
                 li t1,1
@@ -83,20 +83,20 @@ INPUT_CHECK:
                 #li t2, 1
                 #bge t2,t1,desc # se desc=1, vai pra desc
 
-                ascx: 
+                asc_esq: 
                 la t2, desc 
                 sb zero,0(t2) #desc => 0
                 lb t1, 0(t0)
                 addi t1,t1,1
                 sb t1, 0(t0)
 
-                j last
+                j last_esq
 
-                descx: lb t1, 0(t0)
+                desc_esq: lb t1, 0(t0)
                 addi t1,t1,-1
                 sb t1, 0(t0)
 
-                last: la t0,last_key
+                last_esq: la t0,last_key
                 li t1,4
                 sb t1,0(t0)
 
@@ -111,18 +111,13 @@ INPUT_CHECK:
                 addi t1, t1, 4
 	        sh t1,0(t0)
 
-                #MOVE O BYTE
-                #la t3, asc
-                #lb t1, 0(t3)
-                #li t2,3
-
                 la t0, PLYR_STATUS #pega o numero da sprite
                 sb zero, 2(t0) #olha pra direita
                 lb t1, 0(t0) # carrega o numero da sprite
                 li t2, 3 #aux pra sprite final
 
-                beqz t1, ascx #se t1 = 0, vai ser asc
-                beq t1,t2,descx #t1 = 3 => desc
+                beqz t1, asc_dir #se t1 = 0, vai ser asc
+                beq t1,t2,desc_dir #t1 = 3 => desc
 
                 la t2, desc 
                 li t1,1
@@ -134,20 +129,20 @@ INPUT_CHECK:
                 #li t2, 1
                 #bge t2,t1,desc # se desc=1, vai pra desc
 
-                ascx: 
+                asc_dir: 
                 la t2, desc 
                 sb zero,0(t2) #desc => 0
                 lb t1, 0(t0)
                 addi t1,t1,1
                 sb t1, 0(t0)
 
-                j last
+                j last_dir
 
-                descx: lb t1, 0(t0)
+                desc_dir: lb t1, 0(t0)
                 addi t1,t1,-1
                 sb t1, 0(t0)
 
-                last: la t0,last_key
+                last_dir: la t0,last_key
                 li t1,4
                 sb t1,0(t0)
 
