@@ -167,8 +167,8 @@ INPUT_CHECK:
         
         INPUT.ZERO:
                 #la t0, MOVEX 
-                sh zero, 0(t0) # zera moveX, moveY
-                sb zero, 4(t0) # zera jump
+                #sh zero, 0(t0) # zera moveX, moveY
+                #sb zero, 4(t0) # zera jump
                 j END_INPUT_CHECK
 
 	END_INPUT_CHECK:

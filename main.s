@@ -178,5 +178,5 @@ DELETE: .word 0
 .include "sprites/data/ripper.data"
 .include "sprites/data/zoomer_vertical.data"
 .include "sprites/data/zoomer_horizontal.data"
-.include "matrix.data"
-.include "tiles.data"
+.include "sprites/data/matrix.data"
+.include "sprites/data/tiles.data"
