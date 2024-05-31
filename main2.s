@@ -183,19 +183,16 @@ GAME_LOOP:
 	
 	
 #	mv t5,a0
-#	li a0, 3000
+#	li a0, 3000  ####### debug
 #	li a7, 32
 #	ecall
 #	mv a0,t5
+
 	li a7, 0
 	call RENDER					
 									
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
-	
-	li a0,3000
-	li a7,32
-	ecall
 	
 	xori a5,s0,1
 	
