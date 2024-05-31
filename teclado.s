@@ -26,7 +26,6 @@ INPUT_CHECK:
         CHECK_INPUT.D:
         li t1, 'd'	# Loads ascii value of 'd' key
         bne t0,t1, CHECK_INPUT.SPACE
-        
         j INPUT.D	# If 'd' key was pressed
         
         CHECK_INPUT.SPACE:
@@ -38,7 +37,7 @@ INPUT_CHECK:
         li t1, 'k'	# Loads ascii value of 'k' key
         bne t0,t1, CHECK_INPUT.T
         j INPUT.K 	# If 'k' key was pressed
-        
+
         CHECK_INPUT.T:
         li t1, 't'	# Loads ascii value of 'k' key
         bne t0,t1, CHECK_INPUT.P
@@ -49,107 +48,34 @@ INPUT_CHECK:
         bne t0,t1, NO_INPUT
         j INPUT.P 	# If 'k' key was pressed
 
-
 	NO_INPUT:
-       		#j END_INPUT_CHECK
-                j INPUT.ZERO
+		la t0, MOVE_X
+		sh zero,0(t0) # Zerar MOVE_X e MOVE_Y
+       		j END_INPUT_CHECK 
 
 	INPUT.W:
 	        j END_INPUT_CHECK
 	
 	INPUT.A: # Moves player left
-	        la t0, PLYR_POS 
-	        lh t1, 0(t0)
-	        sh t1, 2(t0)
-	        addi t1, t1, -4 
-	        sh t1, 0(t0)
-
-                
-                la t0, PLYR_STATUS #pega o numero da sprite
-                li t1,1
-                sb t1, 2(t0) #olha pra esquerda
-                lb t1, 0(t0) # carrega o numero da sprite
-                li t2, 3 #aux pra sprite final
-
-                beqz t1, asc_esq #se t1 = 0, vai ser asc
-                beq t1,t2,desc_esq #t1 = 3 => desc
-
-                la t2, desc 
-                li t1,1
-                sb t1,0(t2) #desc => 1
-
-
-                #la t2, desc 
-                #lb t1, 0(t2)
-                #li t2, 1
-                #bge t2,t1,desc # se desc=1, vai pra desc
-
-                asc_esq: 
-                la t2, desc 
-                sb zero,0(t2) #desc => 0
-                lb t1, 0(t0)
-                addi t1,t1,1
-                sb t1, 0(t0)
-
-                j last_esq
-
-                desc_esq: lb t1, 0(t0)
-                addi t1,t1,-1
-                sb t1, 0(t0)
-
-                last_esq: la t0,last_key
-                li t1,4
-                sb t1,0(t0)
-
+	        la t0, MOVE_X
+	        li t1, -1	# esq
+	        sb t1, 0(t0)
 	        j END_INPUT_CHECK
 	
 	INPUT.S:
 	        j END_INPUT_CHECK
-
 	INPUT.D: # Moves player right
-		la t0, PLYR_POS 
-	        lh t1, 0(t0)
-	        sh t1, 2(t0)
-                addi t1, t1, 4
-	        sh t1,0(t0)
-		
-		
-                la t0, PLYR_STATUS #pega o numero da sprite
-                sb zero, 2(t0) #olha pra direita
-                lb t1, 0(t0) # carrega o numero da sprite
-                li t2, 3 #aux pra sprite final
+		la t0, MOVE_X
+	        li t1, 1       # dir
+	        sb t1, 0(t0)
+	        j END_INPUT_CHECK
 
-                beqz t1, asc_dir #se t1 = 0, vai ser asc
-                beq t1,t2,desc_dir #t1 = 3 => desc
-
-                la t2, desc 
-                li t1,1
-                sb t1,0(t2) #desc => 1
-
-
-                #la t2, desc 
-                #lb t1, 0(t2)
-                #li t2, 1
-                #bge t2,t1,desc # se desc=1, vai pra desc
-
-                asc_dir: 
-                la t2, desc 
-                sb zero,0(t2) #desc => 0
-                lb t1, 0(t0)
-                addi t1,t1,1
-                sb t1, 0(t0)
-
-                j last_dir
-
-                desc_dir: lb t1, 0(t0)
-                addi t1,t1,-1
-                sb t1, 0(t0)
-
-                last_dir: la t0,last_key
-                li t1,4
-                sb t1,0(t0)
-
-                j END_INPUT_CHECK
+                #la t0, PLYR_STATUS
+                #lb t1, 0(t0)
+                #addi t1,zero,1
+                #sb t1, 0(t0)
+                
+	        j END_INPUT_CHECK
 	
 	INPUT.SPACE:
 	        j END_INPUT_CHECK
@@ -167,12 +93,6 @@ INPUT_CHECK:
                 addi t1,zero,1
                 sb t1, 0(t0)
                 j END_INPUT_CHECK
-        
-        INPUT.ZERO:
-                #la t0, MOVEX 
-          #      sh zero, 0(t0) # zera moveX, moveY
-           #     sb zero, 4(t0) # zera jump
-                j END_INPUT_CHECK
 
 	END_INPUT_CHECK:
-		ret		
+		ret	
