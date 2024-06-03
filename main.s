@@ -1,17 +1,23 @@
 .include "MACROSv21.s" # Macros para bitmap display
  
 .data
-.eqv tile_size 16
+####### Informations related to frame rate  ####### 
 .eqv frame_rate 90 # T ms por frame 
+RUN_TIME: .word 0 # Guarda quanto tempo passou 
+####### .eqv related to tiles  ####### 
+.eqv tile_size 16	# Tile size (use powers of 2 in order to use tile_size_shift)
+.eqv tile_size_shift 4  # Power value that gives tile size (2^tile_size_shift = tile_size)
+####### .eqv related to screen  ####### 
 .eqv m_screen_width 20
 .eqv m_screen_height 15
 .eqv left_hor_border 120
 .eqv right_hor_border 180
-RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
+####### Map informations ####### 
 CURRENT_MAP: .word 0
 MAP_INFO: .byte 0, 0, 0, 0 # num_map,x of matrix,y of matrix ,no_use
-####### Player infos #########
+
+####### Player informations #########
 PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
 PLYR_POS: .half 40, 0  # Stores Player's current and old top left X respectively, both related to the screen  
 	  .byte 98, 0,   # Stores Player's current and old top left Y respectively, both related to the screen 
@@ -22,10 +28,14 @@ PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Facing Direction (0 = Right, 1 = L
 MOVE_X: .byte 0 # -1 esq, 1 dir, 0 parado
 MOVE_Y: .byte 0
 
+.eqv standing_front_hitbox 8 # offset from the front of Samus' standing sprite 
+.eqv standing_back_hitbox 4  # offset from the back of Samus' standing sprite 
 .eqv PLYR_HEALTH 100
 .eqv SAM_WALK 20
 .eqv SAM_SHOOT 28
 .eqv SAM_BALL 16
+.eqv JUMP_FORCE -5 
+.eqv GRAVITY 10
 
 ## ZOOMER ##
 ZOOMER_INFO: .byte 0, 0 # Stores Zoomer's health points, Rendering (0 - Disabled, 1 - Enabled)
@@ -80,7 +90,7 @@ SETUP:
 	la a0, Map1 		# Map Address
 	li a1, 10		# starting X on Matrix (top left)
 	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 8		# X offset (0, 4, 8, 12)
+	li a3, 0		# X offset (0, 4, 8, 12)
 	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 0		# Frame = 0
 	li a6, m_screen_width	# Screen Width = 20
@@ -100,7 +110,7 @@ SETUP:
 	la a0, Map1 		# Map Address
 	li a1, 10		# starting X on Matrix (top left)
 	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 8		# X offset (0, 4, 8, 12)
+	li a3, 0		# X offset (0, 4, 8, 12)
 	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 1		# Frame = 1
 	li a6, m_screen_width	# Screen Width = 20
@@ -169,7 +179,8 @@ GAME_LOOP:
 
 
 
-.include "teclado.s"
+.include "input.s"
+.include "physics.s"
 .include "render.s"										
 .include "SYSTEMv21.s"
 # Sprites

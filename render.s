@@ -78,7 +78,9 @@ beqz a7,NORMAL
 #	a2 = Y coordinate where rendering will start (top left)	   	#
 #	a3 = width of printing area (usually the size of the sprite)	#
 # 	a4 = height of printing area (usually the size of the sprite)	#
-#	a5 = frame (0 or 1)						#	
+#	a5 = frame (0 or 1)						#
+#	a6 = operation (0 - rendering 4 pixels at once; 		#
+#			1 -  rendering 2 pixels at once) 		#	
 #     -----------          temporary registers           -----------    #
 # 	t0 = bitmap display printing address				#
 #	t1 = temporary operations					#
@@ -102,23 +104,42 @@ RENDER_COLOR:
 	
 	slli t1,a0,8	# Shifts 8 bits on a0
 	add a0,a0,t1	# a0 now stores two bytes of the same color (e.g.: 0x000000FF -> 0x0000FFFF)
-	slli t1,a0,16	# Shifts 16 bits on a0
-	add a0,a0,t1	# a0 now stores four bytes of the same color (e.g.: 0x0000FFFF -> 0xFFFFFFFF)
 	
-	PRINT_LINE_COLOR:
-		sw a0,0(t0)	# Renders four color pixels at once
-		addi t0,t0,4	# increments bitmap address
+	bnez a6, PRINT_LINE_COLOR_HALF # If not printing 4 pixels at once
+		slli t1,a0,16	       # Shifts 16 bits on a0
+		add a0,a0,t1	       # a0 now stores four bytes of the same color (e.g.: 0x0000FFFF -> 0xFFFFFFFF)
+		j PRINT_LINE_COLOR_WORD
 		
-		addi t3,t3,4		# increments column counter
-		blt t3,a3,PRINT_LINE_COLOR	# if column counter < width, repeat
+	PRINT_LINE_COLOR_HALF:	
+		sh a0,0(t0)	# Renders two color pixels at once
+		addi t0,t0,2	# increments bitmap address by 2 bytes
+		
+		addi t3,t3,2			# increments column counter
+		blt t3,a3,PRINT_LINE_COLOR_HALF	# if column counter < width, repeat
 		
 		addi t0,t0,320	# goes to next line on bitmap display
 		sub t0,t0,a3	# goes to right X on bitmap display (current address - width)
 		
 		mv t3,zero			# t3 = 0 (resets column counter)
 		addi t2,t2,1			# increments line counter
-		bgt a4,t2,PRINT_LINE_COLOR	# if height > line counter, repeat
-		ret	
+		bgt a4,t2,PRINT_LINE_COLOR_HALF	# if height > line counter, repeat
+		ret			
+		
+	PRINT_LINE_COLOR_WORD:
+		sw a0,0(t0)	# Renders four color pixels at once
+		addi t0,t0,4	# increments bitmap address by 4 bytes
+		
+		addi t3,t3,4			# increments column counter
+		blt t3,a3,PRINT_LINE_COLOR_WORD	# if column counter < width, repeat
+		addi t0,t0,320	# goes to next line on bitmap display
+		sub t0,t0,a3	# goes to right X on bitmap display (current address - width)
+		
+		mv t3,zero			# t3 = 0 (resets column counter)
+		addi t2,t2,1			# increments line counter
+		bgt a4,t2,PRINT_LINE_COLOR_WORD	# if height > line counter, repeat
+		ret
+		
+	
 		
 ###############################         RENDER MAP         ##############################
 #    Takes a given map matrix and renders tiles acoording to the value stored on it.   	#
@@ -498,10 +519,12 @@ RENDER_MAP_LOOP:
 		li a0, 0x00 		# Black
 		mv a1, t4		# Top Left X
 		mv a2, t5		# Top Left Y	
+		li a6, 0
 		# a5 doesn't change
 		bnez t6, CropColor 
 		j NoCropColor
 		CropColor:
+		li a6, 1
 		addi t6,t6,-1
 		bnez t6, RightBottomColorCrop
 			LeftTopColorCrop:
