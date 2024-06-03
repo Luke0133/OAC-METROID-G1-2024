@@ -7,6 +7,8 @@
 .eqv m_screen_height 15
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
 
+CURRENT_MAP: .word 0
+
 ####### Player infos #########
 PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
 PLYR_POS: .half 40, 0  # Stores Player's current and old top left X respectively, both related to the screen  
@@ -183,16 +185,19 @@ GAME_LOOP:
 	
 	
 #	mv t5,a0
-#	li a0, 3000  ####### debug
+#	li a0, 3000
 #	li a7, 32
 #	ecall
 #	mv a0,t5
-
 	li a7, 0
 	call RENDER					
 									
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
+	
+	li a0,3000
+	li a7,32
+	ecall
 	
 	xori a5,s0,1
 	
@@ -234,7 +239,7 @@ GAME_LOOP:
 
 
 
-.include "teclado.s"
+.include "teclado2.s"
 .include "render.s"										
 .include "SYSTEMv21.s"
 # Sprites
