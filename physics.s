@@ -47,6 +47,7 @@ PHYSICS:
           addi t4,t4, 1	# Player's X on matrix += 1 (goes to the right)
           sub t3,t3,t6	# Offset gets corrected (relative to new X on matrix coordinate)
           li a7, 1
+        
         SKIP_RIGHT_X:
           # Otherwise, the player is still on the same tile
 
@@ -85,13 +86,13 @@ PHYSICS:
           lb t0, 4(a1)  # Loads Map X postition on Matrix
           li t6, left_hor_border #loads left_border = 120 
           blt t6, t5, NOT_LEFT_BORDER_PASS # if new player position on screen doesn't pass the left border, go to NOT_LEFT_BORDER_PASS
-            beqz t0, Fixed_X_Map  # If on leftmost part of the map, ignore the left 
-            # border and render as if map had fixed X on matrix
-            j MOVE_SCREEN_X
+          beqz t0, Fixed_X_Map  # If on leftmost part of the map, ignore the left 
+          # border and render as if map had fixed X on matrix
+          j MOVE_SCREEN_X
 
           NOT_LEFT_BORDER_PASS:   # Checking if passed the Right Horizontal Border
-          li t6, right_hor_border #loads right_border = 180 
-          bge t6,t5,Fixed_X_Map   # if new player position on screen doesn't pass the right border, go to Fixed_X_Map
+            li t6, right_hor_border #loads right_border = 180 
+            bge t6,t5,Fixed_X_Map   # if new player position on screen doesn't pass the right border, go to Fixed_X_Map
             lb t1, 1(a2)          # Loads Map matrix width
             li t6, m_screen_width # Loads Map screen width related to matrix
             sub t1,t1,t6          # t1 = Map Matrix Width - Screen Matrix Width
@@ -99,8 +100,7 @@ PHYSICS:
             # border and render as if map had fixed X on matrix
           
           MOVE_SCREEN_X:
-            sh t2,2(a3) # Stores original X on old X related to screen
-            
+            sh t2,2(a3) # Stores original X on old X related to screen    
             lb t0, 4(a1)  # Loads Map X postition on Matrix
             add t0,t0,a7  # adds to the X -1, 0 or 1
             sb t0, 4(a1)  # Stores new Map X postition on Matrix

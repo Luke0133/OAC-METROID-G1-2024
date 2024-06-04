@@ -501,7 +501,7 @@ RENDER_MAP_LOOP:
 			j START_RENDER_MAP	 # start rendering process
 	
 	Check_Y_Offset:
-		 a4, Y_Offset		 # Or a Y offset, go to offset operations
+		bnez a4, Y_Offset		 # Or a Y offset, go to offset operations
 		j START_RENDER_MAP
 	
 	Y_Offset:
@@ -513,7 +513,7 @@ RENDER_MAP_LOOP:
 			bne t2, t0, NoY_Offset   # If t2 = 15, it's on the lower border
 			li t6,2			 # t6 = 2: Cropping lowermost tile
 			NoY_Offset:
-			j START_RENDER_MAP'	 # start rendering process
+			j START_RENDER_MAP	 # start rendering process
 	
 	START_RENDER_MAP:
 		bnez t1,NormalRender
@@ -655,6 +655,7 @@ RENDER_MAP_LOOP:
 	
 	CONTINUE_LINE2:
 		addi t2,t2,1	# Increments line counter (current Y on Matrix)
+
 ################		
 	#	li t0, m_screen_height 			# Altura da matriz para o tamanho de uma tela (240 pixels de altura)
 ################
@@ -662,6 +663,8 @@ RENDER_MAP_LOOP:
 #			addi t0,t0,1	  # t0 += 1
 #		No_Y_Offset:
 #		bge t2,t0,CONTINUE_COLUMN # If height > line counter, repeat
+		
+		
 		bge t2,s2,CONTINUE_COLUMN # If height > line counter, repeat
 		j RENDER_MAP_LOOP	  # Return to beggining of loop
 		CONTINUE_COLUMN:
