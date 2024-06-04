@@ -148,9 +148,7 @@ GAME_LOOP:
 	call PHYSICS
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 	
-#	li a0,3000
-#	li a7,32
-#	ecall								
+							
 	la a0, sam_walk_vertical_esq 		# Gets sprite address# Endereco do mapa
 	la t0,PLYR_POS
 	lh a1, 0(t0)		# Topo esquerdo X

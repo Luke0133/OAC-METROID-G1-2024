@@ -22,10 +22,12 @@
 #########################################################################
 RENDER:
 	beqz a7,NORMAL  # a7 == 0 ? normal : cropped
+	
 	CROP_MODE:	# When rendering cropped sprite 	
 		add a0,a0,s1	# Image address + X on sprite 
 		mul t3,s3,s2	# t4 = sprite width * Y on sprite
 		add a0,a0,t3	# a0 = Image address + X on sprite + sprite widht * Y on sprite
+	
 	NORMAL:		# Executed even if on crop mode
 		mul t4,a6,a4	# Sprite offset (for files that have more than one sprite)
 		mul t4,t4,a3	# Sprite Line offset (skips the first %width lines)
@@ -61,9 +63,11 @@ RENDER:
 		sub t0,t0,a3	# goes to right X on bitmap display (current address - width)
 		
 		beqz a7, NORMAL_RENDER	# If not on crop mode
+		
 		CROP_RENDER:
 			add a0,a0,s3	# a0 += sprite width	
 			sub a0,a0,a3	# a0 -= rendering width
+		
 		NORMAL_RENDER: 
 			mv t3,zero		# t3 = 0 (Resets column counter)
 			addi t2,t2,1		# increments line counter
@@ -176,13 +180,6 @@ RENDER_COLOR:
 #  	t6 = temporary register for moving info					   	#
 #########################################################################################
 RENDER_MAP:
-## DEBUG
-#	mv t5,a0
-#	li a0, 3000
-#	li a7, 32
-#	ecall
-#	mv a0,t5
-#############################
 	
 # Storing Registers on Stack
 	addi sp,sp,-16
@@ -193,51 +190,48 @@ RENDER_MAP:
 # End of Stack Operations
 	addi t0,a0,3 	# skips first 3 bytes of information (goes to the actual matrix)
 	add s0, t0, a1 	# s0 = Matrix Address + Starting X on Matrix
-	lbu s1,1(a0)	# s1 = matrix width
+	lbu s1,1(a0)	# s1 = matrix width (load byte unsigned)
 	mul t0,s1,a2    # t0 = Matrix Width x Starting Y on Matrix
 	add s0, s0, t0	# s0 = Address to current X and Y on Matrix
 	
 	RENDER_MAP_GetCurrentX:
-	add s3,t3,a6 	# s3 will be compared with t3 (column counter) to go to next line
-#	addi s3,s3,-1   # sub is necessary (eg.: starts on X = 19, width = 2, ends on X = 21-1 = 20)
-	beqz t3,RENDER_MAP_NoTrailX
+		add s3,t3,a6 	# s3 will be compared with t3 (column counter) to go to next line
+	#	addi s3,s3,-1   # sub is necessary (eg.: starts on X = 19, width = 2, ends on X = 21-1 = 20)
+		beqz t3,RENDER_MAP_NoTrailX
+			
 		sub t3,t3,a1	# t3 now is the column counter related to the screen matrix
-		add s3,t3,a6
+		add s3,t3,a6 #add column counter (t3) to width of rendering area
 		add s0, s0, t3 	# s0 = Matrix Address + Current X on Matrix
+		
 		j RENDER_MAP_GetCurrentY
+
 	RENDER_MAP_NoTrailX:
-	beqz a3, RENDER_MAP_GetCurrentY # If there's no X offset
-	li t0, m_screen_width
-	blt a6,t0 RENDER_MAP_GetCurrentY # If width of rendering area is smaller than the screen's width, ignore
+		beqz a3, RENDER_MAP_GetCurrentY # If there's no X offset
+		li t0, m_screen_width # t0 = 20
+		blt a6,t0 RENDER_MAP_GetCurrentY # If width of rendering area is smaller than the screen's width, ignore
 		addi s3,t0,1	# if rendering a full screen (20 wide) with offset, will need to render 21 tiles
 		
 	RENDER_MAP_GetCurrentY:
-	add s2,t2,a7 	# s2 will be compared with t2 (column counter) to go to next line 
-#	addi s2,s2,-1   # sub is necessary (eg.: starts on Y = 6, height = 3, ends on X = 9-1 = 8)
-	beqz t2,RENDER_MAP_NoTrailY
+		add s2,t2,a7 	# s2 will be compared with t2 (column counter) to go to next line 
+	#	addi s2,s2,-1   # sub is necessary (eg.: starts on Y = 6, height = 3, ends on X = 9-1 = 8)
+		beqz t2,RENDER_MAP_NoTrailY
 		sub t2,t2,a2	# t2 now is the column counter related to the screen matrix
 		add s2,t2,a7
 		mul t0,s1,t2    # t0 = Matrix Width x Current Y on Matrix
 		add s0, s0, t0	# s0 = Address to current X and Y on Matrix
 		j RENDER_MAP_LOOP
+
 	RENDER_MAP_NoTrailY:
-	beqz a4, RENDER_MAP_LOOP # If there's an X offset
-	li t0, m_screen_height
-	blt a7,t0 RENDER_MAP_LOOP # If height of rendering area is smaller than the screen's height, ignore
-		addi s2,t0,1	# if rendering a full screen (15 wide) with offset, will need to render 16 tiles
-#	mv t2,zero	# t2 = 0 (Resets line counter)
-#	mv t3,zero	# t3 = 0 (Resets column counter)
+		beqz a4, RENDER_MAP_LOOP # If there's an X offset
+		li t0, m_screen_height
+		blt a7,t0 RENDER_MAP_LOOP # If height of rendering area is smaller than the screen's height, ignore
+			addi s2,t0,1	# if rendering a full screen (15 wide) with offset, will need to render 16 tiles
+	#	mv t2,zero	# t2 = 0 (Resets line counter)
+	#	mv t3,zero	# t3 = 0 (Resets column counter)
 
 	
 	
 RENDER_MAP_LOOP:
-## DEBUG
-#	mv t5,a0
-#	li a0, 500
-#	li a7, 32
-#	ecall
-#	mv a0,t5
-######################
 	lbu t1,0(s0)	# loads byte stored on matrix for checking what is the tile
 	
 	bnez t1,NotBackground
@@ -465,59 +459,65 @@ RENDER_MAP_LOOP:
 	li t1,0 # If no valid tile is detected, the background color will be applied
 	 
 	CONTINUE_RENDER_MAP:
-# Storing Registers on Stack
-	addi sp,sp,-52
-	sw s3,48(sp)
-	sw s2,44(sp)
-	sw s1,40(sp)
-	sw a7,36(sp)
-	sw a6,32(sp)
-	sw a4,28(sp)
-	sw a3,24(sp)
-	sw a2,20(sp)
-	sw a1,16(sp)
-	sw a0,12(sp)
-	sw t2,8(sp)
-	sw t3,4(sp)
-	sw ra,0(sp)
-# End of Stack Operations
-	mv a0, t0 # Moves t0 (storing tile address) to a0
+		# Storing Registers on Stack
+			addi sp,sp,-52
+			sw s3,48(sp)
+			sw s2,44(sp)
+			sw s1,40(sp)
+			sw a7,36(sp)
+			sw a6,32(sp)
+			sw a4,28(sp)
+			sw a3,24(sp)
+			sw a2,20(sp)
+			sw a1,16(sp)
+			sw a0,12(sp)
+			sw t2,8(sp)
+			sw t3,4(sp)
+			sw ra,0(sp)
+		# End of Stack Operations
+			mv a0, t0 # Moves t0 (storing tile address) to a0
 	
 	# Defining rendering coordinates
 	li t0, tile_size 	# Tile size = 16
 	mul t4,t3,t0		# t4 gets the X value relative to the screen (t3 (current X) * tile size)
 	mul t5,t2,t0		# t5 gets the Y value relative to the screen (t2 (current Y) * tile size)
+	
 	# Obs.: don't use t4 and t5 until stack is saved, unless it's related to rendering coordinates
 	li t6,0
-	bnez a3, X_Offset 	# If there's a X offset
+	bnez a3, X_Offset 	# x != 0 ? X_Offset : Check_Y_Offset
+	
 	j Check_Y_Offset
+
 	X_Offset:
 		bnez t3, TryRightOffset  # If t3 (current colum, i.e., current X) = 0, it's on the left border
 		li t6,1			 # t6 = 1: Cropping leftmost tile
 		j START_RENDER_MAP  	 # start rendering process
+		
 		TryRightOffset:
-		li t0, m_screen_width    # screen width related to matrix = 20
-		bne t3, t0, NoX_Offset   # If t3 = 20, it's on the right border
-		li t6,2			 # t6 = 2: Cropping rightmost tile
-		NoX_Offset:
-		j START_RENDER_MAP	 # start rendering process
+			li t0, m_screen_width    # screen width related to matrix = 20
+			bne t3, t0, NoX_Offset   # If t3 = 20, it's on the right border
+			li t6,2			 # t6 = 2: Cropping rightmost tile
+			NoX_Offset:
+			j START_RENDER_MAP	 # start rendering process
+	
 	Check_Y_Offset:
-	bnez a4, Y_Offset		 # Or a Y offset, go to offset operations
-	j START_RENDER_MAP
+		 a4, Y_Offset		 # Or a Y offset, go to offset operations
+		j START_RENDER_MAP
+	
 	Y_Offset:
 		bnez t2, TryBottomOffset # If t3 (current colum, i.e., current X) = 0, it's on the top border
 		li t6,1			 # t6 = 1: Cropping uppermost tile
 		j START_RENDER_MAP	 # start rendering process
 		TryBottomOffset:
-		li t0, m_screen_height   # screen height related to matrix = 15
-		bne t2, t0, NoY_Offset   # If t2 = 15, it's on the lower border
-		li t6,2			 # t6 = 2: Cropping lowermost tile
-		NoY_Offset:
-		j START_RENDER_MAP	 # start rendering process
+			li t0, m_screen_height   # screen height related to matrix = 15
+			bne t2, t0, NoY_Offset   # If t2 = 15, it's on the lower border
+			li t6,2			 # t6 = 2: Cropping lowermost tile
+			NoY_Offset:
+			j START_RENDER_MAP'	 # start rendering process
 	
 	START_RENDER_MAP:
-	bnez t1,NormalRender
-	# Color Render
+		bnez t1,NormalRender
+		# Color Render
 		li a0, 0x00 		# Black
 		mv a1, t4		# Top Left X
 		mv a2, t5		# Top Left Y	
@@ -525,15 +525,18 @@ RENDER_MAP_LOOP:
 		# a5 doesn't change
 		bnez t6, CropColor 
 		j NoCropColor
+
 		CropColor:
-		li a6, 1
-		addi t6,t6,-1
-		bnez t6, RightBottomColorCrop
+			li a6, 1
+			addi t6,t6,-1
+			bnez t6, RightBottomColorCrop
+
 			LeftTopColorCrop:
 				li t0, tile_size	
 				sub a3,t0, a3		# a3 will hold rendering widht that is equal to the tile size (16) - X offset
 				sub a4,t0, a4		# a4 will hold rendering height that is equal to the tile size (16) - Y offset
 				j StartColorRender
+
 			RightBottomColorCrop:	
 				sub a1,a1,a3		# a1 will shift left the ammount of a3 (currently X offset) 
 				sub a2,a2,a4		# a2 will shift up the ammount of a4 (currently Y offset)
@@ -545,6 +548,7 @@ RENDER_MAP_LOOP:
 				li a4, tile_size	    # otherwise, it'll be the tile size
 				EndRightBottomCropColor:
 				j StartColorRender
+		
 		NoCropColor:
 			sub a1,a1,a3		# a1 will shift left the ammount of a3 (currently X offset) 
 			sub a2,a2,a4		# a2 will shift up the ammount of a4 (currently Y offset)	
@@ -563,61 +567,69 @@ RENDER_MAP_LOOP:
 		# If no offset is taken into account, will skip unecessary parameters  
 		bnez t6, Continue_Crop 
 		j Skip_Offset
+		
 		Continue_Crop : 
-		li a7,1			# Cropped Render operations
-		addi t6,t6,-1		# After this, t6 = 0 or t6 = 1
-		bnez t6, RightBottomCrop
-		LeftTopCrop:	 # Will crop tile from the left or from the top
-			mv s1, a3		# s1 will store the X offset (where rendering will start from)
-			mv s2, a4		# s2 will store the Y offset (where rendering will start from)
-			li s3, tile_size	# s3 = 16
-			sub a3,s3, s1		# a3 will hold rendering widht that is equal to the tile size (16) - X offset
-			sub a4,s3, s2		# a4 will hold rendering height that is equal to the tile size (16) - Y offset
-			j Start_NormalRender
-		RightBottomCrop: # Will crop tile from the right or bottom
-			li s1, 0		# s1 = 0 (rendering will start from the left)
-			li s2, 0		# s2 = 0 (rendering will start from the top)
-			li s3, tile_size	# s3 = 16
-			sub a1,a1,a3		# a1 will shift left the ammount of a3 (currently X offset) 
-			sub a2,a2,a4		# a2 will shift up the ammount of a4 (currently Y offset)
+			li a7,1			# Cropped Render operations
+			addi t6,t6,-1		# After this, t6 = 0 or t6 = 1
+			bnez t6, RightBottomCrop
+			
+			LeftTopCrop:	 # Will crop tile from the left or from the top
+				mv s1, a3		# s1 will store the X offset (where rendering will start from)
+				mv s2, a4		# s2 will store the Y offset (where rendering will start from)
+				li s3, tile_size	# s3 = 16
+				sub a3,s3, s1		# a3 will hold rendering widht that is equal to the tile size (16) - X offset
+				sub a4,s3, s2		# a4 will hold rendering height that is equal to the tile size (16) - Y offset
+				j Start_NormalRender
+			
+			RightBottomCrop: # Will crop tile from the right or bottom
+				li s1, 0		# s1 = 0 (rendering will start from the left)
+				li s2, 0		# s2 = 0 (rendering will start from the top)
+				li s3, tile_size	# s3 = 16
+				sub a1,a1,a3		# a1 will shift left the ammount of a3 (currently X offset) 
+				sub a2,a2,a4		# a2 will shift up the ammount of a4 (currently Y offset)
+			
 			CheckX:
-			bnez a3, CheckY # If X offset (a3) isn't zero, the widht for rendering the cropped tile will be the X offset
-			li a3, tile_size	    # otherwise, it'll be the tile size
+				bnez a3, CheckY # If X offset (a3) isn't zero, the widht for rendering the cropped tile will be the X offset
+				li a3, tile_size	    # otherwise, it'll be the tile size
+			
 			CheckY:
-			bnez a4, EndRightBottomCrop # If Y offset (a4) isn't zero, the widht for rendering the cropped tile will be the Y offset
-			li a4, tile_size	    # otherwise, it'll be the tile size
-			EndRightBottomCrop:
-			j Start_NormalRender
+				bnez a4, EndRightBottomCrop # If Y offset (a4) isn't zero, the widht for rendering the cropped tile will be the Y offset
+				li a4, tile_size	    # otherwise, it'll be the tile size
+				EndRightBottomCrop:
+				j Start_NormalRender
+
 		# If no offset is taken into account, a3 and a4 will be overriten with the deffault tile size (16)  
 		Skip_Offset:
-		sub a1,a1,a3		# a1 will shift left the ammount of a3 (currently X offset) 
-		sub a2,a2,a4		# a2 will shift up the ammount of a4 (currently Y offset) 
-		li a3, tile_size	# Tile Width (Relative to Screen)
-		li a4, tile_size	# Tile Height (Relative to Screen)
-		li a7, 0		# Normal Render operations
+			sub a1,a1,a3		# a1 will shift left the ammount of a3 (currently X offset) 
+			sub a2,a2,a4		# a2 will shift up the ammount of a4 (currently Y offset) 
+			li a3, tile_size	# Tile Width (Relative to Screen)
+			li a4, tile_size	# Tile Height (Relative to Screen)
+			li a7, 0		# Normal Render operations
+		
 		Start_NormalRender:
-		call RENDER
+			call RENDER
 	
 	EndRender:
-# Procedure finished: Loading Registers from Stack
-	lw s3,48(sp)
-	lw s2,44(sp)
-	lw s1,40(sp)
-	lw a7,36(sp)
-	lw a6,32(sp)
-	lw a4,28(sp)
-	lw a3,24(sp)
-	lw a2,20(sp)
-	lw a1,16(sp)
-	lw a0,12(sp)
-	lw t2,8(sp)
-	lw t3,4(sp)
-	lw ra,0(sp)
-	addi sp,sp,52
-# End of Stack Operations
+		# Procedure finished: Loading Registers from Stack
+		lw s3,48(sp)
+		lw s2,44(sp)
+		lw s1,40(sp)
+		lw a7,36(sp)
+		lw a6,32(sp)
+		lw a4,28(sp)
+		lw a3,24(sp)
+		lw a2,20(sp)
+		lw a1,16(sp)
+		lw a0,12(sp)
+		lw t2,8(sp)
+		lw t3,4(sp)
+		lw ra,0(sp)
+		addi sp,sp,52
+		# End of Stack Operations
 			
-	addi t3,t3,1	# Increments column counter (current X on Matrix)
-	addi s0,s0,1	# Goes to next byte
+		addi t3,t3,1	# Increments column counter (current X on Matrix)
+		addi s0,s0,1	# Goes to next byte
+
 ################
 #	li t0, m_screen_width 		# Largura da matriz para o tamanho de uma tela (320 pixels de largura)
 ################
@@ -625,27 +637,23 @@ RENDER_MAP_LOOP:
 #	addi t0,t0,1
 #	No_X_Offset:
 #	bge t3,t0,CONTINUE_LINE	# if column counter >= width, repeat
+	
 	bge t3,s3,CONTINUE_LINE	# if column counter >= width, repeat
 	j RENDER_MAP_LOOP	# if column counter < width, repeat
+	
 	CONTINUE_LINE:
-## DEBUG
-#	mv t5,a0
-#	li a0, 1000
-#	li a7, 32
-#	ecall
-#	mv a0,t5
-##
 		add s0,s0,s1	# s0 = Current Address on Matrix + Matrix Width
 		li t0, m_screen_width
 		bge s3,t0, MINUS_WIDTH
 		sub s0,s0,a6	# s0 = New Current Address on Matrix 
 		sub t3,t3,a6	# t3 = 0 (resets column counter)
 		j CONTINUE_LINE2
-		MINUS_WIDTH:
+	
+	MINUS_WIDTH:
 		sub s0,s0,s3
 		mv t3,zero	# t3 = 0 (resets column counter)
-		CONTINUE_LINE2:
-		
+	
+	CONTINUE_LINE2:
 		addi t2,t2,1	# Increments line counter (current Y on Matrix)
 ################		
 	#	li t0, m_screen_height 			# Altura da matriz para o tamanho de uma tela (240 pixels de altura)
