@@ -21,7 +21,7 @@
 # 	t4 = temporary operations					#
 #########################################################################
 RENDER:
-beqz a7,NORMAL
+	beqz a7,NORMAL  # a7 == 0 ? normal : cropped
 	CROP_MODE:	# When rendering cropped sprite 	
 		add a0,a0,s1	# Image address + X on sprite 
 		mul t3,s3,s2	# t4 = sprite width * Y on sprite
@@ -29,7 +29,9 @@ beqz a7,NORMAL
 	NORMAL:		# Executed even if on crop mode
 		mul t4,a6,a4	# Sprite offset (for files that have more than one sprite)
 		mul t4,t4,a3	# Sprite Line offset (skips the first %width lines)
-# not used #	addi a0,a0,8	# Skip image size info
+		
+		# not used #	addi a0,a0,8	# Skip image size info
+		
 		add a0,a0,t4	# Adds offset to image address
 
 	#Propper rendering
