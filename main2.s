@@ -6,8 +6,19 @@
 .eqv m_screen_width 20
 .eqv m_screen_height 15
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
+####### .eqv related to tiles  ####### 
+.eqv tile_size 16	# Tile size (use powers of 2 in order to use tile_size_shift)
+.eqv tile_size_shift 4  # Power value that gives tile size (2^tile_size_shift = tile_size)
+####### .eqv related to screen  ####### 
+.eqv m_screen_width 20
+.eqv m_screen_height 15
+.eqv left_hor_border 112
+.eqv right_hor_border 184
 
+
+####### Map informations ####### 
 CURRENT_MAP: .word 0
+MAP_INFO: .byte 23, 0, 0, 0 # num_map,x of matrix,y of matrix ,no_use
 
 ####### Player infos #########
 PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
@@ -17,12 +28,16 @@ PLYR_POS: .half 40, 0  # Stores Player's current and old top left X respectively
 PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Facing Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
 		   0,0 # Ball Mode (0 - Disabled, 1 - Enabled), Attacking (0 - no, 1 - yes),SpriteOrder(0=asc,1=desc)
+MOVE_X: .byte 0 # -1 esq, 1 dir, 0 parado
+MOVE_Y: .byte 0
 last_key: .byte 0 #0=0,1=w,2=a,3=s,4=d
 desc: .byte 0
 .eqv PLYR_HEALTH 100
 .eqv SAM_WALK 20
 .eqv SAM_SHOOT 28
 .eqv SAM_BALL 16
+.eqv JUMP_FORCE -5 
+.eqv GRAVITY 10
 
 ## ZOOMER ##
 ZOOMER_INFO: .byte 0, 0 # Stores Zoomer's health points, Rendering (0 - Disabled, 1 - Enabled)
@@ -124,6 +139,7 @@ ENGINE_SETUP:
 GAME_LOOP:
 	
 	call INPUT_CHECK	# Checa input do jogador
+	call PHYSICS
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 
 	###### LIFE POINTS ############
@@ -236,7 +252,7 @@ GAME_LOOP:
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
 
-
+.include "physics.s"
 .include "teclado2.s"
 .include "render.s"										
 .include "SYSTEMv21.s"

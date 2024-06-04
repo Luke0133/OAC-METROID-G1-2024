@@ -57,12 +57,47 @@ INPUT_CHECK:
 	        j END_INPUT_CHECK
 	
 	INPUT.A: # Moves player left
-	#	li a0,1000
-	#	li a7,32
-	#	ecall
 	        la t0, MOVE_X
 	        li t1, -1	# esq
 	        sb t1, 0(t0)
+
+                 
+                la t0, PLYR_STATUS #pega o numero da sprite
+                li t1,1
+                sb t1, 2(t0) #olha pra esquerda
+                lb t1, 0(t0) # carrega o numero da sprite
+                li t2, 3 #aux pra sprite final
+
+                beqz t1, asc_esq #se t1 = 0, vai ser asc
+                beq t1,t2,desc_esq #t1 = 3 => desc
+
+                la t2, desc 
+                li t1,1
+                sb t1,0(t2) #desc => 1
+
+
+                #la t2, desc 
+                #lb t1, 0(t2)
+                #li t2, 1
+                #bge t2,t1,desc # se desc=1, vai pra desc
+
+                asc_esq: 
+                la t2, desc 
+                sb zero,0(t2) #desc => 0
+                lb t1, 0(t0)
+                addi t1,t1,1
+                sb t1, 0(t0)
+
+                j last_esq
+
+                desc_esq: lb t1, 0(t0)
+                addi t1,t1,-1
+                sb t1, 0(t0)
+
+                last_esq: la t0,last_key
+                li t1,4
+                sb t1,0(t0)
+                
 	        j END_INPUT_CHECK
 	
 	INPUT.S:
@@ -73,10 +108,34 @@ INPUT_CHECK:
 	        sb t1, 0(t0)
 	        j END_INPUT_CHECK
 
-                #la t0, PLYR_STATUS
-                #lb t1, 0(t0)
-                #addi t1,zero,1
-                #sb t1, 0(t0)
+                la t0, PLYR_STATUS #pega o numero da sprite
+                sb zero, 2(t0) #olha pra direita
+                lb t1, 0(t0) # carrega o numero da sprite
+                li t2, 3 #aux pra sprite final
+
+                beqz t1, asc_dir #se t1 = 0, vai ser asc
+                beq t1,t2,desc_dir #t1 = 3 => desc
+
+                la t2, desc 
+                li t1,1
+                sb t1,0(t2) #desc => 1
+
+                asc_dir: 
+                la t2, desc 
+                sb zero,0(t2) #desc => 0
+                lb t1, 0(t0)
+                addi t1,t1,1
+                sb t1, 0(t0)
+
+                j last_dir
+
+                desc_dir: lb t1, 0(t0)
+                addi t1,t1,-1
+                sb t1, 0(t0)
+
+                last_dir: la t0,last_key
+                li t1,4
+                sb t1,0(t0)
                 
 	        j END_INPUT_CHECK
 	

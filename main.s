@@ -63,6 +63,8 @@ RIDLEY_POS: .half 80, 0 # Stores Ridley's current and old top left X respectivel
 RIDLEY_MATRIX: .byte 0, 0, 0, 0 # Stores Ridley's top left new and old X and new and old Y respectively, all related to the map matrix 
 RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - Freefall)
 .eqv RIDLEY_HEALTH 200
+last_key: .byte 0 #0=0,1=w,2=a,3=s,4=d
+desc: .byte 0
 
 # BOMBA 1
 ## COORDENADAS
