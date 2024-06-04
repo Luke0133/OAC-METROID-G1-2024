@@ -10,19 +10,19 @@ RUN_TIME: .word 0 # Guarda quanto tempo passou
 ####### .eqv related to screen  ####### 
 .eqv m_screen_width 20
 .eqv m_screen_height 15
-.eqv left_hor_border 120
-.eqv right_hor_border 180
+.eqv left_hor_border 112
+.eqv right_hor_border 184
 
 ####### Map informations ####### 
 CURRENT_MAP: .word 0
-MAP_INFO: .byte 0, 0, 0, 0 # num_map,x of matrix,y of matrix ,no_use
+MAP_INFO: .byte 23, 0, 0, 0 # num_map,x of matrix,y of matrix ,no_use
 
 ####### Player informations #########
 PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
-PLYR_POS: .half 40, 0  # Stores Player's current and old top left X respectively, both related to the screen  
-	  .byte 98, 0,   # Stores Player's current and old top left Y respectively, both related to the screen 
-	        0, 0 # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-PLYR_MATRIX: .byte 0, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
+PLYR_POS: .half 148, 0  # Stores Player's current and old top left X respectively, both related to the screen  
+	  .byte 160, 0,   # Stores Player's current and old top left Y respectively, both related to the screen 
+	        8, 0 # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+PLYR_MATRIX: .byte 33, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Facing Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
 		   0,0 # Ball Mode (0 - Disabled, 1 - Enabled), Attacking (0 - no, 1 - yes) 
 MOVE_X: .byte 0 # -1 esq, 1 dir, 0 parado
@@ -76,21 +76,21 @@ RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - 
 
 SETUP:
 ## DEBUG
-	li a0, 0x66 		# Endereco do mapa
-	li a1, 0		# Topo esquerdo X
-	li a2, 0		# Topo esquerdo Y		
-	li a3, 320		# Largura da imagem
-	li a4, 240		# Altura da imagem	
-	li a5, 0		# Frame = 0
-	call RENDER_COLOR
+#	li a0, 0x66 		# Endereco do mapa
+#	li a1, 0		# Topo esquerdo X
+#	li a2, 0		# Topo esquerdo Y		
+#	li a3, 320		# Largura da imagem
+#	li a4, 240		# Altura da imagem	
+#	li a5, 0		# Frame = 0
+#	call RENDER_COLOR
 #	li a0,1000
 #	li a7,32
 #	ecall
 ##
 	la a0, Map1 		# Map Address
-	li a1, 10		# starting X on Matrix (top left)
+	li a1, 23		# starting X on Matrix (top left)
 	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 0		# X offset (0, 4, 8, 12)
+	li a3, 8		# X offset (0, 4, 8, 12)
 	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 0		# Frame = 0
 	li a6, m_screen_width	# Screen Width = 20
@@ -99,18 +99,18 @@ SETUP:
 	li t2, 0		# Starting Y for rendering (top left, related to Matrix)
 	call RENDER_MAP
 ## DEBUG
-	li a0, 0x66 		# Endereco do mapa
-	li a1, 0		# Topo esquerdo X
-	li a2, 0		# Topo esquerdo Y		
-	li a3, 320		# Largura da imagem
-	li a4, 240		# Altura da imagem	
-	li a5, 1		# Frame = 0
-	call RENDER_COLOR
+#	li a0, 0x66 		# Endereco do mapa
+#	li a1, 0		# Topo esquerdo X
+#	li a2, 0		# Topo esquerdo Y		
+#	li a3, 320		# Largura da imagem
+#	li a4, 240		# Altura da imagem	
+#	li a5, 1		# Frame = 0
+#	call RENDER_COLOR
 ##
 	la a0, Map1 		# Map Address
-	li a1, 10		# starting X on Matrix (top left)
+	li a1, 23		# starting X on Matrix (top left)
 	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 0		# X offset (0, 4, 8, 12)
+	li a3, 8		# X offset (0, 4, 8, 12)
 	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 1		# Frame = 1
 	li a6, m_screen_width	# Screen Width = 20
@@ -118,6 +118,10 @@ SETUP:
 	li t3, 0		# Starting X for rendering (top left, related to Matrix)
 	li t2, 0		# Starting Y for rendering (top left, related to Matrix)
 	call RENDER_MAP
+	
+	la t0,Map1
+	la t1,CURRENT_MAP
+	sw t0,0(t1)
 
 ENGINE_SETUP:
 	li a7,30	# Ecall 30: Pega o tempo que passou
@@ -141,11 +145,16 @@ GAME_LOOP:
 	call INPUT_CHECK	# Checa input do jogador
 	call PHYSICS
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
-									
+	
+#	li a0,3000
+#	li a7,32
+#	ecall								
 	la a0, sam_walk_vertical_esq 		# Gets sprite address# Endereco do mapa
 	la t0,PLYR_POS
 	lh a1, 0(t0)		# Topo esquerdo X
-	lb a2, 4(t0)		# Topo esquerdo Y		
+	lbu a2, 4(t0)		# Topo esquerdo Y	
+#	li a1, 148		# Topo esquerdo X
+#	li a2, 160		# Topo esquerdo Y	
 	li a3, 20		# Largura da imagem
 	li a4, 32		# Altura da imagem	
 	mv a5, s0		# Frame
@@ -163,17 +172,19 @@ GAME_LOOP:
 	mv a5,s0		# carrega o frame atual (que esta na tela em a3)
 	xori a5,a5,1		# inverte a3 (0 vira 1, 1 vira 0)
 	
-	la a0, sam_walk_vertical_esq 	# Gets sprite address
+	la a0, sam_walk_vertical_esq 		# Gets sprite address# Endereco do mapa
 	la t0,PLYR_POS
 	lh a1, 0(t0)		# Topo esquerdo X
-	lb a2, 4(t0)		# Topo esquerdo Y		
+	lbu a2, 4(t0)		# Topo esquerdo Y
+#	li a1, 148		# Topo esquerdo X
+#	li a2, 160		# Topo esquerdo Y		
 	li a3, 20		# Largura da imagem
 	li a4, 32		# Altura da imagem	
 	mv a5, s0		# Frame
 	li a6, 0
 	li a7, 0
 	
-	call RENDER
+	call RENDER	
 	
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 

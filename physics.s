@@ -68,7 +68,7 @@ PHYSICS:
         sb t4, 8(a3)    # Stores new X coordinate on matrix
 
         lh t2, 0(a3)    # Loads Player's Current X
-        add t5, a4, t5  # t5 = Player's current X + Movement of Player on X axis
+        add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
 
         lb t0, 0(a2) 	  	# loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
         li t6, 1 		# Loads 1 and 
@@ -82,9 +82,9 @@ PHYSICS:
           j CHECK_MOVE_Y
           
         Horizontal_Map:
+          lb t0, 4(a1)  # Loads Map X postition on Matrix
           li t6, left_hor_border #loads left_border = 120 
           blt t6, t5, NOT_LEFT_BORDER_PASS # if new player position on screen doesn't pass the left border, go to NOT_LEFT_BORDER_PASS
-            lb t0, 4(a1)  # Loads Map X postition on Matrix
             beqz t0, Fixed_X_Map  # If on leftmost part of the map, ignore the left 
             # border and render as if map had fixed X on matrix
             j MOVE_SCREEN_X
