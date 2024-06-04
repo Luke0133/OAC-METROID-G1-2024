@@ -62,84 +62,97 @@ INPUT_CHECK:
 	        sb t1, 0(t0)
 
                  
-                la t0, PLYR_STATUS #pega o numero da sprite
-                li t1,1
-                sb t1, 2(t0) #olha pra esquerda
-                lb t1, 0(t0) # carrega o numero da sprite
+                la t0, PLYR_STATUS # loads sprite's number
+                li t1,1 # t1 = looking_left
+                sb t1, 1(t0) #PLYR_STATUS = looking_left
+                lb t1, 0(t0) # t1 = sprite_number
                 li t2, 3 #aux pra sprite final
 
-                beqz t1, asc_esq #se t1 = 0, vai ser asc
-                beq t1,t2,desc_esq #t1 = 3 => desc
-
-                la t2, desc 
-                li t1,1
-                sb t1,0(t2) #desc => 1
-
-
-                #la t2, desc 
-                #lb t1, 0(t2)
-                #li t2, 1
-                #bge t2,t1,desc # se desc=1, vai pra desc
+                beqz t1, asc_esq #if t1= 0, asc_esq
+                beq t1,t2, desc_esq
+                
+                la t1,desc
+                lb t2, 0(t1)
+                beqz t2, asc_counter
+                j desc_counter
 
                 asc_esq: 
-                la t2, desc 
-                sb zero,0(t2) #desc => 0
-                lb t1, 0(t0)
-                addi t1,t1,1
-                sb t1, 0(t0)
+                        la t2, desc 
+                        sb zero,0(t2) #desc => 0 == is_asc
 
-                j last_esq
+                asc_counter:
+                        lb t1, 0(t0) # t1 = sprite_number
+                        addi t1,t1,1 # sprime_number += 1
+                        sb t1, 0(t0) #sprime_number += 1
+                        j last_esq
 
-                desc_esq: lb t1, 0(t0)
-                addi t1,t1,-1
-                sb t1, 0(t0)
+                desc_esq: 
+                        la t2, desc
+                        li t1,1 
+                        sb t1,0(t2) #desc => 0 == is_asc
 
-                last_esq: la t0,last_key
-                li t1,4
-                sb t1,0(t0)
+                desc_counter: 
+                        lb t1, 0(t0) # t1 = sprite_number
+                        addi t1,t1,-1 # sprime_number -= 1
+                        sb t1, 0(t0) # sprite_number -= 1
+
+                last_esq: 
+                        la t0,last_key
+                        li t1,2
+                        sb t1,0(t0)
                 
 	        j END_INPUT_CHECK
 	
 	INPUT.S:
 	        j END_INPUT_CHECK
-                
+
 	INPUT.D: # Moves player right
 		la t0, MOVE_X
 	        li t1, 1       # dir
 	        sb t1, 0(t0)
 	        j END_INPUT_CHECK
 
-                la t0, PLYR_STATUS #pega o numero da sprite
-                sb zero, 2(t0) #olha pra direita
-                lb t1, 0(t0) # carrega o numero da sprite
+                 
+                la t0, PLYR_STATUS # loads sprite's number
+                sb zero, 1(t0) #PLYR_STATUS = looking_right
+                lb t1, 0(t0) # t1 = sprite_number
                 li t2, 3 #aux pra sprite final
 
-                beqz t1, asc_dir #se t1 = 0, vai ser asc
-                beq t1,t2,desc_dir #t1 = 3 => desc
-
-                la t2, desc 
-                li t1,1
-                sb t1,0(t2) #desc => 1
+                beqz t1, asc_dir #t1 = 0 ? asc_dir
+                beq t1,t2, desc_dir # t1 = 3 ? desc_dir
+                
+                la t1,desc #t1 = desc_address
+                lb t2, 0(t1) # t2 = desc_byte
+                beqz t2, asc_counter_dir #t2 = 0 ? asc_counter
+                j desc_counter_dir #
 
                 asc_dir: 
-                la t2, desc 
-                sb zero,0(t2) #desc => 0
-                lb t1, 0(t0)
-                addi t1,t1,1
-                sb t1, 0(t0)
+                        la t2, desc 
+                        sb zero,0(t2) #desc => 0 == is_asc
 
-                j last_dir
+                asc_counter_dir:
+                        lb t1, 0(t0) # t1 = sprite_number
+                        addi t1,t1,1 # sprime_number += 1
+                        sb t1, 0(t0) #sprime_number += 1
+                        j last_dir
 
-                desc_dir: lb t1, 0(t0)
-                addi t1,t1,-1
-                sb t1, 0(t0)
+                desc_dir: 
+                        la t2, desc
+                        li t1,1 
+                        sb t1,0(t2) #desc => 0 == is_asc
 
-                last_dir: la t0,last_key
-                li t1,4
-                sb t1,0(t0)
+                desc_counter_dir: 
+                        lb t1, 0(t0) # t1 = sprite_number
+                        addi t1,t1,-1 # sprime_number -= 1
+                        sb t1, 0(t0) # sprite_number -= 1
+
+                last_dir: 
+                        la t0,last_key
+                        li t1,4
+                        sb t1,0(t0)
+                        
+                        j END_INPUT_CHECK
                 
-	        j END_INPUT_CHECK
-	
 	INPUT.SPACE:
 	        j END_INPUT_CHECK
 	

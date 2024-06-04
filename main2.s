@@ -151,23 +151,18 @@ GAME_LOOP:
 	
 	###############################
 
-	la t0,last_key
-	lb t1,0(t0)
-	li t2,0
-	beq t1,t2,continue 
-
-
+	la t0,last_key #t0 = last_key_address
+	lb t1,0(t0) #t1 = last_key_pressed
+	beqz t1,continue # t1 = 0 ? continue : store key 
 	
-	la t0,last_key
-	lb t1,0(t0)
-	li t2,0
 	sw t2,0(t0)
 
 	continue:
 	
-	check_dir: la t0, PLYR_STATUS
-	lb t1, 2(t0)
-	beq zero,t1,render_dir # se ta olhando a direita
+	check_dir: 
+		la t0, PLYR_STATUS # t0 = PLYR_STATUS
+		lb t1, 1(t0) #t1 = facing_direction
+		beqz t1,render_dir # t1 = 0 ? looking_right : looking_left
 
 	render_left:
 		la a0, sam_walk_vertical_esq 		# Gets sprite address # Endereco do mapa
@@ -176,61 +171,62 @@ GAME_LOOP:
 	render_dir:
 		la a0, sam_walk_vertical 		# Gets sprite address# Endereco do mapa
 	
-	start_render: la t0,PLYR_POS
-	lh a1, 0(t0)		# Topo esquerdo X
-	lb a2, 4(t0)		# Topo esquerdo Y		
-	li a3, 20		# Largura da imagem
-	li a4, 32		# Altura da imagem	
-	mv a5, s0		# Frame
-	
-	la t0, PLYR_STATUS
-	lb a6, 0(t0)
-	
-	li a7, 0
-	call RENDER					
-									
-	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
-	sw s0,0(t0)
-	
+	start_render: 
+		la t0,PLYR_POS
+		lh a1, 0(t0)		# Topo esquerdo X
+		lb a2, 4(t0)		# Topo esquerdo Y		
+		li a3, 20		# Largura da imagem
+		li a4, 32		# Altura da imagem	
+		mv a5, s0		# Frame
+		
+		la t0, PLYR_STATUS # t0 = PLYR_STATUS
+		lb a6, 0(t0) # a6 = sprite number
+		
+		li a7, 0 # a7 = frame
+		call RENDER					
+										
+		li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
+		sw s0,0(t0)
+		
 
-	
-	xori a5,s0,1
-	
-	#la a0, Map2 		# Map Address
-    #li a1, 0		# starting X on Matrix (top left)
-	#li a2, 29		# starting Y on Matrix (top left)		
-    #li a3, 0		# X offset (0, 4, 8, 12)
-    #li a4, 8		# Y offset (0, 4, 8, 12)	
-   #
-    #li a6, 2	# Screen Width = 20
-    #li a7, 2	# Screen Height = 15
-	#la t0, PLYR_POS
-    #lh t1, 2(t0)
-    #mv t3, t1
-    #lb t1, 5(t0)
-    #mv t2,t1
-    #call RENDER_MAP
-#
-	#la a0, Map2 		# Map Address
-    #li a1, 0		# starting X on Matrix (top left)
-	#li a2, 29		# starting Y on Matrix (top left)		
-    #li a3, 0		# X offset (0, 4, 8, 12)
-    #li a4, 8		# Y offset (0, 4, 8, 12)	
-    #li a5, 1		# Frame = 0
-    #li a6, 2	# Screen Width = 20
-    #li a7, 2	# Screen Height = 15
-	#la t0, PLYR_POS
-    #lh t1, 2(t0)
-    #mv t3, t1
-    #lb t1, 5(t0)
-    #mv t2,t1
-    #call RENDER_MAP
-	
-	
-	##### LIMPEZA DE RASTRO
-	
-	
-	j ENGINE_LOOP	# Volta para ENGINE_LOOP
+		
+		xori a5,s0,1
+		
+		#la a0, Map2 		# Map Address
+		#li a1, 0		# starting X on Matrix (top left)
+		#li a2, 29		# starting Y on Matrix (top left)		
+		#li a3, 0		# X offset (0, 4, 8, 12)
+		#li a4, 8		# Y offset (0, 4, 8, 12)	
+	#
+		#li a6, 2	# Screen Width = 20
+		#li a7, 2	# Screen Height = 15
+		#la t0, PLYR_POS
+		#lh t1, 2(t0)
+		#mv t3, t1
+		#lb t1, 5(t0)
+		#mv t2,t1
+		#call RENDER_MAP
+	#
+		#la a0, Map2 		# Map Address
+		#li a1, 0		# starting X on Matrix (top left)
+		#li a2, 29		# starting Y on Matrix (top left)		
+		#li a3, 0		# X offset (0, 4, 8, 12)
+		#li a4, 8		# Y offset (0, 4, 8, 12)	
+		#li a5, 1		# Frame = 0
+		#li a6, 2	# Screen Width = 20
+		#li a7, 2	# Screen Height = 15
+		#la t0, PLYR_POS
+		#lh t1, 2(t0)
+		#mv t3, t1
+		#lb t1, 5(t0)
+		#mv t2,t1
+		#call RENDER_MAP
+		
+		
+		##### LIMPEZA DE RASTRO
+		
+		
+		j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
 
 .include "physics.s"
