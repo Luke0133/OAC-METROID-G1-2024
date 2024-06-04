@@ -30,8 +30,7 @@ PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Facing Direction (0 = Right, 1 = L
 		   0,0 # Ball Mode (0 - Disabled, 1 - Enabled), Attacking (0 - no, 1 - yes),SpriteOrder(0=asc,1=desc)
 MOVE_X: .byte 0 # -1 esq, 1 dir, 0 parado
 MOVE_Y: .byte 0
-last_key: .byte 0 #0=0,1=w,2=a,3=s,4=d
-desc: .byte 0
+
 .eqv PLYR_HEALTH 100
 .eqv SAM_WALK 20
 .eqv SAM_SHOOT 28
@@ -71,7 +70,8 @@ RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - 
 ## RENDERIZAR/STATUS
 # BOMBA 2
 
-
+last_key: .byte 0 #0=0,1=w,2=a,3=s,4=d
+desc: .byte 0
 
 		
 .text

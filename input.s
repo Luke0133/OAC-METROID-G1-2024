@@ -102,6 +102,7 @@ INPUT_CHECK:
 	
 	INPUT.S:
 	        j END_INPUT_CHECK
+                
 	INPUT.D: # Moves player right
 		la t0, MOVE_X
 	        li t1, 1       # dir
