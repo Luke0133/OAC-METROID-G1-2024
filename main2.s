@@ -77,46 +77,34 @@ RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - 
 .text
 
 SETUP:
-## DEBUG
-	li a0, 0x66 		# Endereco do mapa
-	li a1, 0		# Topo esquerdo X
-	li a2, 0		# Topo esquerdo Y		
-	li a3, 320		# Largura da imagem
-	li a4, 240		# Altura da imagem	
-	li a5, 0		# Frame = 0
-	call RENDER_COLOR
-##
 	la a0, Map2 		# Map Address
-	li a1, 0		# starting X on Matrix (top left)
-	li a2, 29		# starting Y on Matrix (top left)		
-	li a3, 0		# X offset (0, 4, 8, 12)
-	li a4, 8		# Y offset (0, 4, 8, 12)	
+	li a1, 23		# starting X on Matrix (top left)
+	li a2, 0		# starting Y on Matrix (top left)		
+	li a3, 8		# X offset (0, 4, 8, 12)
+	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 0		# Frame = 0
 	li a6, m_screen_width	# Screen Width = 20
 	li a7, m_screen_height	# Screen Height = 15
 	mv t3, zero		# Starting X for rendering (top left, related to Matrix)
 	mv t2, zero		# Starting Y for rendering (top left, related to Matrix)
 	call RENDER_MAP
-## DEBUG
-	li a0, 0x66 		# Endereco do mapa
-	li a1, 0		# Topo esquerdo X
-	li a2, 0		# Topo esquerdo Y		
-	li a3, 320		# Largura da imagem
-	li a4, 240		# Altura da imagem	
-	li a5, 1		# Frame = 0
-	call RENDER_COLOR
-##
+
 	la a0, Map2 		# Map Address
-	li a1, 0		# starting X on Matrix (top left)
-	li a2, 29		# starting Y on Matrix (top left)		
-	li a3, 0		# X offset (0, 4, 8, 12)
-	li a4, 8		# Y offset (0, 4, 8, 12)	
+	li a1, 23		# starting X on Matrix (top left)
+	li a2, 0		# starting Y on Matrix (top left)		
+	li a3, 8		# X offset (0, 4, 8, 12)
+	li a4, 0		# Y offset (0, 4, 8, 12)	
 	li a5, 1		# Frame = 1
 	li a6, m_screen_width	# Screen Width = 20
 	li a7, m_screen_height	# Screen Height = 15
 	mv t3, zero		# Starting X for rendering (top left, related to Matrix)
 	mv t2, zero		# Starting Y for rendering (top left, related to Matrix)
 	call RENDER_MAP
+
+	la t0,Map1
+	la t1,CURRENT_MAP
+	sw t0,0(t1)
+
 
 ENGINE_SETUP:
 	li a7,30	# Ecall 30: Pega o tempo que passou
@@ -198,13 +186,6 @@ GAME_LOOP:
 	la t0, PLYR_STATUS
 	lb a6, 0(t0)
 	
-	
-	
-#	mv t5,a0
-#	li a0, 3000
-#	li a7, 32
-#	ecall
-#	mv a0,t5
 	li a7, 0
 	call RENDER					
 									
@@ -215,35 +196,35 @@ GAME_LOOP:
 	
 	xori a5,s0,1
 	
-	la a0, Map2 		# Map Address
-    li a1, 0		# starting X on Matrix (top left)
-	li a2, 29		# starting Y on Matrix (top left)		
-    li a3, 0		# X offset (0, 4, 8, 12)
-    li a4, 8		# Y offset (0, 4, 8, 12)	
-   
-    li a6, 2	# Screen Width = 20
-    li a7, 2	# Screen Height = 15
-	la t0, PLYR_POS
-    lh t1, 2(t0)
-    mv t3, t1
-    lb t1, 5(t0)
-    mv t2,t1
-    call RENDER_MAP
-
-	la a0, Map2 		# Map Address
-    li a1, 0		# starting X on Matrix (top left)
-	li a2, 29		# starting Y on Matrix (top left)		
-    li a3, 0		# X offset (0, 4, 8, 12)
-    li a4, 8		# Y offset (0, 4, 8, 12)	
-    li a5, 1		# Frame = 0
-    li a6, 2	# Screen Width = 20
-    li a7, 2	# Screen Height = 15
-	la t0, PLYR_POS
-    lh t1, 2(t0)
-    mv t3, t1
-    lb t1, 5(t0)
-    mv t2,t1
-    call RENDER_MAP
+	#la a0, Map2 		# Map Address
+    #li a1, 0		# starting X on Matrix (top left)
+	#li a2, 29		# starting Y on Matrix (top left)		
+    #li a3, 0		# X offset (0, 4, 8, 12)
+    #li a4, 8		# Y offset (0, 4, 8, 12)	
+   #
+    #li a6, 2	# Screen Width = 20
+    #li a7, 2	# Screen Height = 15
+	#la t0, PLYR_POS
+    #lh t1, 2(t0)
+    #mv t3, t1
+    #lb t1, 5(t0)
+    #mv t2,t1
+    #call RENDER_MAP
+#
+	#la a0, Map2 		# Map Address
+    #li a1, 0		# starting X on Matrix (top left)
+	#li a2, 29		# starting Y on Matrix (top left)		
+    #li a3, 0		# X offset (0, 4, 8, 12)
+    #li a4, 8		# Y offset (0, 4, 8, 12)	
+    #li a5, 1		# Frame = 0
+    #li a6, 2	# Screen Width = 20
+    #li a7, 2	# Screen Height = 15
+	#la t0, PLYR_POS
+    #lh t1, 2(t0)
+    #mv t3, t1
+    #lb t1, 5(t0)
+    #mv t2,t1
+    #call RENDER_MAP
 	
 	
 	##### LIMPEZA DE RASTRO
