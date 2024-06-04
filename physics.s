@@ -53,13 +53,15 @@ PHYSICS:
 
 
 ###### PARA COLIS�OOOO
-  #      slt t5,a4,zero			# t5 = 1 if a4 < 0, otherwise, t5 = 0
-   #     slli t5,t5,tile_size_shift 	# t5 = tile_size if t0 <0, otherwise, t5 = 0
-    #    sub t5,t5,t3			# t5 = tile_size - X offset, otherwise t5 = X offset
+  #      slt t5,a4,zero			# a4 < 0 ? t5 = 1 : t5 = 0
+  #     slli t5,t5,tile_size_shift 	# t0 < 0 ? t5 = tile_size : t5 = 0
+  #    sub t5,t5,t3			# t5 = tile_size - X offset, otherwise t5 = X offset
   #      li t6, standing_front_hitbox	# Offset 
-   #     bge t6,t5,SkipColisionCheck
-   #	j colisao?
-   	SkipColisionCheck: 
+  #     bge t6,t5,SkipColisionCheck
+  #	j colisao?
+  
+  
+  SkipColisionCheck: 
 
 
     
