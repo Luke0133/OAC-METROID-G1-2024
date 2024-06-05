@@ -1,4 +1,4 @@
-.include "MACROSv21.s" # Macros para bitmap display
+.include "helpers/MACROSv21.s" # Macros para bitmap display
  
 .data
 ####### Informations related to frame rate  ####### 
@@ -15,7 +15,8 @@ RUN_TIME: .word 0 # Guarda quanto tempo passou
 
 ####### Map informations ####### 
 CURRENT_MAP: .word 0
-MAP_INFO: .byte 23, 0, 0, 0 # num_map,x of matrix,y of matrix ,no_use
+MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render, 2 - switch map)
+                23, 0 # x of matrix, y of matrix
 
 ####### Player informations #########
 PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
@@ -63,8 +64,6 @@ RIDLEY_POS: .half 80, 0 # Stores Ridley's current and old top left X respectivel
 RIDLEY_MATRIX: .byte 0, 0, 0, 0 # Stores Ridley's top left new and old X and new and old Y respectively, all related to the map matrix 
 RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - Freefall)
 .eqv RIDLEY_HEALTH 200
-last_key: .byte 0 #0=0,1=w,2=a,3=s,4=d
-desc: .byte 0
 
 # BOMBA 1
 ## COORDENADAS
@@ -76,54 +75,9 @@ desc: .byte 0
 		
 .text
 
-SETUP:
-## DEBUG
-#	li a0, 0x66 		# Endereco do mapa
-#	li a1, 0		# Topo esquerdo X
-#	li a2, 0		# Topo esquerdo Y		
-#	li a3, 320		# Largura da imagem
-#	li a4, 240		# Altura da imagem	
-#	li a5, 0		# Frame = 0
-#	call RENDER_COLOR
-#	li a0,1000
-#	li a7,32
-#	ecall
-##
-	la a0, Map1 		# Map Address
-	li a1, 23		# starting X on Matrix (top left)
-	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 8		# X offset (0, 4, 8, 12)
-	li a4, 0		# Y offset (0, 4, 8, 12)	
-	li a5, 0		# Frame = 0
-	li a6, m_screen_width	# Screen Width = 20
-	li a7, m_screen_height	# Screen Height = 15
-	li t3, 0		# Starting X for rendering (top left, related to Matrix)
-	li t2, 0		# Starting Y for rendering (top left, related to Matrix)
-	call RENDER_MAP
-## DEBUG
-#	li a0, 0x66 		# Endereco do mapa
-#	li a1, 0		# Topo esquerdo X
-#	li a2, 0		# Topo esquerdo Y		
-#	li a3, 320		# Largura da imagem
-#	li a4, 240		# Altura da imagem	
-#	li a5, 1		# Frame = 0
-#	call RENDER_COLOR
-##
-	la a0, Map1 		# Map Address
-	li a1, 23		# starting X on Matrix (top left)
-	li a2, 0		# starting Y on Matrix (top left)		
-	li a3, 8		# X offset (0, 4, 8, 12)
-	li a4, 0		# Y offset (0, 4, 8, 12)	
-	li a5, 1		# Frame = 1
-	li a6, m_screen_width	# Screen Width = 20
-	li a7, m_screen_height	# Screen Height = 15
-	li t3, 0		# Starting X for rendering (top left, related to Matrix)
-	li t2, 0		# Starting Y for rendering (top left, related to Matrix)
-	call RENDER_MAP
-	
-	la t0,Map1
-	la t1,CURRENT_MAP
-	sw t0,0(t1)
+main:
+	call SETUP
+
 
 ENGINE_SETUP:
 	li a7,30	# Ecall 30: Pega o tempo que passou
@@ -144,11 +98,16 @@ ENGINE_SETUP:
 		j ENGINE_LOOP		# caso contrario voltar para o inicio do loop
 	
 GAME_LOOP:
+	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
+
 	call INPUT_CHECK	# Checa input do jogador
 	call PHYSICS
-	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 	
-							
+#	call MAP_OPERATIONS
+
+#	li a0,3000
+#	li a7,32
+#	ecall								
 	la a0, sam_walk_vertical_esq 		# Gets sprite address# Endereco do mapa
 	la t0,PLYR_POS
 	lh a1, 0(t0)		# Topo esquerdo X
@@ -189,24 +148,6 @@ GAME_LOOP:
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
 
+.include "helpers/helpers.s"
+.include "sprites/sprites.s"
 
-.include "input.s"
-.include "physics.s"
-.include "render.s"										
-.include "SYSTEMv21.s"
-# Sprites
-.data
-DELETE:
-.include "sprites/data/sam_walk_vertical.data"
-.include "sprites/data/sam_walk_vertical_esq.data"
-.include "sprites/data/walk_right.data"
-.include "sprites/data/beam.data"
-.include "sprites/data/health.data"
-.include "sprites/data/full_health.data"
-.include "sprites/data/gameover.data"
-.include "sprites/data/kraid_sit.data"
-.include "sprites/data/ripper.data"
-.include "sprites/data/zoomer_vertical.data"
-.include "sprites/data/zoomer_horizontal.data"
-.include "sprites/data/matrix.data"
-.include "sprites/data/tiles.data"
