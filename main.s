@@ -102,6 +102,8 @@ GAME_LOOP:
 	call PHYSICS
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 	
+#	call MAP_OPERATIONS
+
 #	li a0,3000
 #	li a7,32
 #	ecall								
@@ -145,24 +147,6 @@ GAME_LOOP:
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
 
-.include "helpers/setup.s"
-.include "helpers/input.s"
-.include "helpers/physics.s"
-.include "helpers/render.s"										
-.include "helpers/SYSTEMv21.s"
-# Sprites
-.data
-DELETE:
-.include "sprites/data/sam_walk_vertical.data"
-.include "sprites/data/sam_walk_vertical_esq.data"
-.include "sprites/data/walk_right.data"
-.include "sprites/data/beam.data"
-.include "sprites/data/health.data"
-.include "sprites/data/full_health.data"
-.include "sprites/data/gameover.data"
-.include "sprites/data/kraid_sit.data"
-.include "sprites/data/ripper.data"
-.include "sprites/data/zoomer_vertical.data"
-.include "sprites/data/zoomer_horizontal.data"
-.include "sprites/matrix.data"
-.include "sprites/tiles.data"
+.include "helpers/helpers.s"
+.include "sprites/sprites.s"
+

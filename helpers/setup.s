@@ -5,6 +5,9 @@
 #########################################################################
 
 SETUP:
+    addi sp,sp,-4
+    sw ra, 0(sp)
+
     la t0, MAP_INFO # Loads Map Info address
     lbu t1, 0 (t0)  # Loads byte related to map number
     
@@ -50,9 +53,6 @@ SETUP:
         li a4, 240
         li a5, 0
         li a6, 0	
-
-        addi sp,sp,-4
-        sw ra, 0(sp)
     
         call RENDER_COLOR
 
@@ -64,9 +64,6 @@ SETUP:
         li a5, 1
         li a6, 0
         call RENDER_COLOR
-
-        lw ra, 0(sp)
-        addi sp,sp,4
 	
 	    li a0, 3000
 	    li a7,32
@@ -83,7 +80,7 @@ SETUP:
         lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
 
         la t0, PLYR_POS # Loads Player Position
-        lbu a3, 5(t0)	# Loads player's X offset
+        lbu a3, 6(t0)	# Loads player's X offset
         li a4, 0		# Y offset (0, 4, 8, 12)	
         li a5, 0		# Frame = 0
         li a6, m_screen_width	# Screen Width = 20
@@ -91,94 +88,112 @@ SETUP:
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
         
-        addi sp,sp,-4
-        sw ra, 0(sp)
-    
         call RENDER_MAP
 
-        lw ra, 0(sp)
-        addi sp,sp,4
-
-    
-        la t0, Map1 		# Map Address
-        li a1, 23		# starting X on Matrix (top left)
-        li a2, 0		# starting Y on Matrix (top left)		
-        li a3, 8		# X offset (0, 4, 8, 12)
-        li a4, 0		# Y offset (0, 4, 8, 12)	
-        li a5, 1		# Frame = 1
-        li a6, m_screen_width	# Screen Width = 20
-        li a7, m_screen_height	# Screen Height = 15
-        li t3, 0		# Starting X for rendering (top left, related to Matrix)
-        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
-        
-        addi sp,sp,-4
-        sw ra, 0(sp)
-        
-        call RENDER_MAP
-    
-            lw ra, 0(sp)
-            addi sp,sp,4
-            
-            la t0,Map1
-        la t1,CURRENT_MAP
-        sw t0,0(t1)
-    
-        MAP2_SETUP:
-        la a0, Map2 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
-        sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
-        
         lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
-        lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))		
-        li a3, 8		# X offset (0, 4, 8, 12)
+        lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+
+        la t0, PLYR_POS # Loads Player Position
+        lbu a3, 6(t0)	# Loads player's X offset
         li a4, 0		# Y offset (0, 4, 8, 12)	
-        li a5, 0		# Frame = 0
+        li a5, 1		# Frame = 0
         li a6, m_screen_width	# Screen Width = 20
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
-        
-        addi sp,sp,-4
-        sw ra, 0(sp)
-    
+
         call RENDER_MAP
 
-        lw ra, 0(sp)
-        addi sp,sp,4
+        j END_SETUP
 
-    
-        la t0, Map2 		# Map Address
-        li a1, 23		# starting X on Matrix (top left)
-        li a2, 0		# starting Y on Matrix (top left)		
-        li a3, 8		# X offset (0, 4, 8, 12)
-        li a4, 0		# Y offset (0, 4, 8, 12)	
-        li a5, 1		# Frame = 1
-        li a6, m_screen_width	# Screen Width = 20
-        li a7, m_screen_height	# Screen Height = 15
-        li t3, 0		# Starting X for rendering (top left, related to Matrix)
-        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
-        
-        addi sp,sp,-4
-        sw ra, 0(sp)
-        
-        call RENDER_MAP
 
-        lw ra, 0(sp)
-        addi sp,sp,4
-        
-        la t0,Map1
-        la t1,CURRENT_MAP
-        sw t0,0(t1)
-    
-        ret
+
+        MAP2_SETUP:
+            la a0, Map2 	# Map Address
+            la t0, CURRENT_MAP # Loads CURRENT_MAP address
+            sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
+
+            lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+            lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))		
+            li a3, 8		# X offset (0, 4, 8, 12)
+            li a4, 0		# Y offset (0, 4, 8, 12)	
+            li a5, 0		# Frame = 0
+            li a6, m_screen_width	# Screen Width = 20
+            li a7, m_screen_height	# Screen Height = 15
+            li t3, 0		# Starting X for rendering (top left, related to Matrix)
+            li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+
+            addi sp,sp,-4
+            sw ra, 0(sp)
+
+            call RENDER_MAP
+            la t0, Map2 		# Map Address
+            li a1, 23		# starting X on Matrix (top left)
+            li a2, 0		# starting Y on Matrix (top left)		
+            li a3, 8		# X offset (0, 4, 8, 12)
+            li a4, 0		# Y offset (0, 4, 8, 12)	
+            li a5, 1		# Frame = 1
+            li a6, m_screen_width	# Screen Width = 20
+            li a7, m_screen_height	# Screen Height = 15
+            li t3, 0		# Starting X for rendering (top left, related to Matrix)
+            li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+            call RENDER_MAP
+            la t0,Map1
+            la t1,CURRENT_MAP
+            sw t0,0(t1)
+            j END_SETUP
 
         MAP3_SETUP:
-            ret
+            la a0, Map3 	# Map Address
+            la t0, CURRENT_MAP # Loads CURRENT_MAP address
+            sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
+            
+            lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+            lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+
+            la t0, PLYR_POS # Loads Player Position
+            lbu a3, 5(t0)	# Loads player's X offset
+            li a4, 0		# Y offset (0, 4, 8, 12)	
+            li a5, 0		# Frame = 0
+            li a6, m_screen_width	# Screen Width = 20
+            li a7, m_screen_height	# Screen Height = 15
+            li t3, 0		# Starting X for rendering (top left, related to Matrix)
+            li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+            
+            call RENDER_MAP
+
+            la t0, CURRENT_MAP # Loads CURRENT_MAP address
+            lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+            lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+
+            la t0, PLYR_POS # Loads Player Position
+            lbu a3, 5(t0)	# Loads player's X offset
+            li a4, 0		# Y offset (0, 4, 8, 12)	
+            li a5, 1		# Frame = 0
+            li a6, m_screen_width	# Screen Width = 20
+            li a7, m_screen_height	# Screen Height = 15
+            li t3, 0		# Starting X for rendering (top left, related to Matrix)
+            li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+
+            call RENDER_MAP
+
+            j END_SETUP
+
+
         MAP4_SETUP:
-            ret
+            j END_SETUP
+
         MAP5_SETUP:
-            ret
+            j END_SETUP
+            
         MAP6_SETUP:
-            ret
+            j END_SETUP
+            
         MAP7_SETUP:
-            ret
+            j END_SETUP
+
+END_SETUP:
+    lw ra, 0(sp)
+    addi sp,sp,4
+    ret
