@@ -16,7 +16,7 @@ RUN_TIME: .word 0 # Guarda quanto tempo passou
 ####### Map informations ####### 
 CURRENT_MAP: .word 0
 MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render, 2 - switch map)
-                23, 0 # x of matrix, y of matrix ,
+                23, 0 # x of matrix, y of matrix
 
 ####### Player informations #########
 PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
@@ -98,9 +98,10 @@ ENGINE_SETUP:
 		j ENGINE_LOOP		# caso contrario voltar para o inicio do loop
 	
 GAME_LOOP:
+	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
+
 	call INPUT_CHECK	# Checa input do jogador
 	call PHYSICS
-	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 	
 #	call MAP_OPERATIONS
 
