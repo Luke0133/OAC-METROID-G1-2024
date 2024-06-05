@@ -1,0 +1,58 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "Brainstar.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "Brainstar.tmx": {
+            "expandedGroupLayers": [
+                40
+            ],
+            "scale": 0.25,
+            "selectedLayer": 35,
+            "viewCenter": {
+                "x": 548,
+                "y": 1164
+            }
+        },
+        "NES - Metroid - Brinstar.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 2
+        },
+        "Tileset.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 3,
+            "scaleInEditor": 4
+        }
+    },
+    "last.imagePath": "D:/OneDrive/Documentos/LUCA/System RARS/OAC-METROID-G1-2024-main/sprites/bmp",
+    "map.height": 75,
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 160,
+    "openFiles": [
+        "Tileset.tsx",
+        "NES - Metroid - Brinstar.tsx",
+        "Brainstar.tmx"
+    ],
+    "project": "Brainstar.tiled-project",
+    "recentFiles": [
+        "Tileset.tsx",
+        "NES - Metroid - Brinstar.tsx",
+        "Brainstar.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    },
+    "tileset.type": 0,
+    "tileset.useTransparentColor": true
+}
