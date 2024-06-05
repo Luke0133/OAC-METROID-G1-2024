@@ -1,4 +1,4 @@
-.include "MACROSv21.s" # Macros para bitmap display
+.include "helpers/MACROSv21.s" # Macros para bitmap display
  
 .data
 ####### Informations related to frame rate  ####### 
@@ -190,10 +190,10 @@ GAME_LOOP:
 
 
 
-.include "input.s"
-.include "physics.s"
-.include "render.s"										
-.include "SYSTEMv21.s"
+.include "helpers/input.s"
+.include "helpers/physics.s"
+.include "helpers/render.s"										
+.include "helpers/SYSTEMv21.s"
 # Sprites
 .data
 DELETE:
@@ -208,5 +208,5 @@ DELETE:
 .include "sprites/data/ripper.data"
 .include "sprites/data/zoomer_vertical.data"
 .include "sprites/data/zoomer_horizontal.data"
-.include "matrix.data"
-.include "tiles.data"
+.include "sprites/matrix.data"
+.include "sprites/tiles.data"
