@@ -15,7 +15,7 @@ RUN_TIME: .word 0 # Guarda quanto tempo passou
 
 ####### Map informations ####### 
 CURRENT_MAP: .word 0
-MAP_INFO: .byte 1, 0, # num_map, enable render
+MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render, 2 - switch map)
                 23, 0 # x of matrix, y of matrix ,
 
 ####### Player informations #########
