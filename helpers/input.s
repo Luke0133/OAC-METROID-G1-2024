@@ -3,7 +3,8 @@
 INPUT_CHECK:
         li t1,0xFF200000  	# KDMMIO Address
         lw t0, 0(t1)	  	# Reads the Keyboard Control bit
-        andi t0, t0, 0x0001	  	# Masks the least significant bit
+        andi t0, t0, 0x0001	# Masks the least significant bit
+        la a0, PLYR_STATUS      # Loads Player Status
         bnez t0, CONTINUE_CHECK # if an input is detected, continue checking
         j NO_INPUT 		# otherwise no input was detected 
         
@@ -49,39 +50,33 @@ INPUT_CHECK:
         j INPUT.P 	# If 'k' key was pressed
 
 	NO_INPUT:
-		la t0, MOVE_X
-		sh zero,0(t0) # Zerar MOVE_X e MOVE_Y
+                li t1, 0                # Loads vertical direction (0 = normal)
+                sb t1,2(a0)             # Stores new direction on PLYR_STATUS
+		sh zero,6(a0)           # Stores new direction on MOVE_X
        		j END_INPUT_CHECK 
 
-	INPUT.W:
+	INPUT.W:  # Looking Up
+                li t1, 1                # Loads vertical direction (1 = up)
+                sb t1,2(a0)             # Stores new direction on PLYR_STATUS
 	        j END_INPUT_CHECK
 	
 	INPUT.A: # Moves player left
-#		li a0,1000
-#		li a7,32
-#		ecall
-	        la t0, MOVE_X
-	        li t1, -1	# esq
-	        sb t1, 0(t0)
-	        j END_INPUT_CHECK
+                li t1, 1                # Loads direction (1 = left)
+                sb t1,1(a0)             # Stores new direction on PLYR_STATUS
+
+	        li t1, -1	        # Loads direction for MOVE_X (-1 = left)
+	        sb t1, 6(a0)            # Stores new direction on MOVE_X
+	        j END_INPUT_CHECK        
 	
 	INPUT.S:
 	        j END_INPUT_CHECK
 	INPUT.D: # Moves player right
-	#	li a0,1000
-	#	li a7,32
-	#	ecall
-		la t0, MOVE_X
-	        li t1, 1       # dir
-	        sb t1, 0(t0)
-	        j END_INPUT_CHECK
+                li t1, 0                # Loads direction (1 = left)
+                sb t1,1(a0)             # Stores new direction on PLYR_STATUS
 
-                #la t0, PLYR_STATUS
-                #lb t1, 0(t0)
-                #addi t1,zero,1
-                #sb t1, 0(t0)
-                
-	        j END_INPUT_CHECK
+	        li t1, 1	        # Loads direction for MOVE_X (1 = right)
+	        sb t1, 6(a0)            # Stores new direction on MOVE_X
+	        j END_INPUT_CHECK 
 	
 	INPUT.SPACE:
 	        j END_INPUT_CHECK

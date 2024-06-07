@@ -30,7 +30,7 @@ PHYSICS:
     
     MOVE_PLAYER_X:
         li t6, 2      # t6 = 2 (map will be rendered again)
-    	sb t6, 5(a1)  # Stores t6 on CURRENT_MAP's rendering byte
+    	  sb t6, 5(a1)  # Stores t6 on CURRENT_MAP's rendering byte
     	
       	slli a4, t0, 2  # Multiplies the value stored on MOVE_X by 4. a0 will store the movement of the player (+/- 4 pixels)
         
@@ -109,21 +109,20 @@ PHYSICS:
               # border and render as if map had fixed X on matrix
     
             MOVE_SCREEN_X:
-            
-            
               sh t2,2(a3) # Stores original X on old X related to screen
       
               lbu t0, 6(a1)  # Loads Map X postition on Matrix
       
               li t6, 254
-              sltu t6,t6,t0
-              slti t3,a7,1
-              add t6,t6,t3
+              sltu t6,t6,t0 # t0 >= 255 ? t6=1 : t6=0
+              slti t3,a7,1  # a7 >= 1   ? t3=0 : t3=1 
+              add t6,t6,t3  # 2
               li t3,2
               beq t3,t6, Fixed_X_Map
-              	add t0,t0,a7  # adds to the X -1, 0 or 1 
-                sb t0, 6(a1)         # Stores Map X postition on Matrix
-              	j CHECK_MOVE_Y
+              add t0,t0,a7  # adds to the X -1, 0 or 1 
+              sb t0, 6(a1)         # Stores Map X postition on Matrix
+              
+              j CHECK_MOVE_Y
       
       
     CHECK_MOVE_Y:
