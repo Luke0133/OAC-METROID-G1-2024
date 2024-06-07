@@ -37,7 +37,12 @@ GAME_LOOP:
 	call INPUT_CHECK	# Checa input do jogador
 	call PHYSICS
 	call MAP_MOVE_RENDER
-						
+	##### DEBUG
+    #  li a0, 3000
+    #  li a7, 32
+    #  ecall
+      ##### DEBUG
+
 	la a0, Samus_Right_Idle 		# Gets sprite address# Endereco do mapa
 	la t0,PLYR_POS
 	lh a1, 0(t0)		# Topo esquerdo X
