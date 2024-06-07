@@ -13,6 +13,8 @@
 #	a2 = current map's address (located on matrix.data)	#
 # a3 = PLYR_POS
 # a4 = Move_X/Y in tile format
+# a5 = player offset (t3)
+# a6 = player x on matrix (t4)
 # t5,t6 = Temporary Registers
 
 PHYSICS:
@@ -29,6 +31,13 @@ PHYSICS:
     j CHECK_MOVE_Y         # Otherwise, go check Y movement
     
     MOVE_PLAYER_X:
+    ##### DEBUG
+      mv t6 a0
+      li a0, 3000
+      li a7, 32
+      ecall
+      mv a0,t6
+      ##### DEBUG
         li t6, 2      # t6 = 2 (map will be rendered again)
     	  sb t6, 5(a1)  # Stores t6 on CURRENT_MAP's rendering byte
     	
@@ -37,13 +46,13 @@ PHYSICS:
         lb t3, 6(a3)	# Loads Player's X offset
         add t3,t3,a4	# Adds the X Movement to the Player's Offset
         
-        lbu t4, 8(a3)	# Loads Player's X on Matrix
-        sb t4, 9(a3)	# Stores Plater's X on Matrix on the Old X
+        lbu a5, 8(a3)	# Loads Player's X on Matrix
+        sb a5, 9(a3)	# Stores Plater's X on Matrix on the Old X
         
         li a7, 0
         bge t3,zero,SKIP_LEFT_X
        	# If t3 < 0, Player is moving to the left tile
-        addi t4,t4, -1		  # Player's X on matrix -= 1 (goes to the left)
+        addi a5,a5, -1		  # Player's X on matrix -= 1 (goes to the left)
         addi t3,t3,tile_size  # Offset gets corrected (relative to new X on matrix coordinate)
         li a7, -1
         
@@ -51,7 +60,7 @@ PHYSICS:
             li t6, tile_size
             blt t3,t6, SKIP_RIGHT_X
             # If t3 >= 16, Player is moving to the right tile
-            addi t4,t4, 1	 # Player's X on matrix += 1 (goes to the right)
+            addi a5,a5, 1	 # Player's X on matrix += 1 (goes to the right)
             sub t3,t3,t6	 # Offset gets corrected (relative to new X on matrix coordinate)
             li a7, 1
         SKIP_RIGHT_X:
@@ -72,7 +81,7 @@ PHYSICS:
 ###### DPS DE CHECAR COLIS�O
 
         sb t3, 6(a3)    # Stores new X offset
-        sb t4, 8(a3)    # Stores new X coordinate on matrix
+        sb a5, 8(a3)    # Stores new X coordinate on matrix
 
         lh t2, 0(a3)    # Loads Player's Current X
         add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
@@ -101,7 +110,7 @@ PHYSICS:
 
             NOT_LEFT_BORDER_PASS:   # Checking if passed the Right Horizontal Border
             li t6, right_hor_border #loads right_border = 180 
-            bge t6,t5,Fixed_X_Map   # if new player position on screen doesn't pass the right border, go to Fixed_X_Map
+            bge t6,t5,MOVE_SCREEN_X   # if new player position on screen doesn't pass the right border, go to Fixed_X_Map
               lbu t1, 1(a2)    # Loads Map matrix width
               li t6, m_screen_width # Loads Map screen width related to matrix
               sub t1,t1,t6    # t1 = Map Matrix Width - Screen Matrix Width
