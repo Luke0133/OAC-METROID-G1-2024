@@ -77,7 +77,7 @@ SETUP:
         sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
         
         lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
-        lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
 
         la t0, PLYR_POS # Loads Player Position
         lbu a3, 6(t0)	# Loads player's X offset
@@ -92,7 +92,7 @@ SETUP:
 
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
-        lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
 
         la t0, PLYR_POS # Loads Player Position
         lbu a3, 6(t0)	# Loads player's X offset
@@ -115,7 +115,7 @@ SETUP:
             sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
 
             lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
-            lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))		
+            lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))		
             li a3, 8		# X offset (0, 4, 8, 12)
             li a4, 0		# Y offset (0, 4, 8, 12)	
             li a5, 0		# Frame = 0
@@ -150,7 +150,7 @@ SETUP:
             sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
             
             lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
-            lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+            lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
 
             la t0, PLYR_POS # Loads Player Position
             lbu a3, 5(t0)	# Loads player's X offset
@@ -165,7 +165,7 @@ SETUP:
 
             la t0, CURRENT_MAP # Loads CURRENT_MAP address
             lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
-            lbu a1, 6(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+            lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
 
             la t0, PLYR_POS # Loads Player Position
             lbu a3, 5(t0)	# Loads player's X offset

@@ -674,7 +674,7 @@ Samus_Right_Jump: # 24 x 64, Height per sprite: 32
 199,199,199,199,199,199,199,199,199,199,199,199,199,199,14,14,14,14,199,199,199,199,199,199,
 
 # 08. Samus_Right_Jump_Up: Status 0 - Normal, 1 - Shooting
-Samus_Right_Jump_Up: .word 20 x 64, Height per sprite: 32
+Samus_Right_Jump_Up: # 20 x 64, Height per sprite: 32
 # 1280 bytes -- 1.25 KiB 
 .byte 199,199,199,199,199,199,199,199,199,199,199,32,32,199,199,199,199,199,199,199,
 199,199,199,199,199,199,199,199,199,199,32,32,32,32,199,199,199,199,199,199,

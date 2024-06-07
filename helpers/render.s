@@ -1,24 +1,25 @@
 .text
-##########################     RENDER IMAGE    ##########################
+#########################   RENDER IMAGE WORD   #########################
+#   Renders image when address is given. It renders byte by byte (slow) #
 #     -----------           argument registers           -----------    #
-#	a0 = Image Address						#
-#	a1 = X coordinate where rendering will start (top left)		#
-#	a2 = Y coordinate where rendering will start (top left)		#
-#	a3 = width of rendering area (usually the size of the sprite)	#
-# 	a4 = height of rendering area (usually the size of the sprite)	#
-#	a5 = frame (0 or 1)						#
-#	a6 = status of sprite (usually 0 for sprites that are alone)	#
-#	a7 = operation (0 if normal printing, 1 cropped print)		#
+#       a0 = Image Address                                              #
+#       a1 = X coordinate where rendering will start (top left)         #
+#       a2 = Y coordinate where rendering will start (top left)         #
+#       a3 = width of rendering area (usually the size of the sprite)   #
+#       a4 = height of rendering area (usually the size of the sprite)  #
+#       a5 = frame (0 or 1)                                             #
+#       a6 = status of sprite (usually 0 for sprites that are alone)    #
+#       a7 = operation (0 if normal printing, 1 cropped print)          #
 # -- saved registers (recieved as arguments - only when on crop mode)-- #
-#	s1 = X coordinate relative to sprite (top left)			#
-#	s2 = Y coordinate relative to sprite (top left)     		#
-#	s3 = sprite width			   	  		#
+#       s1 = X coordinate relative to sprite (top left)                 #
+#       s2 = Y coordinate relative to sprite (top left)                 #
+#       s3 = sprite width                                               #
 #     -----------          temporary registers           -----------    #
-#	t0 = bitmap display printing address				#
-#	t1 = image address						#
-#	t2 = line counter						#
-# 	t3 = column counter						#
-# 	t4 = temporary operations					#
+#       t0 = bitmap display printing address                            #
+#       t1 = image address                                              #
+#       t2 = line counter                                               #
+#       t3 = column counter                                             #
+#       t4 = temporary operations                                       #
 #########################################################################
 RENDER:
 beqz a7,NORMAL
@@ -68,24 +69,94 @@ beqz a7,NORMAL
 			bgt a4,t2,PRINT_LINE	# if height > line counter, repeat
 			ret
 
-############################## RENDER COLOR #############################
-#		 Renders a given color on a given space			#
-#     -----------           instruction count            -----------    #
-#	RENDER_COLOR uses 23 instructions				#
+#########################   RENDER IMAGE WORD   #########################
+#   Renders image when address is given. It renders word by word        #
 #     -----------           argument registers           -----------    #
-#	a0 = color		    					#
-#	a1 = X coordinate where rendering will start (top left)	   	#	
-#	a2 = Y coordinate where rendering will start (top left)	   	#
-#	a3 = width of printing area (usually the size of the sprite)	#
-# 	a4 = height of printing area (usually the size of the sprite)	#
-#	a5 = frame (0 or 1)						#
-#	a6 = operation (0 - rendering 4 pixels at once; 		#
-#			1 -  rendering 2 pixels at once) 		#	
+#       a0 = Image Address                                              #
+#       a1 = X coordinate where rendering will start (top left)         #
+#       a2 = Y coordinate where rendering will start (top left)         #
+#       a3 = width of rendering area (usually the size of the sprite)   #
+#       a4 = height of rendering area (usually the size of the sprite)  #
+#       a5 = frame (0 or 1)                                             #
+#       a6 = status of sprite (usually 0 for sprites that are alone)    #
+#       a7 = operation (0 if normal printing, 1 cropped print)          #
+# -- saved registers (recieved as arguments - only when on crop mode)-- #
+#       s1 = X coordinate relative to sprite (top left)                 #
+#       s2 = Y coordinate relative to sprite (top left)                 #
+#       s3 = sprite width                                               #
 #     -----------          temporary registers           -----------    #
-# 	t0 = bitmap display printing address				#
-#	t1 = temporary operations					#
-#	t2 = line counter						#
-#	t3 = column counter						#
+#       t0 = bitmap display printing address                            #
+#       t1 = image address                                              #
+#       t2 = line counter                                               #
+#       t3 = column counter                                             #
+#       t4 = temporary operations                                       #
+#########################################################################
+RENDER_WORD:
+beqz a7,NORMAL_WORD
+	CROP_MODE_WORD:	# When rendering cropped sprite 	
+		add a0,a0,s1	# Image address + X on sprite 
+		mul t3,s3,s2	# t4 = sprite width * Y on sprite
+		add a0,a0,t3	# a0 = Image address + X on sprite + sprite widht * Y on sprite
+	NORMAL_WORD:		# Executed even if on crop mode
+		mul t4,a6,a4	# Sprite offset (for files that have more than one sprite)
+		mul t4,t4,a3	# Sprite Line offset (skips the first %width lines)
+# not used #	addi a0,a0,8	# Skip image size info
+		add a0,a0,t4	# Adds offset to image address
+
+	#Propper rendering
+
+	li t0,0x0FF0	#t0 = 0x0FF0
+	add t0,t0,a5	# Rendering Address corresponds to 0x0FF0 + frame
+	slli t0,t0,20	# Shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
+	add t0,t0,a1	# t0 = 0xFF00 0000 + X or 0xFF10 0000 + X
+	li t1,320	# t1 = 320
+	mul t1,t1,a2	# t1 = 320 * Y 
+	add t0,t0,t1	# t0 = 0xFF00 0000 + X + (Y * 320) or 0xFF10 0000 + X + (Y * 320)
+	
+	mv t2,zero	# t2 = 0 (Resets line counter)
+	mv t3,zero	# t3 = 0 (Resets column counter)
+	
+	PRINT_LINE_WORD:	
+		lb t4,0(a0)	# loads word(4 pixels) on t4
+		sb t4,0(t0)	# prints 4 pixels from t4
+		
+		addi t0,t0,1	# increments bitmap address
+		addi a0,a0,1	# increments image address
+		
+		addi t3,t3,1		# increments column counter
+		blt t3,a3,PRINT_LINE_WORD	# if column counter < width, repeat
+		
+		addi t0,t0,320	# goes to next line on bitmap display
+		sub t0,t0,a3	# goes to right X on bitmap display (current address - width)
+		
+		beqz a7, NORMAL_RENDER_WORD	# If not on crop mode
+		CROP_RENDER_WORD:
+			add a0,a0,s3	# a0 += sprite width	
+			sub a0,a0,a3	# a0 -= rendering width
+		NORMAL_RENDER_WORD: 
+			mv t3,zero		# t3 = 0 (Resets column counter)
+			addi t2,t2,1		# increments line counter
+			bgt a4,t2,PRINT_LINE_WORD	# if height > line counter, repeat
+			ret
+
+
+
+############################## RENDER COLOR #############################
+#                Renders a given color on a given space                 #
+#     -----------           argument registers           -----------    #
+#       a0 = color                                                      #
+#       a1 = X coordinate where rendering will start (top left)         #	
+#       a2 = Y coordinate where rendering will start (top left)         #
+#       a3 = width of printing area (usually the size of the sprite)    #
+#       a4 = height of printing area (usually the size of the sprite)   #
+#       a5 = frame (0 or 1)                                             #
+#       a6 = operation (0 - rendering 4 pixels at once;                 #
+#                       1 -  rendering 2 pixels at once)                #	
+#     -----------          temporary registers           -----------    #
+#       t0 = bitmap display printing address                            #
+#       t1 = temporary operations                                       #
+#       t2 = line counter                                               #
+#       t3 = column counter                                             # 
 #########################################################################
 
 RENDER_COLOR:
@@ -143,35 +214,35 @@ RENDER_COLOR:
 		
 ###############################         RENDER MAP         ##############################
 #    Takes a given map matrix and renders tiles acoording to the value stored on it.   	#
-#	-- t2 and t3 are recieved as arguments:						#
-#	  > t2: line where rendering will begin (Y related to Matrix)			#
-#	  > t3: column where rendering will begin (X related to Matrix)			#
-#	-- the arguments t2 and t3 are related to the full matrix, and not the 20 x 15  # 
-#	   screen matrix. They'll later be converted to the line and column related to  #
-#	   the screen sized matrix. 							#
-#	Obs.: If you aren't rendering a sprite's trail, set t2 and t3 to 0		# 	
+#   -- t2 and t3 are recieved as arguments:                                             #
+#       > t2: line where rendering will begin (Y related to Matrix)                     #
+#       > t3: column where rendering will begin (X related to Matrix)                   #
+#   -- the arguments t2 and t3 are related to the full matrix, and not the 20 x 15      # 
+#       screen matrix. They'll later be converted to the line and column related to     #
+#       the screen sized matrix.                                                        #
+#       Obs.: If you aren't rendering a sprite's trail, set t2 and t3 to 0              # 	
 #     ------------               argument registers                  ------------      	#
-#	a0 = Map Matrix Address						  	   	#
-#	a1 = starting X on Matrix (top left)					   	#
-#	a2 = starting Y on Matrix (top left)    				   	#	
-#	a3 = X offset (0, 4, 8, 12)	  	   				   	#
-#	a4 = Y offset (0, 4, 8, 12)	  	   				   	#	 		  
-#	a5 = frame (0 or 1)						  	   	#
-#	a6 = width (Related to Matrix) of rendering area				#
-#	a7 = height (Related to Matrix) of rendering area				#
+#       a0 = Map Matrix Address                                                         #
+#       a1 = starting X on Matrix (top left)                                            #
+#       a2 = starting Y on Matrix (top left)                                            #	
+#       a3 = X offset (0, 4, 8, 12)                                                     #
+#       a4 = Y offset (0, 4, 8, 12)                                                     #	 		  
+#       a5 = frame (0 or 1)                                                             #
+#       a6 = width (Related to Matrix) of rendering area                                #
+#       a7 = height (Related to Matrix) of rendering area                               #
 #     ------------            saved registers (uses stack)           ------------      	#
-#	s0 = current X and Y address on Matrix		   	  		   	#
-#	s1 = Matrix Width				   	  		   	#
-#	s2 = Y where line loop will stop						#
-#	s3 = X where column loop will stop						#			
+#       s0 = current X and Y address on Matrix                                          #
+#       s1 = Matrix Width                                                               #
+#       s2 = Y where line loop will stop                                                #
+#       s3 = X where column loop will stop                                              #			
 #     ------------                temporary registers                ------------      	#
-#	t0 = temporary operations			           		   	#
-#	t1 = tile to be rendered 			   	  		   	#				
-#	t2 = line counter (and also current Y) related to Matrix		   	#
-#  	t3 = column counter (and also current X) related to Matrix			#
-#  	t4 = temporary register for moving info						#
-#  	t5 = temporary register for moving info					   	#
-#  	t6 = temporary register for moving info					   	#
+#       t0 = temporary operations                                                       #
+#       t1 = tile to be rendered                                                        #				
+#       t2 = line counter (and also current Y) related to Matrix                        #
+#       t3 = column counter (and also current X) related to Matrix                      #
+#       t4 = temporary register for moving info                                         #
+#       t5 = temporary register for moving info                                         #
+#       t6 = temporary register for moving info                                         #
 #########################################################################################
 RENDER_MAP:
 ## DEBUG
@@ -594,7 +665,7 @@ RENDER_MAP_LOOP:
 		li a4, tile_size	# Tile Height (Relative to Screen)
 		li a7, 0		# Normal Render operations
 		Start_NormalRender:
-		call RENDER
+		call RENDER_WORD
 	
 	EndRender:
 # Procedure finished: Loading Registers from Stack

@@ -57,9 +57,9 @@ INPUT_CHECK:
 	        j END_INPUT_CHECK
 	
 	INPUT.A: # Moves player left
-	#	li a0,1000
-	#	li a7,32
-	#	ecall
+#		li a0,1000
+#		li a7,32
+#		ecall
 	        la t0, MOVE_X
 	        li t1, -1	# esq
 	        sb t1, 0(t0)

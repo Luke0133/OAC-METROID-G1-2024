@@ -12,3 +12,4 @@
 .include "data/zoomer_horizontal.data"
 .include "matrix.data"
 .include "tiles.data"
+.include "samus.data"
