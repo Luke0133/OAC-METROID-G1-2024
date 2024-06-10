@@ -24,11 +24,13 @@ PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0
 PLYR_POS: .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
 		  .byte 160, 0,   # Stores Player's current and old top left Y respectively, both related to the screen 
 		        8, 0 # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+
 PLYR_MATRIX: .byte 33, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
-PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Facing Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
+PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
 				   0,0 # Ball Mode (0 - Disabled, 1 - Enabled), Attacking (0 - no, 1 - yes) 
-MOVE_X: .byte 0 # -1 esq, 1 dir, 0 parado
-MOVE_Y: .byte 0
+
+MOVE_X: .byte 0 # -1 left, 1 right, 0 not moving on X axis
+MOVE_Y: .byte 0 # -1 up, 1 down, 0 not moving on Y axis
 
 .eqv standing_front_hitbox 8 # offset from the front of Samus' standing sprite 
 .eqv standing_back_hitbox 4  # offset from the back of Samus' standing sprite 
