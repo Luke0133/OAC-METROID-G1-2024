@@ -31,6 +31,8 @@ PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1
 
 MOVE_X: .byte 0 # -1 left, 1 right, 0 not moving on X axis
 MOVE_Y: .byte 0 # -1 up, 1 down, 0 not moving on Y axis
+JUMP: .byte 0
+PLYR_INPUT: .byte 0
 
 .eqv standing_front_hitbox 8 # offset from the front of Samus' standing sprite 
 .eqv standing_back_hitbox 4  # offset from the back of Samus' standing sprite 

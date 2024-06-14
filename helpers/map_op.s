@@ -15,25 +15,15 @@ MAP_MOVE_RENDER:
 	la t0, CURRENT_MAP  # Loads CURRENT_MAP's address
 	lbu t1, 5(t0)       # Loads on t1 the CURRENT_MAP's rendering byte
 	li t2,3				# Loads number 3 -- related to "switch map" operation
-#	li t2,4				# Loads number 4 -- related to "switch map" operation
 	blt t1,t2 CHECK_MAP_MOVE_RENDER_1 # If the rendering byte is 0, 1 or 2
 		ret				# If the rendering byte isn't <= 2
 	CHECK_MAP_MOVE_RENDER_1:
-#		lbu t2, 6(t0)   # Loads on t2 the CURRENT_MAP's X on matrix
-#		li t3,255       # Loads 255, (or -1 in base 2's complement)
-#		blt t2,t3, CHECK_MAP_MOVE_RENDER_2 # If the CURRENT_MAP's X on matrix is less than 255
-#			ret			# If the CURRENT_MAP's X is greater or equal to 255 (meaning X is -1 or another invalid number)
-	CHECK_MAP_MOVE_RENDER_2:
 		beqz t1, END_MAP_MOVE_RENDER # If the rendering byte is 0
 		# If map is allowed to render (t1 = 1)
 			li a0, 0	   # in order to render map normally
-#			li t2,3
-#			bge t1,t2, SKIP_RENDER_BYTE_CHANGE
-#				li a0, 0	   # in order to render map normally
-				addi t1,t1,-1  # subtracting 1 from t1 so that if t1 = 2 -> t1 = 1 (will be rendered 
-							# once more) and if t1 = 1 -> t1 = 0 (won't be rendered again)	
-				sb t1,5(t0)	   # Stores the new CURRENT_MAP's rendering byte
-#			SKIP_RENDER_BYTE_CHANGE:
+			addi t1,t1,-1  # subtracting 1 from t1 so that if t1 = 2 -> t1 = 1 (will be rendered 
+						   # once more) and if t1 = 1 -> t1 = 0 (won't be rendered again)	
+			sb t1,5(t0)	   # Stores the new CURRENT_MAP's rendering byte
 			j SCENE_RENDER # Starts scene rendering procedure
 	END_MAP_MOVE_RENDER:
 		# If map can't be rendered (t1 = 0)
@@ -74,8 +64,8 @@ SCENE_RENDER:
     
     lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
     lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
-	lbu a3, 8(t0)   # Loads current X on Map (starting X on Matrix (top left))
-    lbu a4, 9(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+	lbu a3, 8(t0)   # Loads current X offset on Map
+    lbu a4, 9(t0)   # Loads current Y offset on Map
 	
 	call RENDER_MAP
 	END_SCENE_RENDER:

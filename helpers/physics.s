@@ -11,12 +11,13 @@
 #	a0 = MOVE_X/MOVE_Y address (located on main.s)		#
 #	a1 = CURRENT_MAP address (located on main.s)		#
 #	a2 = current map's address (located on matrix.data)	#
-# a3 = PLYR_POS
-# a4 = Move_X/Y in tile format
-# a6 = player offset (t4)
-# a7 = player x on matrix 
-# s11 = what to add to map matrix (-1, 0 or 1)
-# t5,t3 = Temporary Registers
+#   a3 = PLYR_POS
+#   a4 = Move_X/Y in tile format
+#   a6 = player offset (t4)
+#   a7 = player x on matrix 
+#   s10 = what to add to map matrix (-1, 0 or 1)
+#   s11 = ra storage
+#   t5,t3 = Temporary Registers
 
 PHYSICS:
     la a0, MOVE_X	       # Loads address of MOVE_X
@@ -41,12 +42,12 @@ PHYSICS:
         lbu a7, 8(a3)	# Loads Player's X on Matrix
         sb a7, 9(a3)	# Stores Plater's X on Matrix on the Old X
         
-        li s11, 0
+        li s10, 0
         bge a6,zero,SKIP_LEFT_X
        	# If a6 < 0, Player is moving to the left tile
         addi a7, a7, -1		  # Player's X on matrix -= 1 (goes to the left)
         addi a6,a6,tile_size  # Offset gets corrected (relative to new X on matrix coordinate)
-        li s11, -1
+        li s10, -1
         
         SKIP_LEFT_X:
             li t3, tile_size
@@ -54,32 +55,62 @@ PHYSICS:
             # If a6 >= 16, Player is moving to the right tile
             addi a7,a7, 1	 # Player's X on matrix += 1 (goes to the right)
             sub a6,a6,t3	 # Offset gets corrected (relative to new X on matrix coordinate)
-            li s11, 1
+            li s10, 1
         SKIP_RIGHT_X:
-        # Otherwise, the player is still on the same tile
-
-
-###### PARA COLISAOOOO
-#        slt t5,a4,zero			# t5 = 1 if a4 < 0, otherwise, t5 = 0
-#        slli t5,t5,tile_size_shift 	# t5 = tile_size if t0 <0, otherwise, t5 = 0
-#        sub t5,t5,a6			# t5 = tile_size - X offset, otherwise t5 = X offset
-#        li t3, standing_front_hitbox	# Offset 
-#        bge t3,t5,SkipColisionCheck
-#        j colisao?
-    SkipColisionCheck: 
     
-###### DPS DE CHECAR COLIS�O
+    #### debugging ####
+    #    mv t0,a0
+    #    mv t1,a7   
+    #    mv a0, a7
+    #    li a7,1
+    #    ecall
+    #    
+    #    la a0, DEBUG
+    #    li a7, 4
+    #    ecall
+    #    
+    #    mv a0,t0
+    #    mv a7,t1 
+        
+        # Checking collision
+        mv s11, ra
+        
+        call CHECK_HORIZONTAL_COLLISION
+        
+        mv ra, s11
+        mv t0,a0
+        mv t1,a7   
+        mv a0, a4
+        li a7,1
+        ecall
+        
+        la a0, DEBUG
+        li a7, 4
+        ecall
+        
+        mv a0,t0
+        mv a7,t1 
+        # After checking collision
+        
+#################
+        bnez a4, CAN_MOVE_X 
+            j Fixed_X_Map
+        CAN_MOVE_X:
+###############        
+      
 
-            sb a6, 6(a3)    # Stores new X offset
-            sb a7, 8(a3)    # Stores new X coordinate on matrix
 
-            lh t2, 0(a3)    # Loads Player's Current X
-            add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
-		
-            lbu t0, 0(a2)   # loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
-            li t3, 1        # Loads 1 and 
-            bne t3, t0, Fixed_X_Map # compares with the result
-            j Horizontal_Map
+
+        sb a6, 6(a3)    # Stores new X offset
+        sb a7, 8(a3)    # Stores new X coordinate on matrix
+
+        lh t2, 0(a3)    # Loads Player's Current X
+        add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
+    
+        lbu t0, 0(a2)   # loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
+        li t3, 1        # Loads 1 and 
+        bne t3, t0, Fixed_X_Map # compares with the result
+        j Horizontal_Map
         
         Fixed_X_Map:
             # If the map has a fixed X on matrix, that is, the screen won't follow the player, the player will move related to the screen
@@ -114,7 +145,7 @@ PHYSICS:
             sh t2,2(a3)    # Stores player's original X on old X related to screen
     
             lbu t0, 6(a1)  # Loads Map X postition on Matrix
-            add t0,t0,s11  # adds to the X -1, 0 or 1 (moves map horizontally)
+            add t0,t0,s10  # adds to the X -1, 0 or 1 (moves map horizontally)
             sb t0, 6(a1)   # Stores Map X postition on Matrix
             sb a6, 8(a1)   # Stores Map new X offset that is equal to player's X offset
             
@@ -122,6 +153,7 @@ PHYSICS:
       
       
 CHECK_MOVE_Y:
+# COLLISION Y
     # lb a0, 2(t0)
     # be
     #bnez t0, MOVE_PLAYER_Y # If there's Y movement, go to MOVE_PLAYER_Y

@@ -121,6 +121,5 @@ GAME_LOOP:
 
 
 .include "helpers/helpers.s"
-
 .include "sprites/sprites.s"
 

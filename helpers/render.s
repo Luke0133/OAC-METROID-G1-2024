@@ -278,6 +278,13 @@ RENDER_PLAYER:
 					j NOT_JUMP_RIGHT
 
 				RENDER_JUMP_RIGHT:
+				##########
+					li a0, 1
+ 					li a7,1
+					ecall
+					la a0, DEBUG
+  					li a7, 4
+  					ecall
 					#### STATUS 0,1 when jumping normally go to STATUS 1 of IDLE RIGHT/ ATK
 					#### STATUS 2 when jumping normally go to STATUS 1 of MOVE RIGHT/ ATK
 					#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP RIGHT
@@ -544,11 +551,17 @@ RENDER_MAP_LOOP:
 	j CONTINUE_RENDER_MAP
 	NotDoorLeftTop:
 	li t0,12
-	bne t1,t0, NotDoorLeft
+	bne t1,t0, NotDoorLeftMiddle
 #	# la t0, DoorLeft
 	li t1,0
 	j CONTINUE_RENDER_MAP
-	NotDoorLeft:
+	NotDoorLeftMiddle:
+	li t0,10
+	bne t1,t0, NotDoorLeftBottom
+#	# la t0, DoorLeft
+	li t1,0
+	j CONTINUE_RENDER_MAP
+	NotDoorLeftBottom:
 	li t0,6
 	bne t1,t0, NotDoorRightTop
 #	# la t0, DoorRightTop
@@ -556,11 +569,17 @@ RENDER_MAP_LOOP:
 	j CONTINUE_RENDER_MAP
 	NotDoorRightTop:
 	li t0, 4 
-	bne t1,t0, NotDoorRight
+	bne t1,t0, NotDoorRightMiddle
 #	# la t0, DoorRight
 	li t1,0
 	j CONTINUE_RENDER_MAP
-	NotDoorRight:
+	NotDoorRightMiddle:
+	li t0, 2 
+	bne t1,t0, NotDoorRightBottom
+#	# la t0, DoorRight
+	li t1,0
+	j CONTINUE_RENDER_MAP
+	NotDoorRightBottom:
 	li t0, 198 
 	bne t1,t0, NotDoorFrame
 	la t0, DoorFrame

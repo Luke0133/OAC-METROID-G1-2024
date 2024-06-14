@@ -12,14 +12,14 @@ INPUT_CHECK:
     lw t0, 4(t1)   # Reads key value
    
 ########################################
-#mv t3, a0
+#    mv t3, a0
 #    mv a0, t0   # Reads key value
 #    li a7, 1
 #    ecall
 #    la a0, DEBUG
 #    li a7, 4
 #    ecall
-#mv a0, t3    
+#    mv a0, t3    
 ##################################
 
     li t1, 'w'	   # Loads ascii value of 'w' key
