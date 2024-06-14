@@ -25,17 +25,15 @@ PHYSICS:
     lw a2, 0(a1) 	       # a2 has the current map's address 
     la a3, PLYR_POS        # Loads Player Position
     
-#    li t3, 0      # t3 = 0 (map won't be rendered again)
- #   sb t3, 5(a1) # Stores t3 on CURRENT_MAP's rendering byte
-    
     bnez t0, MOVE_PLAYER_X # If there's X movement, go to MOVE_PLAYER_X
-    j CHECK_MOVE_Y         # Otherwise, go check Y movement
+        lh t1, 0(a3)  # Loads Player's X related to screen
+        sh t1, 2(a3)  # Stores Player's X related to screen on old X
+        lbu t1, 8(a3)  # Loads Player's X related to screen
+        sb t1, 9(a3)  # Stores Player's X related to screen on old X
+        j CHECK_MOVE_Y         # Otherwise, go check Y movement
     
     MOVE_PLAYER_X:
-        li t3, 2      # t3 = 2 (map will be rendered again)
-        sb t3, 5(a1)  # Stores t3 on CURRENT_MAP's rendering byte
-    	
-      	slli a4, t0, 2  # Multiplies the value stored on MOVE_X by 4. a0 will store the movement of the player (+/- 4 pixels)
+        slli a4, t0, 2  # Multiplies the value stored on MOVE_X by 4. a0 will store the movement of the player (+/- 4 pixels)
         
         lb a6, 6(a3)	# Loads Player's X offset
         add a6,a6,a4	# Adds the X Movement to the Player's Offset
@@ -58,79 +56,79 @@ PHYSICS:
             sub a6,a6,t3	 # Offset gets corrected (relative to new X on matrix coordinate)
             li s11, 1
         SKIP_RIGHT_X:
-    # Otherwise, the player is still on the same tile
+        # Otherwise, the player is still on the same tile
 
 
 ###### PARA COLISAOOOO
-  #      slt t5,a4,zero			# t5 = 1 if a4 < 0, otherwise, t5 = 0
-   #     slli t5,t5,tile_size_shift 	# t5 = tile_size if t0 <0, otherwise, t5 = 0
-    #    sub t5,t5,a6			# t5 = tile_size - X offset, otherwise t5 = X offset
-  #      li t3, standing_front_hitbox	# Offset 
-   #     bge t3,t5,SkipColisionCheck
-   #	j colisao?
-   	SkipColisionCheck: 
-
-
+#        slt t5,a4,zero			# t5 = 1 if a4 < 0, otherwise, t5 = 0
+#        slli t5,t5,tile_size_shift 	# t5 = tile_size if t0 <0, otherwise, t5 = 0
+#        sub t5,t5,a6			# t5 = tile_size - X offset, otherwise t5 = X offset
+#        li t3, standing_front_hitbox	# Offset 
+#        bge t3,t5,SkipColisionCheck
+#        j colisao?
+    SkipColisionCheck: 
     
 ###### DPS DE CHECAR COLIS�O
 
-        sb a6, 6(a3)    # Stores new X offset
-        sb a7, 8(a3)    # Stores new X coordinate on matrix
+            sb a6, 6(a3)    # Stores new X offset
+            sb a7, 8(a3)    # Stores new X coordinate on matrix
 
-        lh t2, 0(a3)    # Loads Player's Current X
-        add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
+            lh t2, 0(a3)    # Loads Player's Current X
+            add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
 		
-        lbu t0, 0(a2)    # loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
-        li t3, 1        # Loads 1 and 
-        bne t3, t0, Fixed_X_Map # compares with the result
-        j Horizontal_Map
+            lbu t0, 0(a2)   # loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
+            li t3, 1        # Loads 1 and 
+            bne t3, t0, Fixed_X_Map # compares with the result
+            j Horizontal_Map
         
         Fixed_X_Map:
             # If the map has a fixed X on matrix, that is, the screen won't follow the player, the player will move related to the screen
             sh t2,2(a3) # Stores original X on old X related to screen
             sh t5,0(a3) # Stores new X on current X related to screen
-    
-            li t0,0      # t0 = 0 (map won't be rendered again)
-            sb t0, 5(a1) # Stores t0 on CURRENT_MAP's rendering byte
             j CHECK_MOVE_Y
     
         Horizontal_Map:
-            lbu t0, 6(a1)         # Loads Map X postition on Matrix
+            lbu t0, 6(a1)    # Loads Map's X postition on Matrix
+            lbu t1, 8(a1)    # Loads Map's X offset
+                        
             li t3, left_hor_border      # loads left_border = 120 
             blt t3, t5, NOT_LEFT_BORDER_PASS  # if new player position on screen doesn't pass the left border, go to NOT_LEFT_BORDER_PASS
-          		li t3,255
-          		bge t0,t3, Fixed_X_Map  # If on leftmost part of the map, ignore the left 
-                j MOVE_SCREEN_X
+          		  # Otherwise, if new player position on screen passes left border, check if it is on left corner of the map
+                  add t4,t0,t1     # Will be 0 if Map's X offset and X position are 0
+          		  beqz t4, Fixed_X_Map  # If on leftmost part of the map, map won't move
+                    j MOVE_SCREEN_X     # otherwise, move the map left
 
-            NOT_LEFT_BORDER_PASS:   # Checking if passed the Right Horizontal Border
+        NOT_LEFT_BORDER_PASS:   # Checking if passed the Right Horizontal Border
             li t3, right_hor_border #loads right_border = 180 
             bge t3,t5,Fixed_X_Map   # if new player position on screen doesn't pass the right border, go to Fixed_X_Map
-              lbu t1, 1(a2)    # Loads Map matrix width
-              li t3, m_screen_width # Loads Map screen width related to matrix
-              sub t1,t1,t3    # t1 = Map Matrix Width - Screen Matrix Width
-              beq t0,t1, Fixed_X_Map  # If on rightmost part of the map, ignore the right 
-              # border and render as if map had fixed X on matrix
+                lbu t1, 1(a2)    # Loads Map matrix width
+                li t3, m_screen_width # Loads Map screen width related to matrix
+                sub t1,t1,t3    # t1 = Map Matrix Width - Screen Matrix Width (t1 = Map's X when it's on rightmost part of the map)
+                beq t0,t1, Fixed_X_Map  # If on rightmost part of the map, map won't move
+                # otherwise, move the map right
+        
+        MOVE_SCREEN_X:
+            li t3, 2       # t3 = 2 (map will be rendered again)
+            sb t3, 5(a1)   # Stores t3 on CURRENT_MAP's rendering byte
+
+            sh t2,2(a3)    # Stores player's original X on old X related to screen
     
-            MOVE_SCREEN_X:
-              sh t2,2(a3) # Stores original X on old X related to screen
-      
-              lbu t0, 6(a1)  # Loads Map X postition on Matrix
-      
-              li t3, 254
-              sltu t3,t3,t0 # t0 >= 255 ? t3=1 : t3=0
-              slti t4,s11,1  # s11 >= 1   ? t4=0 : t4=1 
-              add t3,t3,t4  # 2
-              li t4,2
-              beq t4,t3, Fixed_X_Map
-              add t0,t0,s11  # adds to the X -1, 0 or 1 
-              sb t0, 6(a1)         # Stores Map X postition on Matrix
-              
-              j CHECK_MOVE_Y
+            lbu t0, 6(a1)  # Loads Map X postition on Matrix
+            add t0,t0,s11  # adds to the X -1, 0 or 1 (moves map horizontally)
+            sb t0, 6(a1)   # Stores Map X postition on Matrix
+            sb a6, 8(a1)   # Stores Map new X offset that is equal to player's X offset
+            
+            j CHECK_MOVE_Y
       
       
-    CHECK_MOVE_Y:
-        # lb a0, 2(t0)
-        # be
+CHECK_MOVE_Y:
+    # lb a0, 2(t0)
+    # be
+    #bnez t0, MOVE_PLAYER_Y # If there's Y movement, go to MOVE_PLAYER_Y
+        lbu t1, 4(a3)  # Loads Player's Y related to screen
+        sb t1, 5(a3)  # Stores Player's Y related to screen on old Y
+        lbu t1, 10(a3)  # Loads Player's Y related to screen
+        sb t1, 11(a3)  # Stores Player's Y related to screen on old Y
         j END_PHYSICS
 
     END_PHYSICS:

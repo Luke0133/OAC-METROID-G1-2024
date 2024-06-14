@@ -1,9 +1,8 @@
 .data
 
 ####### Informations related to frame rate  ####### 
-.eqv frame_rate 90 # T ms por frame 
+.eqv frame_rate 45 # T ms por frame 
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
-
 ####### .eqv related to tiles  ####### 
 .eqv tile_size 16	# Tile size (use powers of 2 in order to use tile_size_shift)
 .eqv tile_size_shift 4  # Power value that gives tile size (2^tile_size_shift = tile_size)
@@ -18,6 +17,7 @@ RUN_TIME: .word 0 # Guarda quanto tempo passou
 CURRENT_MAP: .word 0
 MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render once, 2 - render twice, 3 - switch map)
                 23, 0 # x of matrix, y of matrix
+                8, 0 # X, and Y Tile Offset (0, 4, 8 or 12)
 
 ####### Player informations #########
 PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
@@ -25,7 +25,7 @@ PLYR_POS: .half 152, 0  # Stores Player's current and old top left X respectivel
 		  .byte 160, 0,   # Stores Player's current and old top left Y respectively, both related to the screen 
 		        8, 0 # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 
-PLYR_MATRIX: .byte 33, 0, 0, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
+PLYR_MATRIX: .byte 33, 0, 10, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
 				   0,0 # Ball Mode (0 - Disabled, 1 - Enabled), Attacking (0 - no, 1 - yes) 
 

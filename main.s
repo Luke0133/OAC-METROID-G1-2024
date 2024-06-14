@@ -3,7 +3,7 @@
 
 .data
 DEBUG: .string "\n"
-
+DEBUG1: .string "rarara\n"
 		
 .text
 
@@ -35,10 +35,37 @@ GAME_LOOP:
 	xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 
 	call INPUT_CHECK	# Checa input do jogador
-	call PHYSICS
-	call MAP_MOVE_RENDER
-######################
+	######################
 #	li a0, 3000
+#	li a7, 32
+#	ecall
+##################
+	call PHYSICS
+
+#la a0, MOVE_X#
+#	lb a0,0(a0)
+#    li a7, 1
+#    ecall
+#la a0, MAP_INFO
+#	lb a0,1(a0)
+#    li a7, 1
+#    ecall
+	
+	
+#	la a0, DEBUG
+#    li a7, 4
+#    ecall
+
+
+
+
+	call MAP_MOVE_RENDER
+	
+
+
+	
+######################
+#	li a0, 20
 #	li a7, 32
 #	ecall
 ##################
@@ -59,11 +86,20 @@ GAME_LOOP:
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
 	
+######################
+#	li a0, 3000
+#	li a7, 32
+#	ecall
+##################
+
+
+	li a0, 1
+	call RENDER_PLAYER
+
 	##### LIMPEZA DE RASTRO
 	
-	mv a5, s0		# Frame
-	mv a5,s0		# carrega o frame atual (que esta na tela em a3)
-	xori a5,a5,1		# inverte a3 (0 vira 1, 1 vira 0)
+	#mv a5,s0		# carrega o frame atual (que esta na tela em a3)
+	
 	
 #	la a0, Samus_Right_Idle 		# Gets sprite address# Endereco do mapa
 #	la t0,PLYR_POS
@@ -76,7 +112,11 @@ GAME_LOOP:
 #	li a7, 0
 #	
 #	call RENDER	
-	
+	li a7,30	# gets time passed
+	ecall 		# syscall
+	la t0,RUN_TIME	# Loads RUN_TIME address
+	sw a0,0(t0)	# new time is stored in RUN_TIME, in order to be compared later		
+
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
 

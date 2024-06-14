@@ -10,7 +10,7 @@ INPUT_CHECK:
     
     CONTINUE_CHECK:
     lw t0, 4(t1)   # Reads key value
-
+   
 ########################################
 #mv t3, a0
 #    mv a0, t0   # Reads key value
@@ -57,14 +57,15 @@ INPUT_CHECK:
     j INPUT.DEL 	# If del key was pressed
 
     NO_INPUT:
+        la a0, PLYR_STATUS      # Loads Player Status
         li t1, 0        # Loads vertical direction (0 = normal)
         sb t1, 2(a0)    # Stores new direction on PLYR_STATUS
 ######## NAO DESATIVAR ATAQUE AQUI
         sb t1, 5(a0)            
 ######## VER SE VAI ALTERAR AQUI O MOVE_Y        
 	    sh zero, 6(a0)  # Stores new direction on MOVE_X
-#        ret
-       	j END_INPUT_CHECK 
+     #   ret
+        j END_INPUT_CHECK 
 
     INPUT.W:  # Looking Up
         li t1, 1      # Loads vertical direction (1 = up)
@@ -133,11 +134,11 @@ INPUT_CHECK:
 #    lbu a0, 3(a1)
 #    ecall
 #    lbu a0, 4(a1)
-#    ecall
-#    lbu a0, 5(a1)
-#    ecall
-#    la a0, DEBUG
-#    li a7, 4
-#    ecall
+   # ecall
+  #  lbu a0, 5(a1)
+ #   ecall
+#   la a0, DEBUG
+  #  li a7, 4
+  #  ecall
       
 		ret	

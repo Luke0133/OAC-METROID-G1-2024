@@ -247,156 +247,177 @@ RENDER_PLAYER:
 	lbu t4, 2(t0)	# Loads Player's vertical direction (0 = Normal, 1 = Up)
 	lbu t5, 5(t0)	# Loads Player's attacking status (0 - no, 1 - yes)
 	
-	beqz t1, RENDER_PLYR_RIGHT # Checks if player is looking right
-		j RENDER_PLYR_LEFT	   # If player is looking left
+	beqz a0, RENDER_PLAYER_NORMAL # If a0 = 0,  then player will be rendered normally
+		j RENDER_PLAYER_TRAIL     # Otherwise (a0 = 1) render player's trail
 
-	RENDER_PLYR_RIGHT:
-		add t1, t2, t3  # t1 will only be 0 if player isn't moving 
-		beqz t1,RENDER_IDLE_RIGHT # Checks if player is mooving or not
-			j NOT_IDLE_RIGHT	  # If player is moving or not
+	RENDER_PLAYER_NORMAL:
+		beqz t1, RENDER_PLYR_RIGHT # Checks if player is looking right
+			j RENDER_PLYR_LEFT	   # If player is looking left
 
-		RENDER_IDLE_RIGHT:
-			li a3, 20  # Sprite's Widht
-			mv a6, t5	# Idle sprites have their status set to 1 if player is attacking
-			bnez t4, RENDER_IDLE_RIGHT_UP	# If player is looking up
-			# Otherwise, render normal idle 
-				la a0, Samus_Right_Idle # Loads Player's Image Address 
-				li a4, 32  # Sprite's Height
-				j START_RENDER_PLAYER # Start rendering player
-			RENDER_IDLE_RIGHT_UP:
-				addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
-				la a0, Samus_Right_Idle_Up # Loads Player's Image Address 
-				li a4, 38  # Sprite's Height
-				j START_RENDER_PLAYER # Start rendering player
+		RENDER_PLYR_RIGHT:
+			add t1, t2, t3  # t1 will only be 0 if player isn't moving 
+			beqz t1,RENDER_IDLE_RIGHT # Checks if player is mooving or not
+				j NOT_IDLE_RIGHT	  # If player is moving or not
 
-		NOT_IDLE_RIGHT:
-			bnez t3, RENDER_JUMP_RIGHT
-				j NOT_JUMP_RIGHT
-
-			RENDER_JUMP_RIGHT:
-				#### STATUS 0,1 when jumping normally go to STATUS 1 of IDLE RIGHT/ ATK
-				#### STATUS 2 when jumping normally go to STATUS 1 of MOVE RIGHT/ ATK
-				#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP RIGHT
-				# CHECK SPIN JUMP?
-				addi a1,a1, -4 # Offseting sprite's X so that it renders in propper place
-				addi a2,a2, -6 # Offseting sprite's X so that it renders in propper place
-				li a3, 24  # Sprite's Widht
-				li a4, 32  # Sprite's Height
-				mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
-				bnez t4, RENDER_JUMP_RIGHT_UP	# If player is looking up
-				# Otherwise, render normal jump 
-					la a0, Samus_Right_Jump # Loads Player's Image Address 
-					j START_RENDER_PLAYER   # Start rendering player
-				RENDER_JUMP_RIGHT_UP:
-					la a0, Samus_Right_Jump_Up # Loads Player's Image Address 
-					j START_RENDER_PLAYER      # Start rendering player
-
-			NOT_JUMP_RIGHT:
-				beqz t4, RENDER_MOVEMENT_RIGHT
-					j RENDER_MOVEMENT_RIGHT_UP
-
-				RENDER_MOVEMENT_RIGHT:
+			RENDER_IDLE_RIGHT:
+				li a3, 20  # Sprite's Widht
+				mv a6, t5	# Idle sprites have their status set to 1 if player is attacking
+				bnez t4, RENDER_IDLE_RIGHT_UP	# If player is looking up
+				# Otherwise, render normal idle 
+					la a0, Samus_Right_Idle # Loads Player's Image Address 
 					li a4, 32  # Sprite's Height
-					beqz t5, RENDER_MOVEMENT_RIGHT_NORMAL
-						j RENDER_MOVEMENT_RIGHT_ATTACK
-					RENDER_MOVEMENT_RIGHT_NORMAL:
-						la a0, Samus_Right	   # Loads Player's Image Address 
-						li a3, 20              # Sprite's Widht
-						j START_RENDER_PLAYER  # Start rendering player
-					RENDER_MOVEMENT_RIGHT_ATTACK:
-						la a0, Samus_Right_Attack  # Loads Player's Image Address 
-						li a3, 28                  # Sprite's Widht
+					j START_RENDER_PLAYER # Start rendering player
+				RENDER_IDLE_RIGHT_UP:
+					addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
+					la a0, Samus_Right_Idle_Up # Loads Player's Image Address 
+					li a4, 38  # Sprite's Height
+					j START_RENDER_PLAYER # Start rendering player
+
+			NOT_IDLE_RIGHT:
+				bnez t3, RENDER_JUMP_RIGHT
+					j NOT_JUMP_RIGHT
+
+				RENDER_JUMP_RIGHT:
+					#### STATUS 0,1 when jumping normally go to STATUS 1 of IDLE RIGHT/ ATK
+					#### STATUS 2 when jumping normally go to STATUS 1 of MOVE RIGHT/ ATK
+					#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP RIGHT
+					# CHECK SPIN JUMP?
+					addi a1,a1, -4 # Offseting sprite's X so that it renders in propper place
+					addi a2,a2, -6 # Offseting sprite's X so that it renders in propper place
+					li a3, 24  # Sprite's Widht
+					li a4, 32  # Sprite's Height
+					mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
+					bnez t4, RENDER_JUMP_RIGHT_UP	# If player is looking up
+					# Otherwise, render normal jump 
+						la a0, Samus_Right_Jump # Loads Player's Image Address 
+						j START_RENDER_PLAYER   # Start rendering player
+					RENDER_JUMP_RIGHT_UP:
+						la a0, Samus_Right_Jump_Up # Loads Player's Image Address 
 						j START_RENDER_PLAYER      # Start rendering player
 
-				RENDER_MOVEMENT_RIGHT_UP:
+				NOT_JUMP_RIGHT:
+					beqz t4, RENDER_MOVEMENT_RIGHT
+						j RENDER_MOVEMENT_RIGHT_UP
+
+					RENDER_MOVEMENT_RIGHT:
+						li a4, 32  # Sprite's Height
+						beqz t5, RENDER_MOVEMENT_RIGHT_NORMAL
+							j RENDER_MOVEMENT_RIGHT_ATTACK
+						RENDER_MOVEMENT_RIGHT_NORMAL:
+							la a0, Samus_Right	   # Loads Player's Image Address 
+							li a3, 20              # Sprite's Widht
+							j START_RENDER_PLAYER  # Start rendering player
+						RENDER_MOVEMENT_RIGHT_ATTACK:
+							la a0, Samus_Right_Attack  # Loads Player's Image Address 
+							li a3, 28                  # Sprite's Widht
+							j START_RENDER_PLAYER      # Start rendering player
+
+					RENDER_MOVEMENT_RIGHT_UP:
+						addi a2,a2, -6 # Offseting sprite's X so that it renders in propper place
+						li a3, 20      # Sprite's Widht
+						li a4, 38      # Sprite's Height
+						beqz t5, RENDER_MOVEMENT_RIGHT_UP_NORMAL
+							j RENDER_MOVEMENT_RIGHT_UP_ATTACK
+						RENDER_MOVEMENT_RIGHT_UP_NORMAL:
+							la a0, Samus_Right_Up  # Loads Player's Image Address
+							j START_RENDER_PLAYER  # Start rendering player
+						RENDER_MOVEMENT_RIGHT_UP_ATTACK:
+							la a0, Samus_Right_Up_Attack  # Loads Player's Image Address
+							j START_RENDER_PLAYER         # Start rendering player
+
+		RENDER_PLYR_LEFT:
+			add t1, t2, t3  # t1 will only be 0 if player isn't moving 
+			beqz t1,RENDER_IDLE_LEFT # Checks if player is mooving or not
+				j NOT_IDLE_LEFT	  # If player is moving or not
+
+			RENDER_IDLE_LEFT:
+				li a3, 20  # Sprite's Widht
+				mv a6, t5	# Idle sprites have their status set to 1 if player is attacking
+				bnez t4, RENDER_IDLE_LEFT_UP	# If player is looking up
+				# Otherwise, render normal idle 
+					la a0, Samus_Left_Idle # Loads Player's Image Address 
+					li a4, 32  # Sprite's Height
+					j START_RENDER_PLAYER # Start rendering player
+				RENDER_IDLE_LEFT_UP:
+					addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
+					la a0, Samus_Left_Idle_Up # Loads Player's Image Address 
+					li a4, 38  # Sprite's Height
+					j START_RENDER_PLAYER # Start rendering player
+
+			NOT_IDLE_LEFT:
+				bnez t3, RENDER_JUMP_LEFT
+					j NOT_JUMP_LEFT
+
+				RENDER_JUMP_LEFT:
+					#### STATUS 0,1 when jumping normally go to STATUS 1 of IDLE LEFT/ ATK
+					#### STATUS 2 when jumping normally go to STATUS 1 of MOVE LEFT/ ATK
+					#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP LEFT
+					# CHECK SPIN JUMP?
 					addi a2,a2, -6 # Offseting sprite's X so that it renders in propper place
-					li a3, 20      # Sprite's Widht
-					li a4, 38      # Sprite's Height
-					beqz t5, RENDER_MOVEMENT_RIGHT_UP_NORMAL
-						j RENDER_MOVEMENT_RIGHT_UP_ATTACK
-					RENDER_MOVEMENT_RIGHT_UP_NORMAL:
-						la a0, Samus_Right_Up  # Loads Player's Image Address
-						j START_RENDER_PLAYER  # Start rendering player
-					RENDER_MOVEMENT_RIGHT_UP_ATTACK:
-						la a0, Samus_Right_Up_Attack  # Loads Player's Image Address
-						j START_RENDER_PLAYER         # Start rendering player
-
-	RENDER_PLYR_LEFT:
-		add t1, t2, t3  # t1 will only be 0 if player isn't moving 
-		beqz t1,RENDER_IDLE_LEFT # Checks if player is mooving or not
-			j NOT_IDLE_LEFT	  # If player is moving or not
-
-		RENDER_IDLE_LEFT:
-			li a3, 20  # Sprite's Widht
-			mv a6, t5	# Idle sprites have their status set to 1 if player is attacking
-			bnez t4, RENDER_IDLE_LEFT_UP	# If player is looking up
-			# Otherwise, render normal idle 
-				la a0, Samus_Left_Idle # Loads Player's Image Address 
-				li a4, 32  # Sprite's Height
-				j START_RENDER_PLAYER # Start rendering player
-			RENDER_IDLE_LEFT_UP:
-				addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
-				la a0, Samus_Left_Idle_Up # Loads Player's Image Address 
-				li a4, 38  # Sprite's Height
-				j START_RENDER_PLAYER # Start rendering player
-
-		NOT_IDLE_LEFT:
-			bnez t3, RENDER_JUMP_LEFT
-				j NOT_JUMP_LEFT
-
-			RENDER_JUMP_LEFT:
-				#### STATUS 0,1 when jumping normally go to STATUS 1 of IDLE LEFT/ ATK
-				#### STATUS 2 when jumping normally go to STATUS 1 of MOVE LEFT/ ATK
-				#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP LEFT
-				# CHECK SPIN JUMP?
-				addi a1,a1, -4 # Offseting sprite's X so that it renders in propper place
-				addi a2,a2, -6 # Offseting sprite's X so that it renders in propper place
-				li a3, 24  # Sprite's Widht
-				li a4, 32  # Sprite's Height
-				mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
-				bnez t4, RENDER_JUMP_LEFT_UP	# If player is looking up
-				# Otherwise, render normal jump 
-					la a0, Samus_Left_Jump # Loads Player's Image Address 
-					j START_RENDER_PLAYER   # Start rendering player
-				RENDER_JUMP_LEFT_UP:
-					la a0, Samus_Left_Jump_Up # Loads Player's Image Address 
-					j START_RENDER_PLAYER      # Start rendering player
-
-			NOT_JUMP_LEFT:
-				beqz t4, RENDER_MOVEMENT_LEFT
-					j RENDER_MOVEMENT_LEFT_UP
-
-				RENDER_MOVEMENT_LEFT:
-					addi a1,a1, -8 # Offseting sprite's X so that it renders in propper place
-					li a4, 32      # Sprite's Height
-					beqz t5, RENDER_MOVEMENT_LEFT_NORMAL
-						j RENDER_MOVEMENT_LEFT_ATTACK
-					RENDER_MOVEMENT_LEFT_NORMAL:
-						la a0, Samus_Left	   # Loads Player's Image Address 
-						li a3, 28              # Sprite's Widht
-						j START_RENDER_PLAYER  # Start rendering player
-					RENDER_MOVEMENT_LEFT_ATTACK:
-						la a0, Samus_Left_Attack  # Loads Player's Image Address 
-						li a3, 28                  # Sprite's Widht
+					li a3, 24  # Sprite's Widht
+					li a4, 32  # Sprite's Height
+					mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
+					bnez t4, RENDER_JUMP_LEFT_UP	# If player is looking up
+					# Otherwise, render normal jump 
+						la a0, Samus_Left_Jump # Loads Player's Image Address 
+						j START_RENDER_PLAYER   # Start rendering player
+					RENDER_JUMP_LEFT_UP:
+						la a0, Samus_Left_Jump_Up # Loads Player's Image Address 
 						j START_RENDER_PLAYER      # Start rendering player
 
-				RENDER_MOVEMENT_LEFT_UP:
-					addi a2,a2, -6 # Offseting sprite's X so that it renders in propper place
-					li a3, 20      # Sprite's Widht
-					li a4, 38      # Sprite's Height
-					beqz t5, RENDER_MOVEMENT_LEFT_UP_NORMAL
-						j RENDER_MOVEMENT_LEFT_UP_ATTACK
-					RENDER_MOVEMENT_LEFT_UP_NORMAL:
-						la a0, Samus_Left_Up  # Loads Player's Image Address
-						j START_RENDER_PLAYER  # Start rendering player
-					RENDER_MOVEMENT_LEFT_UP_ATTACK:
-						la a0, Samus_Left_Up_Attack  # Loads Player's Image Address
-						j START_RENDER_PLAYER         # Start rendering player
+				NOT_JUMP_LEFT:
+					beqz t4, RENDER_MOVEMENT_LEFT
+						j RENDER_MOVEMENT_LEFT_UP
+
+					RENDER_MOVEMENT_LEFT:
+						addi a1,a1, -8 # Offseting sprite's X so that it renders in propper place
+						li a4, 32      # Sprite's Height
+						beqz t5, RENDER_MOVEMENT_LEFT_NORMAL
+							j RENDER_MOVEMENT_LEFT_ATTACK
+						RENDER_MOVEMENT_LEFT_NORMAL:
+							la a0, Samus_Left	   # Loads Player's Image Address 
+							li a3, 28              # Sprite's Widht
+							j START_RENDER_PLAYER  # Start rendering player
+						RENDER_MOVEMENT_LEFT_ATTACK:
+							la a0, Samus_Left_Attack  # Loads Player's Image Address 
+							li a3, 28                  # Sprite's Widht
+							j START_RENDER_PLAYER      # Start rendering player
+
+					RENDER_MOVEMENT_LEFT_UP:
+						addi a2,a2, -6 # Offseting sprite's X so that it renders in propper place
+						li a3, 20      # Sprite's Widht
+						li a4, 38      # Sprite's Height
+						beqz t5, RENDER_MOVEMENT_LEFT_UP_NORMAL
+							j RENDER_MOVEMENT_LEFT_UP_ATTACK
+						RENDER_MOVEMENT_LEFT_UP_NORMAL:
+							la a0, Samus_Left_Up  # Loads Player's Image Address
+							j START_RENDER_PLAYER  # Start rendering player
+						RENDER_MOVEMENT_LEFT_UP_ATTACK:
+							la a0, Samus_Left_Up_Attack  # Loads Player's Image Address
+							j START_RENDER_PLAYER         # Start rendering player
+
+		START_RENDER_PLAYER:
+			mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
+			call RENDER	# Calls RENDER procedure
+			mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
+			ret			# End of procedure
+	
+	RENDER_PLAYER_TRAIL:
+		xori a5,s0,1	# Gets oposite frame
+		li a6, 3	# Width (Number of Tiles) = 2
+		li a7, 3	# Height (Number of Tiles) = 2
+
+		la t0, PLYR_MATRIX  # Loads PLYR_MATRIX address
+		lbu t3, 1(t0) # Loads Player's old X related to matrix (Starting X for rendering (top left, related to Matrix))
+		
+		lbu t2, 3(t0) # Loads Player's old Y related to matrix (Starting Y for rendering (top left, related to Matrix))
+
+addi t3,t3,-1
+addi t2,t2,-1
 
 
-	START_RENDER_PLAYER:
 		mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
-		call RENDER	# Calls RENDER procedure
+		call SCENE_RENDER	# Calls SCENE_RENDER procedure
 		mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
 		ret			# End of procedure
 
