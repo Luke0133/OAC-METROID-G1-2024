@@ -6,4 +6,4 @@
 .include "SYSTEMv21.s"
 .include "map_op.s"
 #.include "colisions.s"
-#.include "sprite_op.s"
+.include "sprite_op.s"

@@ -61,7 +61,7 @@ GAME_LOOP:
 
 	call MAP_MOVE_RENDER
 	
-
+	call UPDATE_STATUS
 
 	
 ######################
