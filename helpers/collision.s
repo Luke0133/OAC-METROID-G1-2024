@@ -35,12 +35,12 @@ CHECK_HORIZONTAL_COLLISION:
 
     add t3,t3,t5 # t3 = Map address on correct X and Y
     
-    bnez a0, CHECK_X_DIRECTION # MOVE_X != 0 ? CHECK_X_DIRECTION : END
+    lb t0, 0(a0) # Loads MOVE_X to a0
+    bnez t0, CHECK_X_DIRECTION # MOVE_X != 0 ? CHECK_X_DIRECTION : END
     j END_HORIZONTAL_COLLISION 
     
     CHECK_X_DIRECTION:
-        li t5,1 # t5 = 0 means it's a horizontal check 
-        lb t0, 0(a0) # Loads MOVE_X to a0   
+        li t5,1 # t5 = 0 means it's a horizontal check   
         blt t0, zero, CHECK_X_LEFT # t0 < 0 ? CHECK_X_LEFT : CHECK_X_RIGHT
         j CHECK_X_RIGHT
         
@@ -70,6 +70,46 @@ CHECK_VERTICAL_COLLISION:
     lbu t1, 10(a3) # t1 = PLYR_MATRIX Y
     lbu t2, 7(a3) # t2 = PLYR_Y OFFSET
 
+    lbu t4,1(a2) # Loads matrix width
+    addi t3,a2,3 # start of matrix
+    lbu t5, 10(a3) # t5 = PLYR_MATRIX Y
+    mul t5,t5,t4 # PLYR_MATRIX Y * MATRIX WIDTH
+    add t5,t1,t5 # t5 = PLYR_MATRIX X +  PLYR_MATRIX Y * MATRIX WIDTH  
+
+    add t3,t3,t5 # t3 = Map address on correct X and Y
+    
+    lb t0, 0(a0) # Loads MOVE_Y to t0  
+    bnez t0, CHECK_Y_DIRECTION # MOVE_Y != 0 ? CHECK_X_DIRECTION : END
+    # Checks footing
+        
+    j END_VERTICAL_COLLISION
+    
+    CHECK_Y_DIRECTION:
+        li t5,2 # t5 = 2 ? Vertical
+         
+        blt t0, zero, CHECK_Y_UP # t0 < 0 ? CHECK_Y_UP : CHECK_Y_DOWN
+        j CHECK_Y_DOWN
+        
+        CHECK_Y_UP:
+            beqz t2 CONTINUE_CHECK_Y_UP # offset = 8 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
+            j END_VERTICAL_COLLISION
+            
+            CONTINUE_CHECK_Y_UP:
+                j CHECK_MAP_COLLISION
+        
+        CHECK_Y_DOWN:
+            li t0, 4 # t0 = 8 offset pixels 
+            beq t2, t0, CONTINUE_CHECK_Y_DOWN # offset = 0 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
+            j END_VERTICAL_COLLISION
+            
+            CONTINUE_CHECK_Y_DOWN:
+                addi t3,t3, 1 # Looks to the tile on the right of player's current tile
+                j CHECK_MAP_COLLISION
+    
+
+    END_VERTICAL_COLLISION:
+        li a0,1
+        ret 
 
 ###################    CHECK MAP COLLISION    ###################    
 #   Effectivelly checks the collision by checking which is the      #

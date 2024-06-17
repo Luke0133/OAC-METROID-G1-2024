@@ -290,7 +290,7 @@ RENDER_PLAYER:
 					#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP RIGHT
 					# CHECK SPIN JUMP?
 					addi a1,a1, -4 # Offseting sprite's X so that it renders in propper place
-					addi a2,a2, -6 # Offseting sprite's X so that it renders in propper place
+					addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
 					li a3, 24  # Sprite's Widht
 					li a4, 32  # Sprite's Height
 					mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
