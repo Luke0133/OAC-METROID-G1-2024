@@ -42,12 +42,10 @@ PHYSICS:
         lbu a7, 8(a3)	# Loads Player's X on Matrix
         sb a7, 9(a3)	# Stores Plater's X on Matrix on the Old X
         
-        li s10, 0
         bge a6,zero,SKIP_LEFT_X
        	# If a6 < 0, Player is moving to the left tile
         addi a7, a7, -1		  # Player's X on matrix -= 1 (goes to the left)
         addi a6,a6,tile_size  # Offset gets corrected (relative to new X on matrix coordinate)
-        li s10, -1
         
         SKIP_LEFT_X:
             li t3, tile_size
@@ -55,7 +53,6 @@ PHYSICS:
             # If a6 >= 16, Player is moving to the right tile
             addi a7,a7, 1	 # Player's X on matrix += 1 (goes to the right)
             sub a6,a6,t3	 # Offset gets corrected (relative to new X on matrix coordinate)
-            li s10, 1
         SKIP_RIGHT_X:
     
     #### debugging ####
@@ -78,22 +75,27 @@ PHYSICS:
         call CHECK_HORIZONTAL_COLLISION
         
         mv ra, s11
-        mv t0,a0
-        mv t1,a7   
-        mv a0, a4
-        li a7,1
-        ecall
+#        mv t0,a0
+#        mv t1,a7   
+#        mv a0, a4
+#        li a7,1
+#        ecall
         
-        la a0, DEBUG
-        li a7, 4
-        ecall
+#        la a0, DEBUG
+#        li a7, 4
+#        ecall
         
-        mv a0,t0
-        mv a7,t1 
+#        mv a0,t0
+#        mv a7,t1 
         # After checking collision
         
+        lh t2, 0(a3)    # Loads Player's Current X
+        
 #################
-        bnez a4, CAN_MOVE_X 
+        bnez a0, CAN_MOVE_X 
+            mv t5,t2
+            la a0, MOVE_X	
+            sb zero, 0(a0)	       
             j Fixed_X_Map
         CAN_MOVE_X:
 ###############        
@@ -104,7 +106,6 @@ PHYSICS:
         sb a6, 6(a3)    # Stores new X offset
         sb a7, 8(a3)    # Stores new X coordinate on matrix
 
-        lh t2, 0(a3)    # Loads Player's Current X
         add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
     
         lbu t0, 0(a2)   # loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
@@ -144,11 +145,29 @@ PHYSICS:
 
             sh t2,2(a3)    # Stores player's original X on old X related to screen
     
-            lbu t0, 6(a1)  # Loads Map X postition on Matrix
-            add t0,t0,s10  # adds to the X -1, 0 or 1 (moves map horizontally)
-            sb t0, 6(a1)   # Stores Map X postition on Matrix
+            # Updating map's X offset
+            lbu a6, 8(a1)  # Loads map's X offset
+            add a6,a6,a4  # Adds the X Movement to the map's Offset
+            li t1,0
+            bge a6, zero, NO_X_OFFSET_NEGATIVE_CORRECTION
+                li t1, -1
+                addi a6,a6,tile_size # Corrects negative offset by adding 16
+                j NO_X_OFFSET_CORRECTION
+            NO_X_OFFSET_NEGATIVE_CORRECTION:
+            li t0, tile_size
+            blt a6,t0, NO_X_OFFSET_CORRECTION
+                li t1,1
+                sub a6,a6,t0 # Corrects values that surpass 16 by subtracting 16 from them
+            NO_X_OFFSET_CORRECTION:
             sb a6, 8(a1)   # Stores Map new X offset that is equal to player's X offset
             
+            lbu t0, 6(a1)  # Loads Map X postition on Matrix
+            add t0,t0,t1  # adds to the X -1, 0 or 1 (moves map horizontally)
+            sb t0, 6(a1)   # Stores Map X postition on Matrix
+
+
+
+
             j CHECK_MOVE_Y
       
       

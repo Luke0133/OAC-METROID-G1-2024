@@ -78,10 +78,10 @@ SETUP:
         
         lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
         lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
-
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map	
+        
         la t0, PLYR_POS # Loads Player Position
-        lbu a3, 6(t0)	# Loads player's X offset
-        li a4, 0		# Y offset (0, 4, 8, 12)	
         li a5, 0		# Frame = 0
         li a6, m_screen_width	# Screen Width = 20
         li a7, m_screen_height	# Screen Height = 15
@@ -93,10 +93,10 @@ SETUP:
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
         lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map
 
         la t0, PLYR_POS # Loads Player Position
-        lbu a3, 6(t0)	# Loads player's X offset
-        li a4, 0		# Y offset (0, 4, 8, 12)	
         li a5, 1		# Frame = 0
         li a6, m_screen_width	# Screen Width = 20
         li a7, m_screen_height	# Screen Height = 15

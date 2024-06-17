@@ -23,7 +23,7 @@ MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render once, 2 - render 
 PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
 PLYR_POS: .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
 		  .byte 160, 0,   # Stores Player's current and old top left Y respectively, both related to the screen 
-		        8, 0 # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+		        0, 0 # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 
 PLYR_MATRIX: .byte 33, 0, 10, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)

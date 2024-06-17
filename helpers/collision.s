@@ -8,7 +8,7 @@
 #   address (load address of CURRENT_MAP, then load word from	# 
 #      CURRENT_MAP: this will be the current map's address)	    #
 #################################################################
-#     -----------           argument registers           -----------    #
+#     -----------     DONT USE THESE registers           -----------    #
 #	a0 = MOVE_X/MOVE_Y address (located on main.s)		#
 #	a1 = CURRENT_MAP address (located on main.s)		#
 #	a2 = current map's address (located on matrix.data)	#
@@ -24,7 +24,6 @@
 
 
 CHECK_HORIZONTAL_COLLISION:
-    li a4, 1
     lbu t1, 8(a3) # t1 = PLYR_MATRIX X
     lbu t2, 6(a3) # t2 = PLYR_X OFFSET
     
@@ -32,15 +31,15 @@ CHECK_HORIZONTAL_COLLISION:
     addi t3,a2,3 # start of matrix
     lbu t5, 10(a3) # t5 = PLYR_MATRIX Y
     mul t5,t5,t4 # PLYR_MATRIX Y * MATRIX WIDTH
+    add t5,t1,t5 # t5 = PLYR_MATRIX X +  PLYR_MATRIX Y * MATRIX WIDTH  
 
-    add t3,t3,t5 # t3 = start of mtrix +  PLYR_MATRIX Y * MATRIX WIDTH
-    add t3,t3,t1 # t3 = Map address on correct X and Y
+    add t3,t3,t5 # t3 = Map address on correct X and Y
     
     bnez a0, CHECK_X_DIRECTION # MOVE_X != 0 ? CHECK_X_DIRECTION : END
     j END_HORIZONTAL_COLLISION 
     
-    li t5,0 # t5 = 0 means it's a horizontal check 
     CHECK_X_DIRECTION:
+        li t5,1 # t5 = 0 means it's a horizontal check 
         lb t0, 0(a0) # Loads MOVE_X to a0   
         blt t0, zero, CHECK_X_LEFT # t0 < 0 ? CHECK_X_LEFT : CHECK_X_RIGHT
         j CHECK_X_RIGHT
@@ -54,7 +53,8 @@ CHECK_HORIZONTAL_COLLISION:
                 j CHECK_MAP_COLLISION
         
         CHECK_X_RIGHT:
-            beqz t2, CONTINUE_CHECK_X_RIGHT # offset = 8 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
+            li t0, 4 # t0 = 8 offset pixels 
+            beq t2, t0, CONTINUE_CHECK_X_RIGHT # offset = 0 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
             j END_HORIZONTAL_COLLISION 
             
             CONTINUE_CHECK_X_RIGHT:
@@ -63,6 +63,7 @@ CHECK_HORIZONTAL_COLLISION:
     
 
     END_HORIZONTAL_COLLISION:
+        li a0,1
         ret 
         
 CHECK_VERTICAL_COLLISION:
@@ -74,7 +75,7 @@ CHECK_VERTICAL_COLLISION:
 #   Effectivelly checks the collision by checking which is the      #
 #   tile from the normalized address given as an argument (t3)      #
 #   arguments: t3, t4, t5 , a3
-#   returns a4 = 0 ? Can't move : Can move                          
+#   returns a0 = 0 ? Can't move : Can move                          
 #   switch (t5):
 #       case 0 : pls stop
 #       case 1 : horizontal 
@@ -85,14 +86,14 @@ CHECK_MAP_COLLISION:
   #  li a4, 1 # Base case: player can move
 
 START_CHECK_MAP_COLLISION:
-    bnez a4, CONTINUE_CHECK_MAP_COLLISION_1
+    bnez a0, CONTINUE_CHECK_MAP_COLLISION_1 # a0 != 0 ? CONTINUE_CHECK_MAP_COLLISION_1 : ret
     ret
     CONTINUE_CHECK_MAP_COLLISION_1:
 
     lbu t1, 0(t3) # Loads normalized map address
 
     bnez t1,COLLISION_NotBackground
-	li a4, 1 # Only option when player can move
+	li a0, 1 # Only option when player can move
     j CONTINUE_CHECK_MAP_COLLISION_2
 	
 	COLLISION_NotBackground:
@@ -131,7 +132,7 @@ START_CHECK_MAP_COLLISION:
 	# j SMTH KILL PLAYER
     
 	COLLISION_NotLavaT:
-    li a4, 0 # Player can't move
+    li a0, 0 # Player can't move
 
     CONTINUE_CHECK_MAP_COLLISION_2:
     lbu t0, 16(a3) # Loads morph ball status
@@ -144,14 +145,31 @@ START_CHECK_MAP_COLLISION:
     
     CONTINUE_CHECK_MAP_COLLISION_4:
     li t0, 1
+            ####### debug ########33
+    mv s2,a7 
+    mv s1,a0
+    mv a0,t5
+    li a7,1
+    ecall
+    la a0, DEBUG
+    li a7, 4
+    ecall
+    mv a0,s1
+    mv a7,s2
+#################   
     bne t0, t5, VERTICAL_COLLISION_CHECK
     
     HORIZONTAL_COLLISON_CHECK:
         add t3,t3,t4 # t3 = map address + matrix width
-        li t5,0
+
+
+
+
+        li t5,0 
         j START_CHECK_MAP_COLLISION
     
     VERTICAL_COLLISION_CHECK:
+
         li t0, 2
         bne t0,t5, CONTINUE_VERTICAL_COLLISION_CHECK
         ret
