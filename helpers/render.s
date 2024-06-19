@@ -223,10 +223,16 @@ RENDER_COLOR:
 #     -----------           argument registers           -----------    #
 #       a0 = 0 - render player sprite; 1 - render player's trail        #	
 #     -----------          temporary registers           -----------    #
-#       t0 =                             #
-#       t1 =                                        #
-#       t2 =                                                #
-#       t3 =                                              # 
+#       t0 =  PLYR STATUS                           #
+#       t1 =  HORIZONTAL DIRECTION                                       #
+#       t2 =  MOVEX                                              #
+#       t3 =  MOVEY                                            # 
+#		t4 =  VERTICAL DIRECTION
+#		t5 =  ATTACKING STATUS
+#
+# 	 ----------------------- description --------------------------
+# 		this procedure is similar to a finite state machine, where samus 
+# 		can be render according to her PLYR_STATUS
 #########################################################################	
 
 RENDER_PLAYER:
@@ -248,72 +254,82 @@ RENDER_PLAYER:
 	lbu t5, 5(t0)	# Loads Player's attacking status (0 - no, 1 - yes)
 	
 	beqz a0, RENDER_PLAYER_NORMAL # If a0 = 0,  then player will be rendered normally
-		j RENDER_PLAYER_TRAIL     # Otherwise (a0 = 1) render player's trail
+	j RENDER_PLAYER_TRAIL     # Otherwise (a0 = 1) render player's trail
 
 	RENDER_PLAYER_NORMAL:
 		beqz t1, RENDER_PLYR_RIGHT # Checks if player is looking right
-			j RENDER_PLYR_LEFT	   # If player is looking left
+		j RENDER_PLYR_LEFT	   # If player is looking left
 
 		RENDER_PLYR_RIGHT:
-			add t1, t2, t3  # t1 will only be 0 if player isn't moving 
+			add t1, t2, t3  # t1 = 0 ? ISN'T MOVING : IS MOVING
 			beqz t1,RENDER_IDLE_RIGHT # Checks if player is mooving or not
-				j NOT_IDLE_RIGHT	  # If player is moving or not
+			j NOT_IDLE_RIGHT	  # If player is moving or not
 
 			RENDER_IDLE_RIGHT:
 				li a3, 20  # Sprite's Widht
 				mv a6, t5	# Idle sprites have their status set to 1 if player is attacking
 				bnez t4, RENDER_IDLE_RIGHT_UP	# If player is looking up
+
 				# Otherwise, render normal idle 
-					la a0, Samus_Right_Idle # Loads Player's Image Address 
-					li a4, 32  # Sprite's Height
-					j START_RENDER_PLAYER # Start rendering player
+				la a0, Samus_Right_Idle # Loads Player's Image Address 
+				li a4, 32  # Sprite's Height
+				j START_RENDER_PLAYER # Start rendering player
+
 				RENDER_IDLE_RIGHT_UP:
-					addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
-					la a0, Samus_Right_Idle_Up # Loads Player's Image Address 
-					li a4, 38  # Sprite's Height
-					j START_RENDER_PLAYER # Start rendering player
+				addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
+				la a0, Samus_Right_Idle_Up # Loads Player's Image Address 
+				li a4, 38  # Sprite's Height
+				j START_RENDER_PLAYER # Start rendering player
 
 			NOT_IDLE_RIGHT:
 				bnez t3, RENDER_JUMP_RIGHT
-					j NOT_JUMP_RIGHT
+				j NOT_JUMP_RIGHT
 
 				RENDER_JUMP_RIGHT:
-				##########
-					li a0, 1
- 					li a7,1
-					ecall
-					la a0, DEBUG
-  					li a7, 4
-  					ecall
+					########## DEBUG #############
+					#li a0, 1
+ 					#li a7,1
+					#ecall
+					#la a0, DEBUG
+  					#li a7, 4
+  					#ecall
+					###############################
+
 					#### STATUS 0,1 when jumping normally go to STATUS 1 of IDLE RIGHT/ ATK
 					#### STATUS 2 when jumping normally go to STATUS 1 of MOVE RIGHT/ ATK
 					#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP RIGHT
+					
 					# CHECK SPIN JUMP?
+					
 					addi a1,a1, -4 # Offseting sprite's X so that it renders in propper place
 					addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
 					li a3, 24  # Sprite's Widht
 					li a4, 32  # Sprite's Height
 					mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
 					bnez t4, RENDER_JUMP_RIGHT_UP	# If player is looking up
+
 					# Otherwise, render normal jump 
 						la a0, Samus_Right_Jump # Loads Player's Image Address 
 						j START_RENDER_PLAYER   # Start rendering player
+
 					RENDER_JUMP_RIGHT_UP:
 						la a0, Samus_Right_Jump_Up # Loads Player's Image Address 
 						j START_RENDER_PLAYER      # Start rendering player
 
 				NOT_JUMP_RIGHT:
 					beqz t4, RENDER_MOVEMENT_RIGHT
-						j RENDER_MOVEMENT_RIGHT_UP
+					j RENDER_MOVEMENT_RIGHT_UP
 
 					RENDER_MOVEMENT_RIGHT:
 						li a4, 32  # Sprite's Height
 						beqz t5, RENDER_MOVEMENT_RIGHT_NORMAL
-							j RENDER_MOVEMENT_RIGHT_ATTACK
+						j RENDER_MOVEMENT_RIGHT_ATTACK
+
 						RENDER_MOVEMENT_RIGHT_NORMAL:
 							la a0, Samus_Right	   # Loads Player's Image Address 
 							li a3, 20              # Sprite's Widht
 							j START_RENDER_PLAYER  # Start rendering player
+
 						RENDER_MOVEMENT_RIGHT_ATTACK:
 							la a0, Samus_Right_Attack  # Loads Player's Image Address 
 							li a3, 28                  # Sprite's Widht
@@ -324,10 +340,12 @@ RENDER_PLAYER:
 						li a3, 20      # Sprite's Widht
 						li a4, 38      # Sprite's Height
 						beqz t5, RENDER_MOVEMENT_RIGHT_UP_NORMAL
-							j RENDER_MOVEMENT_RIGHT_UP_ATTACK
+						j RENDER_MOVEMENT_RIGHT_UP_ATTACK
+
 						RENDER_MOVEMENT_RIGHT_UP_NORMAL:
 							la a0, Samus_Right_Up  # Loads Player's Image Address
 							j START_RENDER_PLAYER  # Start rendering player
+
 						RENDER_MOVEMENT_RIGHT_UP_ATTACK:
 							la a0, Samus_Right_Up_Attack  # Loads Player's Image Address
 							j START_RENDER_PLAYER         # Start rendering player
@@ -335,16 +353,18 @@ RENDER_PLAYER:
 		RENDER_PLYR_LEFT:
 			add t1, t2, t3  # t1 will only be 0 if player isn't moving 
 			beqz t1,RENDER_IDLE_LEFT # Checks if player is mooving or not
-				j NOT_IDLE_LEFT	  # If player is moving or not
+			j NOT_IDLE_LEFT	  # If player is moving or not
 
 			RENDER_IDLE_LEFT:
 				li a3, 20  # Sprite's Widht
 				mv a6, t5	# Idle sprites have their status set to 1 if player is attacking
 				bnez t4, RENDER_IDLE_LEFT_UP	# If player is looking up
+				
 				# Otherwise, render normal idle 
 					la a0, Samus_Left_Idle # Loads Player's Image Address 
 					li a4, 32  # Sprite's Height
 					j START_RENDER_PLAYER # Start rendering player
+				
 				RENDER_IDLE_LEFT_UP:
 					addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
 					la a0, Samus_Left_Idle_Up # Loads Player's Image Address 
@@ -353,38 +373,43 @@ RENDER_PLAYER:
 
 			NOT_IDLE_LEFT:
 				bnez t3, RENDER_JUMP_LEFT
-					j NOT_JUMP_LEFT
+				j NOT_JUMP_LEFT
 
 				RENDER_JUMP_LEFT:
 					#### STATUS 0,1 when jumping normally go to STATUS 1 of IDLE LEFT/ ATK
 					#### STATUS 2 when jumping normally go to STATUS 1 of MOVE LEFT/ ATK
 					#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP LEFT
 					# CHECK SPIN JUMP?
+					
 					addi a2,a2, -4 # Offseting sprite's X so that it renders in propper place
 					li a3, 24  # Sprite's Widht
 					li a4, 32  # Sprite's Height
 					mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
 					bnez t4, RENDER_JUMP_LEFT_UP	# If player is looking up
+					
 					# Otherwise, render normal jump 
-						la a0, Samus_Left_Jump # Loads Player's Image Address 
-						j START_RENDER_PLAYER   # Start rendering player
+					la a0, Samus_Left_Jump # Loads Player's Image Address 
+					j START_RENDER_PLAYER   # Start rendering player
+					
 					RENDER_JUMP_LEFT_UP:
 						la a0, Samus_Left_Jump_Up # Loads Player's Image Address 
 						j START_RENDER_PLAYER      # Start rendering player
 
 				NOT_JUMP_LEFT:
 					beqz t4, RENDER_MOVEMENT_LEFT
-						j RENDER_MOVEMENT_LEFT_UP
+					j RENDER_MOVEMENT_LEFT_UP
 
 					RENDER_MOVEMENT_LEFT:
 						addi a1,a1, -8 # Offseting sprite's X so that it renders in propper place
 						li a4, 32      # Sprite's Height
 						beqz t5, RENDER_MOVEMENT_LEFT_NORMAL
-							j RENDER_MOVEMENT_LEFT_ATTACK
+						j RENDER_MOVEMENT_LEFT_ATTACK
+						
 						RENDER_MOVEMENT_LEFT_NORMAL:
 							la a0, Samus_Left	   # Loads Player's Image Address 
 							li a3, 28              # Sprite's Widht
 							j START_RENDER_PLAYER  # Start rendering player
+						
 						RENDER_MOVEMENT_LEFT_ATTACK:
 							la a0, Samus_Left_Attack  # Loads Player's Image Address 
 							li a3, 28                  # Sprite's Widht
@@ -395,10 +420,12 @@ RENDER_PLAYER:
 						li a3, 20      # Sprite's Widht
 						li a4, 38      # Sprite's Height
 						beqz t5, RENDER_MOVEMENT_LEFT_UP_NORMAL
-							j RENDER_MOVEMENT_LEFT_UP_ATTACK
+						j RENDER_MOVEMENT_LEFT_UP_ATTACK
+						
 						RENDER_MOVEMENT_LEFT_UP_NORMAL:
 							la a0, Samus_Left_Up  # Loads Player's Image Address
 							j START_RENDER_PLAYER  # Start rendering player
+						
 						RENDER_MOVEMENT_LEFT_UP_ATTACK:
 							la a0, Samus_Left_Up_Attack  # Loads Player's Image Address
 							j START_RENDER_PLAYER         # Start rendering player
@@ -419,8 +446,8 @@ RENDER_PLAYER:
 		
 		lbu t2, 3(t0) # Loads Player's old Y related to matrix (Starting Y for rendering (top left, related to Matrix))
 
-addi t3,t3,-1
-addi t2,t2,-1
+		addi t3,t3,-1
+		addi t2,t2,-1
 
 
 		mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
@@ -462,14 +489,7 @@ addi t2,t2,-1
 #       t6 = temporary register for moving info                                         #
 #########################################################################################
 RENDER_MAP:
-## DEBUG
-#	mv t5,a0
-#	li a0, 3000
-#	li a7, 32
-#	ecall
-#	mv a0,t5
-#############################
-	
+
 # Storing Registers on Stack
 	addi sp,sp,-16
 	sw s3,12(sp)
@@ -487,273 +507,314 @@ RENDER_MAP:
 	add s3,t3,a6 	# s3 will be compared with t3 (column counter) to go to next line
 #	addi s3,s3,-1   # sub is necessary (eg.: starts on X = 19, width = 2, ends on X = 21-1 = 20)
 	beqz t3,RENDER_MAP_NoTrailX
-		sub t3,t3,a1	# t3 now is the column counter related to the screen matrix
-		add s3,t3,a6
-		add s0, s0, t3 	# s0 = Matrix Address + Current X on Matrix
-		j RENDER_MAP_GetCurrentY
+	
+	sub t3,t3,a1	# t3 now is the column counter related to the screen matrix
+	add s3,t3,a6
+	add s0, s0, t3 	# s0 = Matrix Address + Current X on Matrix
+	j RENDER_MAP_GetCurrentY
+	
 	RENDER_MAP_NoTrailX:
 	beqz a3, RENDER_MAP_GetCurrentY # If there's no X offset
 	li t0, m_screen_width
 	blt a6,t0 RENDER_MAP_GetCurrentY # If width of rendering area is smaller than the screen's width, ignore
-		addi s3,t0,1	# if rendering a full screen (20 wide) with offset, will need to render 21 tiles
+	addi s3,t0,1	# if rendering a full screen (20 wide) with offset, will need to render 21 tiles
 		
 	RENDER_MAP_GetCurrentY:
 	add s2,t2,a7 	# s2 will be compared with t2 (column counter) to go to next line 
 #	addi s2,s2,-1   # sub is necessary (eg.: starts on Y = 6, height = 3, ends on X = 9-1 = 8)
 	beqz t2,RENDER_MAP_NoTrailY
-		sub t2,t2,a2	# t2 now is the column counter related to the screen matrix
-		add s2,t2,a7
-		mul t0,s1,t2    # t0 = Matrix Width x Current Y on Matrix
-		add s0, s0, t0	# s0 = Address to current X and Y on Matrix
-		j RENDER_MAP_LOOP
+	
+	sub t2,t2,a2	# t2 now is the column counter related to the screen matrix
+	add s2,t2,a7
+	mul t0,s1,t2    # t0 = Matrix Width x Current Y on Matrix
+	add s0, s0, t0	# s0 = Address to current X and Y on Matrix
+	j RENDER_MAP_LOOP
+	
 	RENDER_MAP_NoTrailY:
 	beqz a4, RENDER_MAP_LOOP # If there's an X offset
 	li t0, m_screen_height
 	blt a7,t0 RENDER_MAP_LOOP # If height of rendering area is smaller than the screen's height, ignore
-		addi s2,t0,1	# if rendering a full screen (15 wide) with offset, will need to render 16 tiles
+	addi s2,t0,1	# if rendering a full screen (15 wide) with offset, will need to render 16 tiles
 #	mv t2,zero	# t2 = 0 (Resets line counter)
 #	mv t3,zero	# t3 = 0 (Resets column counter)
 
 	
 	
 RENDER_MAP_LOOP:
-## DEBUG
-#	mv t5,a0
-#	li a0, 500
-#	li a7, 32
-#	ecall
-#	mv a0,t5
-######################
 	lbu t1,0(s0)	# loads byte stored on matrix for checking what is the tile
-	
 	bnez t1,NotBackground
 	j CONTINUE_RENDER_MAP
+
 	NotBackground:
 	li t0,74
 	bne t1,t0, NotBreakBlock
 	la t0, BreakBlock
 	j CONTINUE_RENDER_MAP
+	
 	NotBreakBlock:
 	li t0,126
 	bne t1,t0, NotBush2A
 	la t0, Bush2A
 	j CONTINUE_RENDER_MAP
+
 	NotBush2A:
 	li t0,127
 	bne t1,t0, NotBush2B
 	la t0, Bush2B
 	j CONTINUE_RENDER_MAP
+
 	NotBush2B:
 	li t0,14
 	bne t1,t0, NotDoorLeftTop
 #	# la t0, DoorLeftTop
 	li t1,0
 	j CONTINUE_RENDER_MAP
+
 	NotDoorLeftTop:
 	li t0,12
 	bne t1,t0, NotDoorLeftMiddle
 #	# la t0, DoorLeft
 	li t1,0
 	j CONTINUE_RENDER_MAP
+
 	NotDoorLeftMiddle:
 	li t0,10
 	bne t1,t0, NotDoorLeftBottom
 #	# la t0, DoorLeft
 	li t1,0
 	j CONTINUE_RENDER_MAP
+
 	NotDoorLeftBottom:
 	li t0,6
 	bne t1,t0, NotDoorRightTop
 #	# la t0, DoorRightTop
 	li t1,0
 	j CONTINUE_RENDER_MAP
+
 	NotDoorRightTop:
 	li t0, 4 
 	bne t1,t0, NotDoorRightMiddle
 #	# la t0, DoorRight
 	li t1,0
 	j CONTINUE_RENDER_MAP
+
 	NotDoorRightMiddle:
 	li t0, 2 
 	bne t1,t0, NotDoorRightBottom
 #	# la t0, DoorRight
 	li t1,0
 	j CONTINUE_RENDER_MAP
+
 	NotDoorRightBottom:
 	li t0, 198 
 	bne t1,t0, NotDoorFrame
 	la t0, DoorFrame
 	j CONTINUE_RENDER_MAP
+
 	NotDoorFrame:
 	li t0, 64 
 	bne t1,t0, NotGround1A
 	la t0, Ground1A
 	j CONTINUE_RENDER_MAP
+
 	NotGround1A:
 	li t0, 72 
 	bne t1,t0, NotGround1B
 	la t0, Ground1B
 	j CONTINUE_RENDER_MAP
+
 	NotGround1B:
 	li t0, 80 
 	bne t1,t0, NotGround1C
 	la t0, Ground1C
 	j CONTINUE_RENDER_MAP
+
 	NotGround1C:
 	li t0, 88 
 	bne t1,t0, NotGround1D
 	la t0, Ground1D
 	j CONTINUE_RENDER_MAP
+	
 	NotGround1D:
 	li t0, 98 
 	bne t1,t0, NotGround2A
 	la t0, Ground2A
 	j CONTINUE_RENDER_MAP
+
 	NotGround2A:
 	li t0, 106 
 	bne t1,t0, NotGround2B
 	la t0, Ground2B
 	j CONTINUE_RENDER_MAP
+
 	NotGround2B:
 	li t0, 114 
 	bne t1,t0, NotGround2C
 	la t0, Ground2C
 	j CONTINUE_RENDER_MAP
+
 	NotGround2C:
 	li t0, 84 
 	bne t1,t0, NotGround3A
 	la t0, Ground3A
 	j CONTINUE_RENDER_MAP
+
 	NotGround3A: 
 	li t0, 92 
 	bne t1,t0, NotGround3B
 	la t0, Ground3B
 	j CONTINUE_RENDER_MAP
+
 	NotGround3B:
 	li t0, 100 
 	bne t1,t0, NotGround3C
 	la t0, Ground3C
 	j CONTINUE_RENDER_MAP
+
 	NotGround3C:
 	li t0, 128 
 	bne t1,t0, NotItemHolderA
 	la t0, ItemHolderA
 	j CONTINUE_RENDER_MAP
+
 	NotItemHolderA:
 	li t0, 136 
 	bne t1,t0, NotItemHolderB
 	la t0, ItemHolderB
 	j CONTINUE_RENDER_MAP
+
 	NotItemHolderB:
 	li t0, 144 
 	bne t1,t0, NotItemHolderC
 	la t0, ItemHolderC
 	j CONTINUE_RENDER_MAP
+
 	NotItemHolderC:
 	li t0, 152 
 	bne t1,t0, NotItemHolderD
 	la t0, ItemHolderD
 	j CONTINUE_RENDER_MAP
+
 	NotItemHolderD:
 	li t0, 160 
 	bne t1,t0, NotItemHolderE
 	la t0, ItemHolderE
 	j CONTINUE_RENDER_MAP
+
 	NotItemHolderE:
 	li t0, 168 
 	bne t1,t0, NotItemHolderF
 	la t0, ItemHolderF
 	j CONTINUE_RENDER_MAP
+
 	NotItemHolderF:
 	li t0, 176
 	bne t1,t0, NotItemHolderG
 	la t0, ItemHolderG
 	j CONTINUE_RENDER_MAP
+
 	NotItemHolderG:
 	li t0, 94
 	bne t1,t0, NotLavaB
 	la t0, LavaB
 	j CONTINUE_RENDER_MAP
+
 	NotLavaB:
 	li t0, 102
 	bne t1,t0, NotLavaT
 	la t0, LavaT
 	j CONTINUE_RENDER_MAP
+
 	NotLavaT:
 	li t0, 90
 	bne t1,t0, NotPipe1H
 	la t0, Pipe1H
 	j CONTINUE_RENDER_MAP
+
 	NotPipe1H:
 	li t0, 82
 	bne t1,t0, NotPipe1V
 	la t0, Pipe1V
 	j CONTINUE_RENDER_MAP
+
 	NotPipe1V:
 	li t0, 68
 	bne t1,t0, NotPipe2H
 	la t0, Pipe2H
 	j CONTINUE_RENDER_MAP
+
 	NotPipe2H:
 	li t0, 122
 	bne t1,t0, NotPipe2V
 	la t0, Pipe2V
 	j CONTINUE_RENDER_MAP
+
 	NotPipe2V:
 	li t0, 118
 	bne t1,t0, NotPipe3V2
 	la t0, Pipe3V2
 	j CONTINUE_RENDER_MAP
+
 	NotPipe3V2:
 	li t0, 110
 	bne t1,t0, NotPipe3V
 	la t0, Pipe3V
 	j CONTINUE_RENDER_MAP
+
 	NotPipe3V:
 	li t0, 96
 	bne t1,t0, NotSlide1L
 	la t0, Slide1L
 	j CONTINUE_RENDER_MAP
+
 	NotSlide1L:
 	li t0, 104
 	bne t1,t0, NotSlide1R
 	la t0, Slide1R
 	j CONTINUE_RENDER_MAP
+
 	NotSlide1R:
 	li t0, 78
 	bne t1,t0, NotSpikeL
 	la t0, SpikeL
 	j CONTINUE_RENDER_MAP
+
 	NotSpikeL:
 	li t0, 86
 	bne t1,t0, NotSpikeR
 	la t0, SpikeR
 	j CONTINUE_RENDER_MAP
+
 	NotSpikeR:
 	li t0, 120
 	bne t1,t0, NotTile1A
 	la t0, Tile1A
 	j CONTINUE_RENDER_MAP
+
 	NotTile1A:
 	li t0, 66
 	bne t1,t0, NotTile1B
 	la t0, Tile1B
 	j CONTINUE_RENDER_MAP
+
 	NotTile1B:
 	li t0, 76
 	bne t1,t0, NotTile2A
 	la t0, Tile2A
 	j CONTINUE_RENDER_MAP
+
 	NotTile2A:
 	li t0, 116
 	bne t1,t0, NotTile3A
 	la t0, Tile3A
 	j CONTINUE_RENDER_MAP
+
 	NotTile3A:
 	li t0, 124
 	bne t1,t0, NotTile3B
 	la t0, Tile3B
 	j CONTINUE_RENDER_MAP
+
 	NotTile3B:
 	li t0, 70 
 	bne t1,t0, NoTile
@@ -763,7 +824,7 @@ RENDER_MAP_LOOP:
 	li t1,0 # If no valid tile is detected, the background color will be applied
 	 
 	CONTINUE_RENDER_MAP:
-# Storing Registers on Stack
+	# Storing Registers on Stack
 	addi sp,sp,-52
 	sw s3,48(sp)
 	sw s2,44(sp)
@@ -778,9 +839,9 @@ RENDER_MAP_LOOP:
 	sw t2,8(sp)
 	sw t3,4(sp)
 	sw ra,0(sp)
-# End of Stack Operations
-	mv a0, t0 # Moves t0 (storing tile address) to a0
 	
+	# End of Stack Operations
+	mv a0, t0 # Moves t0 (storing tile address) to a0
 	# Defining rendering coordinates
 	li t0, tile_size 	# Tile size = 16
 	mul t4,t3,t0		# t4 gets the X value relative to the screen (t3 (current X) * tile size)
@@ -799,9 +860,11 @@ RENDER_MAP_LOOP:
 		li t6,2			 # t6 = 2: Cropping rightmost tile
 		NoX_Offset:
 		j START_RENDER_MAP	 # start rendering process
+	
 	Check_Y_Offset:
 	bnez a4, Y_Offset		 # Or a Y offset, go to offset operations
 	j START_RENDER_MAP
+	
 	Y_Offset:
 		bnez t2, TryBottomOffset # If t3 (current colum, i.e., current X) = 0, it's on the top border
 		li t6,1			 # t6 = 1: Cropping uppermost tile

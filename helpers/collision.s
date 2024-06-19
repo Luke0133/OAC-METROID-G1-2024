@@ -28,7 +28,7 @@ CHECK_HORIZONTAL_COLLISION:
     lbu t2, 6(a3) # t2 = PLYR_X OFFSET
     
     lbu t4,1(a2) # Loads matrix width
-    addi t3,a2,3 # start of matrix
+    addi t3,a2,3 # Start of matrix
     lbu t5, 10(a3) # t5 = PLYR_MATRIX Y
     mul t5,t5,t4 # PLYR_MATRIX Y * MATRIX WIDTH
     add t5,t1,t5 # t5 = PLYR_MATRIX X +  PLYR_MATRIX Y * MATRIX WIDTH  
@@ -115,6 +115,7 @@ CHECK_VERTICAL_COLLISION:
 #   Effectivelly checks the collision by checking which is the      #
 #   tile from the normalized address given as an argument (t3)      #
 #   arguments: t3, t4, t5 , a3
+#   t0 works as an 'assistent register'
 #   returns a0 = 0 ? Can't move : Can move                          
 #   switch (t5):
 #       case 0 : pls stop
@@ -132,7 +133,7 @@ START_CHECK_MAP_COLLISION:
 
     lbu t1, 0(t3) # Loads normalized map address
 
-    bnez t1,COLLISION_NotBackground
+    bnez t1,COLLISION_NotBackground # if it is a dark tile where can move
 	li a0, 1 # Only option when player can move
     j CONTINUE_CHECK_MAP_COLLISION_2
 	
@@ -176,50 +177,51 @@ START_CHECK_MAP_COLLISION:
 
     CONTINUE_CHECK_MAP_COLLISION_2:
     lbu t0, 16(a3) # Loads morph ball status
-    beqz t0, CONTINUE_CHECK_MAP_COLLISION_3
+    beqz t0, CONTINUE_CHECK_MAP_COLLISION_3 # t0 = 0 != ball ? CONTINUE_CHECKING : BALL MODE
     ret
     
     CONTINUE_CHECK_MAP_COLLISION_3:
-    bnez t5, CONTINUE_CHECK_MAP_COLLISION_4
+    bnez t5, CONTINUE_CHECK_MAP_COLLISION_4 # t5 != 0 ? CONTINUE_CHECK_MAP_COLLISION_4 : RET
     ret
     
     CONTINUE_CHECK_MAP_COLLISION_4:
     li t0, 1
-            ####### debug ########33
-    mv s2,a7 
-    mv s1,a0
-    mv a0,t5
-    li a7,1
-    ecall
-    la a0, DEBUG
-    li a7, 4
-    ecall
-    mv a0,s1
-    mv a7,s2
-#################   
-    bne t0, t5, VERTICAL_COLLISION_CHECK
+    
+    ######## debug ########
+    #mv s2,a7 
+    #mv s1,a0
+    #mv a0,t5
+    #li a7,1
+    #ecall
+    #la a0, DEBUG
+    #li a7, 4
+    #ecall
+    #mv a0,s1
+    #mv a7,s2
+    #################
+
+    bne t0, t5, VERTICAL_COLLISION_CHECK # 1 != t5 ? VERTICAL_COLLISION_CHECK : HORIZONTAL_COLLISON_CHECK
     
     HORIZONTAL_COLLISON_CHECK:
         add t3,t3,t4 # t3 = map address + matrix width
-
-
-
-
         li t5,0 
         j START_CHECK_MAP_COLLISION
     
     VERTICAL_COLLISION_CHECK:
-
         li t0, 2
-        bne t0,t5, CONTINUE_VERTICAL_COLLISION_CHECK
+        bne t0,t5, CONTINUE_VERTICAL_COLLISION_CHECK # 2 != t5 ? CONTINUE_VERTICAL_COLLISION_CHECK : ret
         ret
+        
         CONTINUE_VERTICAL_COLLISION_CHECK:
             li t5,0
             lbu t0, 13(a3) # Loads horizontal facing direction
-            beqz t0, VERTICAL_COLLISION_CHECK_RIGHT
+            # 0 = right, 1 = left
+            beqz t0, VERTICAL_COLLISION_CHECK_RIGHT # t0 = 0 ? VERTICAL_COLLISION_CHECK_RIGHT : VERTICAL_COLLISION_CHECK_LEFT
+            
             VERTICAL_COLLISION_CHECK_LEFT:
-                addi t3,t3,-1
+                addi t3,t3,-1 #looks on the tile on the left of player's position
                 j START_CHECK_MAP_COLLISION
+            
             VERTICAL_COLLISION_CHECK_RIGHT:
-                addi t3,t3,1
+                addi t3,t3,1 #looks on the tile on the right of player's position
                 j START_CHECK_MAP_COLLISION
