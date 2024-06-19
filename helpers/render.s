@@ -286,15 +286,6 @@ RENDER_PLAYER:
 				j NOT_JUMP_RIGHT
 
 				RENDER_JUMP_RIGHT:
-					########## DEBUG #############
-					#li a0, 1
- 					#li a7,1
-					#ecall
-					#la a0, DEBUG
-  					#li a7, 4
-  					#ecall
-					###############################
-
 					#### STATUS 0,1 when jumping normally go to STATUS 1 of IDLE RIGHT/ ATK
 					#### STATUS 2 when jumping normally go to STATUS 1 of MOVE RIGHT/ ATK
 					#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP RIGHT
@@ -351,6 +342,7 @@ RENDER_PLAYER:
 							j START_RENDER_PLAYER         # Start rendering player
 
 		RENDER_PLYR_LEFT:
+
 			add t1, t2, t3  # t1 will only be 0 if player isn't moving 
 			beqz t1,RENDER_IDLE_LEFT # Checks if player is mooving or not
 			j NOT_IDLE_LEFT	  # If player is moving or not
@@ -381,11 +373,14 @@ RENDER_PLAYER:
 					#### STATUS 3 when jumping normally go to STATUS 0 (or 1) of JUMP LEFT
 					# CHECK SPIN JUMP?
 					
+
 					addi a2,a2, -4 # Offseting sprite's X so that it renders in propper place
 					li a3, 24  # Sprite's Widht
 					li a4, 32  # Sprite's Height
 					mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
 					bnez t4, RENDER_JUMP_LEFT_UP	# If player is looking up
+					
+					
 					
 					# Otherwise, render normal jump 
 					la a0, Samus_Left_Jump # Loads Player's Image Address 

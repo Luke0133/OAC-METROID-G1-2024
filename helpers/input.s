@@ -9,18 +9,13 @@ INPUT_CHECK:
     j NO_INPUT 		    # otherwise no input was detected 
     
     CONTINUE_CHECK:
+    la t0, PLYR_INPUT
+    li t2, 1   # There is input
+    sb t2, 0(t0) 
+    
     lw t0, 4(t1)   # Reads key value
    
-########################################
-#    mv t3, a0
-#    mv a0, t0   # Reads key value
-#    li a7, 1
-#    ecall
-#    la a0, DEBUG
-#    li a7, 4
-#    ecall
-#    mv a0, t3    
-##################################
+
 
     li t1, 'w'	   # Loads ascii value of 'w' key
     bne t0, t1, CHECK_INPUT.A
@@ -57,6 +52,11 @@ INPUT_CHECK:
     j INPUT.DEL 	# If del key was pressed
 
     NO_INPUT:
+        la t0, PLYR_INPUT
+        li t2, 0   # There isn't input
+        sb t2, 0(t0) 
+
+
         la a0, PLYR_STATUS      # Loads Player Status
         li t1, 0        # Loads vertical direction (0 = normal)
         sb t1, 2(a0)    # Stores new direction on PLYR_STATUS
@@ -100,10 +100,10 @@ INPUT_CHECK:
 	
     INPUT.SPACE:
         li t1, 1     # Loads vertical direction (1 = freefall)
-        sb t1, 2(a0) # Stores new direction on PLYR_STATUS
-
-#        li t1, 1      # Loads direction for MOVE_Y (-1 = up)
-#        sb t1, 7(a0)  # Stores new direction on MOVE_Y
+        sb t1, 3(a0) # Stores new direction on PLYR_STATUS
+        
+        li t1, -1      # Loads direction for MOVE_Y (-1 = up)
+        sb t1, 7(a0)  # Stores new direction on MOVE_Y
 	    j END_INPUT_CHECK
 	
     INPUT.K: # Shoots

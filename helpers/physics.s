@@ -56,20 +56,6 @@ PHYSICS:
             sub a6,a6,t3	 # Offset gets corrected (relative to new X on matrix coordinate)
         
         SKIP_RIGHT_X:
-    
-    #### debugging ####
-    #    mv t0,a0
-    #    mv t1,a7   
-    #    mv a0, a7
-    #    li a7,1
-    #    ecall
-    #    
-    #    la a0, DEBUG
-    #    li a7, 4
-    #    ecall
-    #    
-    #    mv a0,t0
-    #    mv a7,t1 
         
         # Checking collision
         mv s11, ra # storing return address in s11
@@ -78,24 +64,9 @@ PHYSICS:
         
         mv ra, s11 # loading return address from s11
 
-#       mv t0,a0
-#       mv t1,a7   
-#       mv a0, a4
-#       li a7,1
-#       ecall
-      
-#       la a0, DEBUG
-#       li a7, 4
-#       ecall
-      
-#       mv a0,t0
-#       mv a7,t1 
-
         # After checking collision
         
         lh t2, 0(a3)    # Loads Player's Current X
-        
-        #################
         bnez a0, CAN_MOVE_X # a0 != 0 ? CAN_MOVE_X : Fixed_X_Map 
         mv t5,t2 # storing PLYRS_current X in t5
         la a0, MOVE_X	
@@ -173,16 +144,169 @@ PHYSICS:
       
       
 CHECK_MOVE_Y:
-  # COLLISION Y
-  # lb a0, 2(t0)
-  # be
-  #bnez t0, MOVE_PLAYER_Y # If there's Y movement, go to MOVE_PLAYER_Y
-  
-  lbu t1, 4(a3)  # Loads Player's Y related to screen
-  sb t1, 5(a3)  # Stores Player's Y related to screen on old Y
-  lbu t1, 10(a3)  # Loads Player's Y related to screen
-  sb t1, 11(a3)  # Stores Player's Y related to screen on old Y
-  j END_PHYSICS
+    la a0, MOVE_Y	       # Loads address of MOVE_Y
+    lb t0, 0(a0)	       # Loads information from MOVE_Y
+    la a1, CURRENT_MAP     # Loads CURRENT_MAP's address
+    lw a2, 0(a1) 	       # a2 has the current map's address 
+    la a3, PLYR_POS        # Loads Player Position
+    
+    bnez t0, MOVE_PLAYER_Y # If there's Y movement, go to MOVE_PLAYER_Y
+        lbu t1, 4(a3)  # Loads Player's Y related to screen
+        sb t1, 5(a3)  # Stores Player's Y related to screen on old Y
+        lbu t1, 10(a3)  # Loads Player's Y related to screen
+        sb t1, 11(a3)  # Stores Player's Y related to screen on old Y
+        
+        mv s11, ra # storing return address in s11
+        call CHECK_VERTICAL_COLLISION  
+        mv ra, s11 # loading return address from s11
 
-  END_PHYSICS:
-    ret
+        beqz a0, HAS_GROUND # a0 != 0 ? HAS_GROUND :  MOVE_PLAYER_Y
+        li t0, 1 # DOWN
+        la a0, MOVE_Y	       # Loads address of MOVE_Y
+        sb t0, 0(a0)	
+        j MOVE_PLAYER_Y
+    
+    HAS_GROUND:  
+      j END_PHYSICS
+
+    MOVE_PLAYER_Y:
+        blt zero,t0, MOVE_PLAYER_UP
+        j MOVE_PLAYER_DOWN
+        
+        MOVE_PLAYER_UP:
+            li t1, min_jump # minimum height of jump required for the movement 
+            lbu t2, 1(a0)   # Loads JUMP information
+            blt t2, t1, SKIP_INPUT_CHECK
+            lbu t1, 2(a0)   # Loads PLYR_INPUT
+            bnez t1, SKIP_INPUT_CHECK # t1 != 0 ? SKIP_INPUT_CHECK : SWITCH_DOWN
+            j SWITCH_DOWN
+            
+            SKIP_INPUT_CHECK:
+                li t1, slow_jump # threshold of max height to slow down
+                blt t2, t1, JUMP_4_PIXELS
+                li t1, 1 # Will increment only 2 pixels up
+                j CONTINUE_MOVE_PLAYER_Y
+                JUMP_4_PIXELS:
+                    li t1, 2 # Will increment 4 pixels up
+                    j CONTINUE_MOVE_PLAYER_Y
+                    
+            SWITCH_DOWN:
+                li t1,0 # reset jump information
+                sb t1, 1(a0)
+                li t1, 1
+                sb t1,0(a0) # Switches MOVE_Y to 1 (Down)            
+            
+        MOVE_PLAYER_DOWN:
+            li t1, min_jump # minimum height of jump required for the movement 
+            lbu t2, 1(a0)   # Loads JUMP information
+            blt t2, t1, FALL_2_PIXELS
+            li t1, 2 # Will increment 4 pixels down
+            j CONTINUE_MOVE_PLAYER_Y
+            
+            FALL_2_PIXELS:
+                li t1, 1 # Will increment only 2 pixels down
+                j CONTINUE_MOVE_PLAYER_Y
+        
+        CONTINUE_MOVE_PLAYER_Y:
+        # t1 will hold the value for multiplying t0 (MOVE_Y)
+        sll a4, t0, t1  # Multiplies the value stored on MOVE_Y by 4. a0 will store the movement of the player (+/- 4 pixels)
+        
+        lb a6, 7(a3)	# Loads Player's Y offset
+        add a6,a6,a4	# Adds the X Movement to the Player's Offset
+        
+        lbu a7, 10(a3)	# Loads Player's Y on Matrix
+        sb a7, 11(a3)	# Stores Plater's Y on Matrix on the Old Y
+        
+        bge a6,zero,SKIP_UP_Y
+        # If a6 < 0, Player is moving to the upper tile
+        addi a7, a7, -1		  # Player's Y on matrix -= 1 (goes to the left)
+        addi a6,a6,tile_size  # Offset gets corrected (relative to new X on matrix coordinate)
+        
+        SKIP_UP_Y:
+            li t3, tile_size
+            blt a6,t3, SKIP_DOWN_Y
+            # If a6 >= 16, Player is moving to the lower tile
+            addi a7,a7, 1	 # Player's Y on matrix += 1 (goes to the right)
+            sub a6,a6,t3	 # Offset gets corrected (relative to new Y on matrix coordinate)
+        
+        SKIP_DOWN_Y:     
+          # Checking collision
+          mv s11, ra # storing return address in s11
+          call CHECK_VERTICAL_COLLISION
+          mv ra, s11 # loading return address from s11
+          # After checking collision
+
+          lb t2, 4(a3)    # Loads Player's Current Y
+          bnez a0, CAN_MOVE_Y # a0 != 0 ? CAN_MOVE_Y
+          mv t5,t2 # storing PLYRS_current Y in t5
+          la a0, MOVE_Y	
+          sb zero, 0(a0) # MOVE_Y = 0
+          j Fixed_Y_Map
+        
+        CAN_MOVE_Y:    
+          sb a6, 7(a3)    # Stores new Y offset
+          sb a7, 10(a3)   # Stores new Y coordinate on matrix
+
+          add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
+
+          lbu t0, 0(a2)   # loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
+          li t3, 2        # Loads 1 and 
+          bne t3, t0, Fixed_Y_Map # compares with the result
+          j Vertical_Map
+        
+        Fixed_Y_Map:
+          # If the map has a fixed Y on matrix, that is, the screen won't follow the player, the player will move related to the screen
+          sb t2,5(a3) # Stores original Y on old Y  related to screen
+          sb t5,4(a3) # Stores new Y on current Y related to screen
+          j CHECK_MOVE_Y
+
+        Vertical_Map:
+            lbu t0, 7(a1)    # Loads Map's Y postition on Matrix
+            lbu t1, 9(a1)    # Loads Map's Y offset
+                        
+            li t3, top_ver_border      # loads left_border = 120 
+            blt t3, t5, NOT_TOP_BORDER_PASS  # if new player position on screen doesn't pass the left border, go to NOT_LEFT_BORDER_PASS
+            # Otherwise, if new player position on screen passes left border, check if it is on left corner of the map
+            add t4,t0,t1     # Will be 0 if Map's X offset and X position are 0
+            beqz t4, Fixed_Y_Map  # If on leftmost part of the map, map won't move
+            j MOVE_SCREEN_Y     # otherwise, move the map left
+
+        NOT_TOP_BORDER_PASS:   # Checking if passed the Right Horizontal Border
+            li t3, bottom_ver_border #loads right_border = 180 
+            bge t3,t5,Fixed_Y_Map   # if new player position on screen doesn't pass the right border, go to Fixed_X_Map
+            lbu t1, 2(a2)    # Loads Map matrix height
+            li t3, m_screen_height # Loads Map screen width related to matrix
+            sub t1,t1,t3    # t1 = Map Matrix Height - Screen Matrix Height (t1 = Map's Y when it's on rightmost part of the map)
+            beq t0,t1, Fixed_X_Map  # If on rightmost part of the map, map won't move
+            # otherwise, move the map right
+        
+        MOVE_SCREEN_Y:
+            li t3, 2       # t3 = 2 (map will be rendered again)
+            sb t3, 5(a1)   # Stores t3 on CURRENT_MAP's rendering byte
+
+            sb t2,5(a3)    # Stores player's original Y on old Y related to screen
+
+            # Updating map's Y offset
+            lbu a6, 9(a1)  # Loads map's Y offset
+            add a6,a6,a4  # Adds the Y Movement to the map's Offset
+            li t1,0
+            bge a6, zero, NO_Y_OFFSET_NEGATIVE_CORRECTION
+            
+            li t1, -1
+            addi a6,a6,tile_size # Corrects negative offset by adding 16
+            j NO_Y_OFFSET_CORRECTION
+            
+            NO_Y_OFFSET_NEGATIVE_CORRECTION:
+            li t0, tile_size
+            blt a6,t0, NO_Y_OFFSET_CORRECTION
+            li t1,1
+            sub a6,a6,t0 # Corrects values that surpass 16 by subtracting 16 from them
+
+            NO_Y_OFFSET_CORRECTION:
+            sb a6, 9(a1)   # Stores Map new Y offset that is equal to player's Y offset
+            lbu t0, 7(a1)  # Loads Map Y postition on Matrix
+            add t0,t0,t1  # adds to the Y -1, 0 or 1 (moves map horizontally)
+            sb t0, 7(a1)   # Stores Map Y postition on Matrix
+
+    END_PHYSICS:
+      ret

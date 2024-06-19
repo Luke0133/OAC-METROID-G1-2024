@@ -12,7 +12,8 @@ RUN_TIME: .word 0 # Guarda quanto tempo passou
 .eqv m_screen_height 15
 .eqv left_hor_border 119
 .eqv right_hor_border 184
-
+.eqv top_ver_border 64
+.eqv bottom_ver_border 176
 ####### Map informations ####### 
 CURRENT_MAP: .word 0
 MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render once, 2 - render twice, 3 - switch map)
@@ -31,17 +32,22 @@ PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1
 
 MOVE_X: .byte 0 # -1 left, 1 right, 0 not moving on X axis
 MOVE_Y: .byte 0 # -1 up, 1 down, 0 not moving on Y axis
-JUMP: .byte 0
+JUMP: .byte 0 # counter of current height
 PLYR_INPUT: .byte 0
+
+.eqv max_jump 96
+.eqv slow_jump 64
+.eqv min_jump 32
+.eqv gravity 1
+
 
 .eqv standing_front_hitbox 8 # offset from the front of Samus' standing sprite 
 .eqv standing_back_hitbox 4  # offset from the back of Samus' standing sprite 
 .eqv PLYR_HEALTH 100
 .eqv SAM_WALK 20
 .eqv SAM_SHOOT 28
-.eqv SAM_BALL 16
-.eqv JUMP_FORCE -5 
-.eqv GRAVITY 10
+.eqv SAM_BALL 16 
+
 
 ## ZOOMER ##
 ZOOMER_INFO: .byte 0, 0 # Stores Zoomer's health points, Rendering (0 - Disabled, 1 - Enabled)

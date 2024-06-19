@@ -24,19 +24,19 @@
 
 
 CHECK_HORIZONTAL_COLLISION:
-    lbu t1, 8(a3) # t1 = PLYR_MATRIX X
-    lbu t2, 6(a3) # t2 = PLYR_X OFFSET
+    lbu t1, 8(a3)  # t1 = Player's X related to matrix
+    lbu t2, 6(a3)  # t2 = Player's X offset
     
-    lbu t4,1(a2) # Loads matrix width
-    addi t3,a2,3 # Start of matrix
-    lbu t5, 10(a3) # t5 = PLYR_MATRIX Y
-    mul t5,t5,t4 # PLYR_MATRIX Y * MATRIX WIDTH
-    add t5,t1,t5 # t5 = PLYR_MATRIX X +  PLYR_MATRIX Y * MATRIX WIDTH  
+    lbu t4,1(a2)   # Loads Map Matrix's width
+    addi t3,a2,3   # Adds 3 to the Matrix's address so that it goes to the begining of matrix
+    lbu t5, 10(a3) # t5 = Player's Y related to matrix
+    mul t5,t5,t4   # Player's Y related to matrix * Map Matrix's width
+    add t5,t1,t5   # t5 = Player's X related to matrix +  Player's Y related to matrix * Map Matrix's width  
 
-    add t3,t3,t5 # t3 = Map address on correct X and Y
+    add t3,t3,t5   # t3 = Map Matrix's address adjusted for Player's X and Y related to matrix
     
-    lb t0, 0(a0) # Loads MOVE_X to a0
-    bnez t0, CHECK_X_DIRECTION # MOVE_X != 0 ? CHECK_X_DIRECTION : END
+    lb t0, 0(a0)   # Loads MOVE_X information to t0
+    bnez t0, CHECK_X_DIRECTION # MOVE_X != 0 ? j CHECK_X_DIRECTION : j END_HORIZONTAL_COLLISION 
     j END_HORIZONTAL_COLLISION 
     
     CHECK_X_DIRECTION:
@@ -67,44 +67,107 @@ CHECK_HORIZONTAL_COLLISION:
         ret 
         
 CHECK_VERTICAL_COLLISION:
-    lbu t1, 10(a3) # t1 = PLYR_MATRIX Y
+    lbu t1, 8(a3) # t1 = PLYR_MATRIX Y
     lbu t2, 7(a3) # t2 = PLYR_Y OFFSET
 
     lbu t4,1(a2) # Loads matrix width
     addi t3,a2,3 # start of matrix
     lbu t5, 10(a3) # t5 = PLYR_MATRIX Y
     mul t5,t5,t4 # PLYR_MATRIX Y * MATRIX WIDTH
-    add t5,t1,t5 # t5 = PLYR_MATRIX X +  PLYR_MATRIX Y * MATRIX WIDTH  
+    add t5,t1,t5 # t5 = PLYR_MATRIX X + PLYR_MATRIX Y * MATRIX WIDTH  
 
     add t3,t3,t5 # t3 = Map address on correct X and Y
+    lbu t1, 10(a3) # t1 = PLYR_MATRIX Y
+###########################
+            mv s1,a0
+            mv s2,a7
+            mv a0,t3
+            sub a0,a0,a2
+            li a7,1
+            ecall
+            la a0, DEBUG
+            li a7, 4
+            ecall
+            mv a0,s1
+            mv a7,s2
+######################    
+
+    lb t0, 0(a0) # Loads MOVE_Y to t0 
+
+    li t5,2 # t5 = 2 ? Vertical
+        
+    blt zero, t0, CHECK_Y_UP # t0 < 0 ? CHECK_Y_UP : CHECK_Y_DOWN
+    j CHECK_Y_DOWN
     
-    lb t0, 0(a0) # Loads MOVE_Y to t0  
-    bnez t0, CHECK_Y_DIRECTION # MOVE_Y != 0 ? CHECK_X_DIRECTION : END
-    # Checks footing
-        
-    j END_VERTICAL_COLLISION
+    CHECK_Y_UP:
+        ## TODO: Implement sprite ball colision testing
+        beqz t2 CONTINUE_CHECK_Y_UP # offset = 0 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
+        j END_VERTICAL_COLLISION
     
-    CHECK_Y_DIRECTION:
-        li t5,2 # t5 = 2 ? Vertical
-         
-        blt t0, zero, CHECK_Y_UP # t0 < 0 ? CHECK_Y_UP : CHECK_Y_DOWN
-        j CHECK_Y_DOWN
-        
-        CHECK_Y_UP:
-            beqz t2 CONTINUE_CHECK_Y_UP # offset = 8 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
-            j END_VERTICAL_COLLISION
+        CONTINUE_CHECK_Y_UP: 
+            sub t3,t3,t4    # - 1 matrix Y (up)
+            lbu t0,13(a3)    # Loads Facing direction (0 = Right, 1 = Left)
+            lbu t2, 6(a3)    # t2 = Player's Y offset
+            beqz t0, CHECK_Y_UP_RIGHT # t0 = 0 ? CHECK_Y_UP_RIGHT : CHECK_Y_UP_LEFT
+            j CHECK_Y_UP_LEFT
             
-            CONTINUE_CHECK_Y_UP:
-                j CHECK_MAP_COLLISION
-        
-        CHECK_Y_DOWN:
-            li t0, 4 # t0 = 8 offset pixels 
-            beq t2, t0, CONTINUE_CHECK_Y_DOWN # offset = 0 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
-            j END_VERTICAL_COLLISION
+            CHECK_Y_UP_RIGHT:
+                li t0, 8 # X offset 8
+                bne t2,t0, CHECK_1_TILE_RIGHT 
+                li t5, 3 # Check two tiles upwards - case 3
+                
+                CHECK_1_TILE_RIGHT:
+                    j CHECK_MAP_COLLISION
             
-            CONTINUE_CHECK_Y_DOWN:
-                addi t3,t3, 1 # Looks to the tile on the right of player's current tile
-                j CHECK_MAP_COLLISION
+            CHECK_Y_UP_LEFT:
+                li t0, 4 # X offset 3
+                bne t2,t0, CHECK_1_TILE_LEFT 
+                li t5, 3 # Check two tiles upwards - case 3
+                
+                CHECK_1_TILE_LEFT:
+                    j CHECK_MAP_COLLISION
+    
+    CHECK_Y_DOWN:
+        ## TODO: Implement sprite ball colision testing
+        beqz t2 CONTINUE_CHECK_Y_DOWN # offset = 0 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
+        j END_VERTICAL_COLLISION
+    
+        CONTINUE_CHECK_Y_DOWN: 
+            add t3,t3,t4     # 1 matrix Y (down)
+            add t3,t3,t4     # 1 matrix Y (down)
+###########################
+            mv s1,a0
+            mv s2,a7
+            mv a0,t3
+            sub a0,a0,a2
+            li a7,1
+            ecall
+            la a0, DEBUG
+            li a7, 4
+            ecall
+            mv a0,s1
+            mv a7,s2
+######################
+            lbu t0,13(a3)    # Loads Facing direction (0 = Right, 1 = Left)
+            lbu t2, 6(a3)    # t2 = Player's Y offset
+            beqz t0, CHECK_Y_DOWN_RIGHT # t0 = 0 ? CHECK_Y_UP_RIGHT : CHECK_Y_UP_LEFT
+            j CHECK_Y_DOWN_LEFT
+            
+            CHECK_Y_DOWN_RIGHT:
+                li t0, 8 # X offset 8
+                bne t2,t0, CHECK_1_TILE_DOWN_RIGHT 
+                li t5, 3 # Check two tiles upwards - case 3
+                
+                CHECK_1_TILE_DOWN_RIGHT:
+                    j CHECK_MAP_COLLISION
+            
+            CHECK_Y_DOWN_LEFT:
+                li t0, 4 # X offset 3
+                bne t2,t0, CHECK_1_TILE_DOWN_LEFT 
+                li t5, 3 # Check two tiles upwards - case 3
+                
+                CHECK_1_TILE_DOWN_LEFT:
+                    j CHECK_MAP_COLLISION
     
 
     END_VERTICAL_COLLISION:
@@ -187,19 +250,6 @@ START_CHECK_MAP_COLLISION:
     CONTINUE_CHECK_MAP_COLLISION_4:
     li t0, 1
     
-    ######## debug ########
-    #mv s2,a7 
-    #mv s1,a0
-    #mv a0,t5
-    #li a7,1
-    #ecall
-    #la a0, DEBUG
-    #li a7, 4
-    #ecall
-    #mv a0,s1
-    #mv a7,s2
-    #################
-
     bne t0, t5, VERTICAL_COLLISION_CHECK # 1 != t5 ? VERTICAL_COLLISION_CHECK : HORIZONTAL_COLLISON_CHECK
     
     HORIZONTAL_COLLISON_CHECK:
@@ -214,14 +264,17 @@ START_CHECK_MAP_COLLISION:
         
         CONTINUE_VERTICAL_COLLISION_CHECK:
             li t5,0
-            lbu t0, 13(a3) # Loads horizontal facing direction
-            # 0 = right, 1 = left
-            beqz t0, VERTICAL_COLLISION_CHECK_RIGHT # t0 = 0 ? VERTICAL_COLLISION_CHECK_RIGHT : VERTICAL_COLLISION_CHECK_LEFT
+            addi t3,t3,1
+            j START_CHECK_MAP_COLLISION
             
-            VERTICAL_COLLISION_CHECK_LEFT:
-                addi t3,t3,-1 #looks on the tile on the left of player's position
-                j START_CHECK_MAP_COLLISION
-            
-            VERTICAL_COLLISION_CHECK_RIGHT:
-                addi t3,t3,1 #looks on the tile on the right of player's position
-                j START_CHECK_MAP_COLLISION
+            #lbu t0, 13(a3) # Loads horizontal facing direction
+            ## 0 = right, 1 = left
+            #beqz t0, VERTICAL_COLLISION_CHECK_RIGHT # t0 = 0 ? VERTICAL_COLLISION_CHECK_RIGHT : VERTICAL_COLLISION_CHECK_LEFT
+            #
+            #VERTICAL_COLLISION_CHECK_LEFT:
+            #    addi t3,t3,-1 #looks on the tile on the left of player's position
+            #    j START_CHECK_MAP_COLLISION
+            #
+            #VERTICAL_COLLISION_CHECK_RIGHT:
+            #    addi t3,t3,1 #looks on the tile on the right of player's position
+            #    j START_CHECK_MAP_COLLISION
