@@ -170,12 +170,21 @@ CHECK_MOVE_Y:
       j END_PHYSICS
 
     MOVE_PLAYER_Y:
-        blt zero,t0, MOVE_PLAYER_UP
+            ###########################
+    #        mv s1,a0
+    #        mv s2,a7
+    #        li a0,3000
+    #        li a7,32
+    #        ecall
+    #        mv a0,s1
+    #        mv a7,s2
+######################
+        lbu t2, 1(a0)   # Loads JUMP information
+        blt t0,zero, MOVE_PLAYER_UP
         j MOVE_PLAYER_DOWN
         
         MOVE_PLAYER_UP:
             li t1, min_jump # minimum height of jump required for the movement 
-            lbu t2, 1(a0)   # Loads JUMP information
             blt t2, t1, SKIP_INPUT_CHECK
             lbu t1, 2(a0)   # Loads PLYR_INPUT
             bnez t1, SKIP_INPUT_CHECK # t1 != 0 ? SKIP_INPUT_CHECK : SWITCH_DOWN
@@ -185,14 +194,15 @@ CHECK_MOVE_Y:
                 li t1, slow_jump # threshold of max height to slow down
                 blt t2, t1, JUMP_4_PIXELS
                 li t1, 1 # Will increment only 2 pixels up
+                addi t2,t2,2
                 j CONTINUE_MOVE_PLAYER_Y
                 JUMP_4_PIXELS:
                     li t1, 2 # Will increment 4 pixels up
+                    addi t2,t2,4
                     j CONTINUE_MOVE_PLAYER_Y
                     
             SWITCH_DOWN:
-                li t1,0 # reset jump information
-                sb t1, 1(a0)
+                li t2,0 # reset jump information
                 li t1, 1
                 sb t1,0(a0) # Switches MOVE_Y to 1 (Down)            
             
@@ -201,17 +211,23 @@ CHECK_MOVE_Y:
             lbu t2, 1(a0)   # Loads JUMP information
             blt t2, t1, FALL_2_PIXELS
             li t1, 2 # Will increment 4 pixels down
+            addi t2,t2,4
             j CONTINUE_MOVE_PLAYER_Y
             
             FALL_2_PIXELS:
                 li t1, 1 # Will increment only 2 pixels down
+                addi t2,t2,2
                 j CONTINUE_MOVE_PLAYER_Y
         
         CONTINUE_MOVE_PLAYER_Y:
         # t1 will hold the value for multiplying t0 (MOVE_Y)
+        
+        sb t2, 1(a0)
         sll a4, t0, t1  # Multiplies the value stored on MOVE_Y by 4. a0 will store the movement of the player (+/- 4 pixels)
         
-        lb a6, 7(a3)	# Loads Player's Y offset
+        
+        lbu t2, 1(a0)   # Loads JUMP information
+        lbu a6, 7(a3)	# Loads Player's Y offset
         add a6,a6,a4	# Adds the X Movement to the Player's Offset
         
         lbu a7, 10(a3)	# Loads Player's Y on Matrix
@@ -236,7 +252,7 @@ CHECK_MOVE_Y:
           mv ra, s11 # loading return address from s11
           # After checking collision
 
-          lb t2, 4(a3)    # Loads Player's Current Y
+          lbu t2, 4(a3)    # Loads Player's Current Y
           bnez a0, CAN_MOVE_Y # a0 != 0 ? CAN_MOVE_Y
           mv t5,t2 # storing PLYRS_current Y in t5
           la a0, MOVE_Y	
@@ -258,7 +274,7 @@ CHECK_MOVE_Y:
           # If the map has a fixed Y on matrix, that is, the screen won't follow the player, the player will move related to the screen
           sb t2,5(a3) # Stores original Y on old Y  related to screen
           sb t5,4(a3) # Stores new Y on current Y related to screen
-          j CHECK_MOVE_Y
+          j END_PHYSICS
 
         Vertical_Map:
             lbu t0, 7(a1)    # Loads Map's Y postition on Matrix

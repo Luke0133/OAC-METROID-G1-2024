@@ -79,24 +79,24 @@ CHECK_VERTICAL_COLLISION:
     add t3,t3,t5 # t3 = Map address on correct X and Y
     lbu t1, 10(a3) # t1 = PLYR_MATRIX Y
 ###########################
-            mv s1,a0
-            mv s2,a7
-            mv a0,t3
-            sub a0,a0,a2
-            li a7,1
-            ecall
-            la a0, DEBUG
-            li a7, 4
-            ecall
-            mv a0,s1
-            mv a7,s2
+ #           mv s1,a0
+    #        mv s2,a7
+  #          mv a0,t3
+  #          sub a0,a0,a2
+   #         li a7,1
+    #        ecall
+ ##           la a0, DEBUG
+  #          li a7, 4
+ #           ecall
+ #           mv a0,s1
+ #           mv a7,s2
 ######################    
 
     lb t0, 0(a0) # Loads MOVE_Y to t0 
 
     li t5,2 # t5 = 2 ? Vertical
         
-    blt zero, t0, CHECK_Y_UP # t0 < 0 ? CHECK_Y_UP : CHECK_Y_DOWN
+    blt t0,zero, CHECK_Y_UP # t0 < 0 ? CHECK_Y_UP : CHECK_Y_DOWN
     j CHECK_Y_DOWN
     
     CHECK_Y_UP:
@@ -136,17 +136,17 @@ CHECK_VERTICAL_COLLISION:
             add t3,t3,t4     # 1 matrix Y (down)
             add t3,t3,t4     # 1 matrix Y (down)
 ###########################
-            mv s1,a0
-            mv s2,a7
-            mv a0,t3
-            sub a0,a0,a2
-            li a7,1
-            ecall
-            la a0, DEBUG
-            li a7, 4
-            ecall
-            mv a0,s1
-            mv a7,s2
+ #           mv s1,a0
+ #           mv s2,a7
+ #           mv a0,t3
+ #           sub a0,a0,a2
+ #           li a7,1
+ #           ecall
+#            la a0, DEBUG
+#            li a7, 4
+#            ecall
+#            mv a0,s1
+#            mv a7,s2
 ######################
             lbu t0,13(a3)    # Loads Facing direction (0 = Right, 1 = Left)
             lbu t2, 6(a3)    # t2 = Player's Y offset
@@ -190,6 +190,7 @@ CHECK_MAP_COLLISION:
   #  li a4, 1 # Base case: player can move
 
 START_CHECK_MAP_COLLISION:
+
     bnez a0, CONTINUE_CHECK_MAP_COLLISION_1 # a0 != 0 ? CONTINUE_CHECK_MAP_COLLISION_1 : ret
     ret
     CONTINUE_CHECK_MAP_COLLISION_1:

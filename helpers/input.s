@@ -104,6 +104,7 @@ INPUT_CHECK:
         
         li t1, -1      # Loads direction for MOVE_Y (-1 = up)
         sb t1, 7(a0)  # Stores new direction on MOVE_Y
+
 	    j END_INPUT_CHECK
 	
     INPUT.K: # Shoots

@@ -42,8 +42,8 @@ GAME_LOOP:
 ##################
 	call PHYSICS
 
-#	la a0, PLYR_MATRIX#
-#	lb a0,3(a0)
+#	la a0, MOVE_Y
+#	lb a0,0(a0)
 #    li a7, 1
 #    ecall
 #la a0, MAP_INFO
