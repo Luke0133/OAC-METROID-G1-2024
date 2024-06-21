@@ -1,7 +1,7 @@
 .data
 
 ####### Informations related to frame rate  ####### 
-.eqv frame_rate 45 # T ms por frame 
+.eqv frame_rate 65 # T ms por frame 
 RUN_TIME: .word 0 # Guarda quanto tempo passou 
 ####### .eqv related to tiles  ####### 
 .eqv tile_size 16	# Tile size (use powers of 2 in order to use tile_size_shift)
@@ -36,7 +36,7 @@ JUMP: .byte 0 # counter of current height
 PLYR_INPUT: .byte 0
 
 .eqv max_jump 96
-.eqv slow_jump 64
+.eqv slow_jump 80
 .eqv min_jump 32
 .eqv gravity 1
 

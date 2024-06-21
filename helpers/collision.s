@@ -77,20 +77,7 @@ CHECK_VERTICAL_COLLISION:
     add t5,t1,t5 # t5 = PLYR_MATRIX X + PLYR_MATRIX Y * MATRIX WIDTH  
 
     add t3,t3,t5 # t3 = Map address on correct X and Y
-    lbu t1, 10(a3) # t1 = PLYR_MATRIX Y
-###########################
- #           mv s1,a0
-    #        mv s2,a7
-  #          mv a0,t3
-  #          sub a0,a0,a2
-   #         li a7,1
-    #        ecall
- ##           la a0, DEBUG
-  #          li a7, 4
- #           ecall
- #           mv a0,s1
- #           mv a7,s2
-######################    
+    lbu t1, 10(a3) # t1 = PLYR_MATRIX Y   
 
     lb t0, 0(a0) # Loads MOVE_Y to t0 
 
@@ -130,24 +117,31 @@ CHECK_VERTICAL_COLLISION:
     CHECK_Y_DOWN:
         ## TODO: Implement sprite ball colision testing
         beqz t2 CONTINUE_CHECK_Y_DOWN # offset = 0 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
+        li t1,2
+        beq, t1 t2 CONTINUE_CHECK_Y_DOWN # offset = 0 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
         j END_VERTICAL_COLLISION
     
         CONTINUE_CHECK_Y_DOWN: 
             add t3,t3,t4     # 1 matrix Y (down)
             add t3,t3,t4     # 1 matrix Y (down)
 ###########################
- #           mv s1,a0
- #           mv s2,a7
- #           mv a0,t3
- #           sub a0,a0,a2
- #           li a7,1
- #           ecall
+#            mv s1,a0
+#            mv s2,a7
+#            lbu s3, 10(a3) # t5 = PLYR_MATRIX Y
+#            sub a0,t3,a2
+#            addi a0,a0,-3
+#            sub a0,a0,s3
+#            li s4,60
+#            div a0,a0,s4
+#            li a7,1
+#            ecall
 #            la a0, DEBUG
 #            li a7, 4
 #            ecall
 #            mv a0,s1
 #            mv a7,s2
 ######################
+            
             lbu t0,13(a3)    # Loads Facing direction (0 = Right, 1 = Left)
             lbu t2, 6(a3)    # t2 = Player's Y offset
             beqz t0, CHECK_Y_DOWN_RIGHT # t0 = 0 ? CHECK_Y_UP_RIGHT : CHECK_Y_UP_LEFT
@@ -171,6 +165,7 @@ CHECK_VERTICAL_COLLISION:
     
 
     END_VERTICAL_COLLISION:
+   
         li a0,1
         ret 
 

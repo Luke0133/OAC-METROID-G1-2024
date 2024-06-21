@@ -433,8 +433,8 @@ RENDER_PLAYER:
 	
 	RENDER_PLAYER_TRAIL:
 		xori a5,s0,1	# Gets oposite frame
-		li a6, 3	# Width (Number of Tiles) = 2
-		li a7, 3	# Height (Number of Tiles) = 2
+		li a6, 4	# Width (Number of Tiles) = 2
+		li a7, 4	# Height (Number of Tiles) = 2
 
 		la t0, PLYR_MATRIX  # Loads PLYR_MATRIX address
 		lbu t3, 1(t0) # Loads Player's old X related to matrix (Starting X for rendering (top left, related to Matrix))

@@ -42,19 +42,19 @@ GAME_LOOP:
 ##################
 	call PHYSICS
 
-#	la a0, MOVE_Y
+#	la a0, JUMP
 #	lb a0,0(a0)
-#    li a7, 1
-#    ecall
-#la a0, MAP_INFO
+ #   li a7, 1
+  #  ecall
+#	la a0, MAP_INFO
 #	lb a0,1(a0)
-#    li a7, 1
-#    ecall
+#   li a7, 1
+#   ecall
 	
 	
 #	la a0, DEBUG
  #   li a7, 4
- #   ecall
+  #  ecall
 
 
 

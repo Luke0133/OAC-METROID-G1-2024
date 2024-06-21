@@ -159,7 +159,6 @@ CHECK_MOVE_Y:
         mv s11, ra # storing return address in s11
         call CHECK_VERTICAL_COLLISION  
         mv ra, s11 # loading return address from s11
-
         beqz a0, HAS_GROUND # a0 != 0 ? HAS_GROUND :  MOVE_PLAYER_Y
         li t0, 1 # DOWN
         la a0, MOVE_Y	       # Loads address of MOVE_Y
@@ -170,15 +169,6 @@ CHECK_MOVE_Y:
       j END_PHYSICS
 
     MOVE_PLAYER_Y:
-            ###########################
-    #        mv s1,a0
-    #        mv s2,a7
-    #        li a0,3000
-    #        li a7,32
-    #        ecall
-    #        mv a0,s1
-    #        mv a7,s2
-######################
         lbu t2, 1(a0)   # Loads JUMP information
         blt t0,zero, MOVE_PLAYER_UP
         j MOVE_PLAYER_DOWN
@@ -191,6 +181,11 @@ CHECK_MOVE_Y:
             j SWITCH_DOWN
             
             SKIP_INPUT_CHECK:
+                li t1, max_jump # minimum height of jump required for the movement 
+                blt t2, t1, ITERATE_JUMP   # 
+                j SWITCH_DOWN
+                
+                ITERATE_JUMP:
                 li t1, slow_jump # threshold of max height to slow down
                 blt t2, t1, JUMP_4_PIXELS
                 li t1, 1 # Will increment only 2 pixels up
@@ -202,10 +197,10 @@ CHECK_MOVE_Y:
                     j CONTINUE_MOVE_PLAYER_Y
                     
             SWITCH_DOWN:
-                li t2,0 # reset jump information
+                sb zero, 1(a0) # reset jump information
                 li t1, 1
                 sb t1,0(a0) # Switches MOVE_Y to 1 (Down)            
-            
+                j END_PHYSICS
         MOVE_PLAYER_DOWN:
             li t1, min_jump # minimum height of jump required for the movement 
             lbu t2, 1(a0)   # Loads JUMP information
@@ -221,7 +216,6 @@ CHECK_MOVE_Y:
         
         CONTINUE_MOVE_PLAYER_Y:
         # t1 will hold the value for multiplying t0 (MOVE_Y)
-        
         sb t2, 1(a0)
         sll a4, t0, t1  # Multiplies the value stored on MOVE_Y by 4. a0 will store the movement of the player (+/- 4 pixels)
         
@@ -246,18 +240,19 @@ CHECK_MOVE_Y:
             sub a6,a6,t3	 # Offset gets corrected (relative to new Y on matrix coordinate)
         
         SKIP_DOWN_Y:     
-          # Checking collision
-          mv s11, ra # storing return address in s11
-          call CHECK_VERTICAL_COLLISION
-          mv ra, s11 # loading return address from s11
-          # After checking collision
-
-          lbu t2, 4(a3)    # Loads Player's Current Y
-          bnez a0, CAN_MOVE_Y # a0 != 0 ? CAN_MOVE_Y
-          mv t5,t2 # storing PLYRS_current Y in t5
-          la a0, MOVE_Y	
-          sb zero, 0(a0) # MOVE_Y = 0
-          j Fixed_Y_Map
+            # Checking collision
+            mv s11, ra # storing return address in s11
+            call CHECK_VERTICAL_COLLISION
+            mv ra, s11 # loading return address from s11
+            
+            # After checking collision
+            lbu t2, 4(a3)    # Loads Player's Current Y
+            bnez a0, CAN_MOVE_Y # a0 != 0 ? CAN_MOVE_Y : Fixed_Y_Map
+                mv t5,t2 # storing PLYRS_current Y in t5
+                la a0, MOVE_Y	
+                sb zero, 0(a0) # MOVE_Y = 0
+                sb zero,1(a0) # reseting jump byte
+            j Fixed_Y_Map
         
         CAN_MOVE_Y:    
           sb a6, 7(a3)    # Stores new Y offset

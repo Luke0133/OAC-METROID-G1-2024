@@ -63,7 +63,7 @@ INPUT_CHECK:
 ######## NAO DESATIVAR ATAQUE AQUI
         sb t1, 5(a0)            
 ######## VER SE VAI ALTERAR AQUI O MOVE_Y        
-	    sh zero, 6(a0)  # Stores new direction on MOVE_X
+	    sb zero, 6(a0)  # Stores new direction on MOVE_X
      #   ret
         j END_INPUT_CHECK 
 
@@ -99,6 +99,10 @@ INPUT_CHECK:
         j END_INPUT_CHECK 
 	
     INPUT.SPACE:
+        lb t1, 7(a0)  # Loads current direction on MOVE_Y
+        beqz t1, CAN_JUMP
+        j END_INPUT_CHECK
+        CAN_JUMP:
         li t1, 1     # Loads vertical direction (1 = freefall)
         sb t1, 3(a0) # Stores new direction on PLYR_STATUS
         
