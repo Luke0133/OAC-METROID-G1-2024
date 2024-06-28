@@ -450,6 +450,50 @@ RENDER_PLAYER:
 		mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
 		ret			# End of procedure
 
+##########################    RENDER LIFE AND WEAPONS    ##########################
+#              Renders life and weapons based on its usages                #
+#     -----------           argument registers           -----------    #
+#       a0,t0 = PLYR_HEALTH        #	
+#		a1 = column
+#		a2 = row
+# 	    a3 = colors
+#		a4 = frame
+#		a7 = syscall for 'print integer'
+#     -----------          temporary registers           -----------    #
+#
+# 	 ----------------------- description --------------------------
+# 		this procedure is similar to a finite state machine, where samus 
+# 		life points can be render according to her PLYR_HEALTH
+#########################################################################	
+
+RENDER_LIFE: 
+	mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
+	call RENDER_LIFE_POINTS
+	mv ra, s11
+	ret
+	
+RENDER_LIFE_POINTS:
+	la t0, PLYR_HEALTH
+	lb a0, 0(t0)
+
+	#a3 = bgr fundo e bgr frente no a4
+	li a1,30 # a1 = column
+	li a2,60 # a2 = row 
+	li a3,0x00ff # a3 = colors 
+	li a4,1 # a4 = frame
+	li a7,101 # syscal for 'print integer'
+	ecall
+		
+	lb a0, 0(t0)
+	
+	li a1,30 # a1 = column
+	li a2,60 # a2 = row 
+	li a3,0x00ff # a3 = colors 
+	li a4,0 # a4 = frame
+	li a7,101 #syscal for 'print integer'
+	ecall
+
+	ret
 
 ###############################         RENDER MAP         ##############################
 #    Takes a given map matrix and renders tiles acoording to the value stored on it.   	#

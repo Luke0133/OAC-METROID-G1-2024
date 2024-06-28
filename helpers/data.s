@@ -34,6 +34,7 @@ MOVE_X: .byte 0 # -1 left, 1 right, 0 not moving on X axis
 MOVE_Y: .byte 0 # -1 up, 1 down, 0 not moving on Y axis
 JUMP: .byte 0 # counter of current height
 PLYR_INPUT: .byte 0
+PLYR_HEALTH: .byte 100, 0, 0, 0
 
 .eqv max_jump 96
 .eqv slow_jump 80
@@ -43,7 +44,6 @@ PLYR_INPUT: .byte 0
 
 .eqv standing_front_hitbox 8 # offset from the front of Samus' standing sprite 
 .eqv standing_back_hitbox 4  # offset from the back of Samus' standing sprite 
-.eqv PLYR_HEALTH 100
 .eqv SAM_WALK 20
 .eqv SAM_SHOOT 28
 .eqv SAM_BALL 16 

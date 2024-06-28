@@ -103,6 +103,7 @@ GAME_LOOP:
 
 	li a0, 1
 	call RENDER_PLAYER
+	call RENDER_LIFE
 
 	##### LIMPEZA DE RASTRO
 	
