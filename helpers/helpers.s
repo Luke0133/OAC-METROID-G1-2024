@@ -7,3 +7,4 @@
 .include "map_op.s"
 .include "sprite_op.s"
 .include "collision.s"
+.include "music.s"

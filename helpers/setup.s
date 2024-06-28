@@ -5,8 +5,10 @@
 #########################################################################
 
 SETUP:
+
     addi sp,sp,-4
     sw ra, 0(sp)
+    call MUSIC.SETUP
 
     la t0, MAP_INFO # Loads Map Info address
     lbu t1, 0 (t0)  # Loads byte related to map number
