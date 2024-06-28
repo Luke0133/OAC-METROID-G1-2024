@@ -9,9 +9,6 @@
 ###########################################################################
 
 MAP_MOVE_RENDER:
-#	li a0,1000
-#	li a7,32
-#	ecall
 	la t0, CURRENT_MAP  # Loads CURRENT_MAP's address
 	lbu t1, 5(t0)       # Loads on t1 the CURRENT_MAP's rendering byte
 	li t2,3				# Loads number 3 -- related to "switch map" operation

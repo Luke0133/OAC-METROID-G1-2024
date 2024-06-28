@@ -11,17 +11,18 @@ MUSIC.SETUP:
         sw zero, 0(t1)
         ret
 
-############ MUSIC PROCEDURE ############################
-# ARGS:
+############ MUSIC PROCEDURE ###########################################
+# Prodecures in order to be capable of play music while playing game
+# --------------------------------------------------------------------
 # a0 = status address 
 # a1 = instrument
 # a2 = volume
-#########################################################
+########################################################################
 
 MUSIC.PLAY:        
-        la a0, MUSIC.STATUS #carrega o status address
-        li a2, 51 #
-        li a3, 50
+        la a0, MUSIC.STATUS # loads status address
+        li a2, 51 # instrument (range-ensemble)
+        li a3, 50 # volume
 
         lw t0, 0(a0)
         beqz t0, MUSIC.PLAY.NOTE 
