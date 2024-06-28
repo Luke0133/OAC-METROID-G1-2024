@@ -4,6 +4,18 @@ INPUT_CHECK:
     li t1,0xFF200000  	    # KDMMIO Address
     lw t0, 0(t1)	    # Reads the Keyboard Control bit
     andi t0, t0, 0x0001	    # Masks the least significant bit
+#########################    
+    mv s1,a0
+    mv s2,a7
+    mv a0,t0
+	li a7, 1
+    ecall	
+	la a0, DEBUG
+    li a7, 4
+    ecall
+ mv a0,s1
+    mv a7,s2
+#####################
     la a0, PLYR_STATUS      # Loads Player Status
     bnez t0, CONTINUE_CHECK # if an input is detected, continue checking
     j NO_INPUT 		    # otherwise no input was detected 
@@ -50,24 +62,6 @@ INPUT_CHECK:
     j INPUT.DEL 	# If del key was pressed
 
     NO_INPUT:
-        mv s1,a0
-    mv s2,a7
-la a0, MOVE_X
-	lb a0,0(a0)
-    li a7, 1
-    ecall	
-	la a0, DEBUG2 
-    li a7, 4
-    ecall
-	la a0, MOVE_Y
-	lb a0,0(a0)
-    li a7, 1
-    ecall
-	la a0, DEBUG
-    li a7, 4
-    ecall
- mv a0,s1
-    mv a7,s2
         la t0, PLYR_INPUT
         li t2, 0   # There isn't input
         sb t2, 0(t0) 

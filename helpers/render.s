@@ -294,16 +294,16 @@ RENDER_PLAYER:
 					
 					addi a1,a1, -4 # Offseting sprite's X so that it renders in propper place
 					addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
-					li a3, 24  # Sprite's Widht
 					li a4, 32  # Sprite's Height
 					mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
 					bnez t4, RENDER_JUMP_RIGHT_UP	# If player is looking up
-
 					# Otherwise, render normal jump 
+						li a3, 24  # Sprite's Widht
 						la a0, Samus_Right_Jump # Loads Player's Image Address 
 						j START_RENDER_PLAYER   # Start rendering player
 
 					RENDER_JUMP_RIGHT_UP:
+						li a3, 20  # Sprite's Widht
 						la a0, Samus_Right_Jump_Up # Loads Player's Image Address 
 						j START_RENDER_PLAYER      # Start rendering player
 
