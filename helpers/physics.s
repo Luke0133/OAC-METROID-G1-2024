@@ -36,17 +36,28 @@ PHYSICS:
     MOVE_PLAYER_X:
         slli a4, t0, 2  # Multiplies the value stored on MOVE_X by 4. a0 will store the movement of the player (+/- 4 pixels)
         
-        lb a6, 6(a3)	# Loads Player's X offset
-        add a6,a6,a4	# Adds the X Movement to the Player's Offset
-        
-        lbu a7, 8(a3)	# Loads Player's X on Matrix
-        sb a7, 9(a3)	# Stores Plater's X on Matrix on the Old X
-        
-        bge a6,zero,SKIP_LEFT_X
-       	
-        # If a6 < 0, Player is moving to the left tile
-        addi a7, a7, -1		  # Player's X on matrix -= 1 (goes to the left)
-        addi a6,a6,tile_size  # Offset gets corrected (relative to new X on matrix coordinate)
+        lbu t1, 13(a3)  # Loads Player's Facing direction (0 = Right, 1 = Left)
+        add t0,t0,t1    # Adds Facing direction with MOVE_X (if the result t0 = -1 or 2, the direction has changed)
+        li t2,2         # t1 = 2
+        bgeu t0,t2,CHANGE_X_DIRECTION # If t0 = -1 or 2, the direction chas changed
+            j KEEP_X_DIRECTION 
+        CHANGE_X_DIRECTION:
+        # If the direction has changed, no movement will happen, and only the facing direction will be altered
+            xori t1,t1,1   # Inverts direction (0 -> 1; 1 -> 0)
+            sb t1, 13(a3)  # Loads Player's Facing direction (0 = Right, 1 = Left)
+            j CHECK_MOVE_Y
+        KEEP_X_DIRECTION:
+            lb a6, 6(a3)	# Loads Player's X offset
+            add a6,a6,a4	# Adds the X Movement to the Player's Offset
+            
+            lbu a7, 8(a3)	# Loads Player's X on Matrix
+            sb a7, 9(a3)	# Stores Plater's X on Matrix on the Old X
+            
+            bge a6,zero,SKIP_LEFT_X
+            
+            # If a6 < 0, Player is moving to the left tile
+            addi a7, a7, -1		  # Player's X on matrix -= 1 (goes to the left)
+            addi a6,a6,tile_size  # Offset gets corrected (relative to new X on matrix coordinate)
         
         SKIP_LEFT_X:
             li t3, tile_size
@@ -63,7 +74,6 @@ PHYSICS:
         call CHECK_HORIZONTAL_COLLISION
         
         mv ra, s11 # loading return address from s11
-
         # After checking collision
         
         lh t2, 0(a3)    # Loads Player's Current X
@@ -249,8 +259,10 @@ CHECK_MOVE_Y:
             lbu t2, 4(a3)    # Loads Player's Current Y
             bnez a0, CAN_MOVE_Y # a0 != 0 ? CAN_MOVE_Y : Fixed_Y_Map
                 mv t5,t2 # storing PLYRS_current Y in t5
-                la a0, MOVE_Y	
-                sb zero, 0(a0) # MOVE_Y = 0
+                la a0, MOVE_Y
+                lb t0, 0(a0) # MOVE_Y = 0
+                slt t0,t0,zero # t0 = -1 ? t0 = 1 : t0 = 0
+                sb t0, 0(a0) # MOVE_Y = 0
                 sb zero,1(a0) # reseting jump byte
             j Fixed_Y_Map
         

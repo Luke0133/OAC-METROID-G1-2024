@@ -342,7 +342,7 @@ RENDER_PLAYER:
 							j START_RENDER_PLAYER         # Start rendering player
 
 		RENDER_PLYR_LEFT:
-
+			addi a1,a1, -4 # Offseting sprite's X so that it renders in propper place
 			add t1, t2, t3  # t1 will only be 0 if player isn't moving 
 			beqz t1,RENDER_IDLE_LEFT # Checks if player is mooving or not
 			j NOT_IDLE_LEFT	  # If player is moving or not
@@ -351,7 +351,7 @@ RENDER_PLAYER:
 				li a3, 20  # Sprite's Widht
 				mv a6, t5	# Idle sprites have their status set to 1 if player is attacking
 				bnez t4, RENDER_IDLE_LEFT_UP	# If player is looking up
-				
+					
 				# Otherwise, render normal idle 
 					la a0, Samus_Left_Idle # Loads Player's Image Address 
 					li a4, 32  # Sprite's Height

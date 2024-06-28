@@ -12,10 +12,8 @@ INPUT_CHECK:
     la t0, PLYR_INPUT
     li t2, 1   # There is input
     sb t2, 0(t0) 
-    
-    lw t0, 4(t1)   # Reads key value
-   
 
+    lw t0, 4(t1)   # Reads key value
 
     li t1, 'w'	   # Loads ascii value of 'w' key
     bne t0, t1, CHECK_INPUT.A
@@ -52,6 +50,24 @@ INPUT_CHECK:
     j INPUT.DEL 	# If del key was pressed
 
     NO_INPUT:
+        mv s1,a0
+    mv s2,a7
+la a0, MOVE_X
+	lb a0,0(a0)
+    li a7, 1
+    ecall	
+	la a0, DEBUG2 
+    li a7, 4
+    ecall
+	la a0, MOVE_Y
+	lb a0,0(a0)
+    li a7, 1
+    ecall
+	la a0, DEBUG
+    li a7, 4
+    ecall
+ mv a0,s1
+    mv a7,s2
         la t0, PLYR_INPUT
         li t2, 0   # There isn't input
         sb t2, 0(t0) 
@@ -73,8 +89,8 @@ INPUT_CHECK:
 	    j END_INPUT_CHECK
 	
     INPUT.A: # Moves player left
-        li t1, 1      # Loads direction (1 = left)
-        sb t1, 1(a0)  # Stores new direction on PLYR_STATUS
+#        li t1, 1      # Loads direction (1 = left)
+#        sb t1, 1(a0)  # Stores new direction on PLYR_STATUS
 
         li t1, -1     # Loads direction for MOVE_X (-1 = left)
         sb t1, 6(a0)  # Stores new direction on MOVE_X
@@ -91,14 +107,15 @@ INPUT_CHECK:
         SkipMorphBallTransformation:
         j END_INPUT_CHECK
     INPUT.D:          # Moves player right
-        li t1, 0      # Loads direction (0 = right)
-        sb t1, 1(a0)  # Stores new direction on PLYR_STATUS
+#        li t1, 0      # Loads direction (0 = right)
+#        sb t1, 1(a0)  # Stores new direction on PLYR_STATUS
 
         li t1, 1      # Loads direction for MOVE_X (1 = right)
         sb t1, 6(a0)  # Stores new direction on MOVE_X
         j END_INPUT_CHECK 
 	
     INPUT.SPACE:
+
         lb t1, 7(a0)  # Loads current direction on MOVE_Y
         beqz t1, CAN_JUMP
         j END_INPUT_CHECK

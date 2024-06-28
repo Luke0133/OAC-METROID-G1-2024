@@ -3,6 +3,7 @@
 
 .data
 DEBUG: .string "\n"
+DEBUG2: .string " x "
 DEBUG1: .string "rarara\n"
 		
 .text
@@ -40,21 +41,27 @@ GAME_LOOP:
 #	li a7, 32
 #	ecall
 ##################
-	call PHYSICS
 
-#	la a0, JUMP
-#	lb a0,0(a0)
- #   li a7, 1
-  #  ecall
+	call PHYSICS
+	
 #	la a0, MAP_INFO
 #	lb a0,1(a0)
 #   li a7, 1
 #   ecall
-	
-	
+#	la a0, MOVE_X
+#	lb a0,0(a0)
+#    li a7, 1
+#    ecall	#
+#	la a0, DEBUG2 
+#    li a7, 4
+#    ecall#
+#	la a0, MOVE_Y
+#	lb a0,0(a0)
+#    li a7, 1
+#    ecall
 #	la a0, DEBUG
- #   li a7, 4
-  #  ecall
+#    li a7, 4
+#    ecall
 
 
 
