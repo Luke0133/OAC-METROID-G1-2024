@@ -1,6 +1,6 @@
 .include "helpers/MACROSv21.s" # Macros para bitmap display
 .include "helpers/data.s"
-.include "sprites/sprites.s"
+#.include "sprites/sprites.s"
 
 .data
 DEBUG: .string "\n"
@@ -126,7 +126,7 @@ GAME_LOOP:
 	la t0,RUN_TIME	# Loads RUN_TIME address
 	sw a0,0(t0)	# new time is stored in RUN_TIME, in order to be compared later		
 
-	#call MUSIC.PLAY
+	call MUSIC.PLAY
 	
 	j ENGINE_LOOP	# Volta para ENGINE_LOOP
 
