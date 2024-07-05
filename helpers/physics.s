@@ -11,13 +11,13 @@
 #	a0 = MOVE_X/MOVE_Y address (located on main.s)		#
 #	a1 = CURRENT_MAP address (located on main.s)		#
 #	a2 = current map's address (located on matrix.data)	#
-# a3 = PLYR_POS
-# a4 = Move_X/Y in tile format
-# a6 = player offset (t4)
-# a7 = player x on matrix 
-# s10 = what to add to map matrix (-1, 0 or 1)
-# s11 = ra storage
-# t5,t3 = Temporary Registers
+#   a3 = PLYR_POS
+#   a4 = Move_X/Y in tile format
+#   a6 = player offset (t4)
+#   a7 = player x on matrix 
+#   s10 = what to add to map matrix (-1, 0 or 1)
+#   s11 = ra storage
+#   t5,t3 = Temporary Registers
 
 PHYSICS:
     la a0, MOVE_X	       # Loads address of MOVE_X
@@ -79,8 +79,8 @@ PHYSICS:
         lh t2, 0(a3)    # Loads Player's Current X
         bnez a0, CAN_MOVE_X # a0 != 0 ? CAN_MOVE_X : Fixed_X_Map 
         mv t5,t2 # storing PLYRS_current X in t5
-        la a0, MOVE_X	
-        sb zero, 0(a0) # MOVE_X = 0
+      #  la a0, MOVE_X	
+      #  sb zero, 0(a0) # MOVE_X = 0
         j Fixed_X_Map
         
         CAN_MOVE_X:
@@ -202,9 +202,15 @@ CHECK_MOVE_Y:
                 addi t2,t2,2
                 j CONTINUE_MOVE_PLAYER_Y
                 JUMP_4_PIXELS:
-                    li t1, 2 # Will increment 4 pixels up
-                    addi t2,t2,4
-                    j CONTINUE_MOVE_PLAYER_Y
+                    li t1 medium_jump
+                    blt t2,t1, JUMP_8_PIXELS
+                        li t1, 2 # Will increment 4 pixels up
+                        addi t2,t2,4
+                        j CONTINUE_MOVE_PLAYER_Y
+                    JUMP_8_PIXELS:
+                        li t1, 3 # Will increment 4 pixels up
+                        addi t2,t2,8
+                        j CONTINUE_MOVE_PLAYER_Y
                     
             SWITCH_DOWN:
                 sb zero, 1(a0) # reset jump information
@@ -212,7 +218,7 @@ CHECK_MOVE_Y:
                 sb t1,0(a0) # Switches MOVE_Y to 1 (Down)            
                 j END_PHYSICS
         MOVE_PLAYER_DOWN:
-            li t1, min_jump # minimum height of jump required for the movement 
+            li t1, min_jump
             lbu t2, 1(a0)   # Loads JUMP information
             blt t2, t1, FALL_2_PIXELS
             li t1, 2 # Will increment 4 pixels down
@@ -260,11 +266,19 @@ CHECK_MOVE_Y:
             bnez a0, CAN_MOVE_Y # a0 != 0 ? CAN_MOVE_Y : Fixed_Y_Map
                 mv t5,t2 # storing PLYRS_current Y in t5
                 la a0, MOVE_Y
-                lb t0, 0(a0) # MOVE_Y = 0
-                slt t0,t0,zero # t0 = -1 ? t0 = 1 : t0 = 0
-                sb t0, 0(a0) # MOVE_Y = 0
-                sb zero,1(a0) # reseting jump byte
-            j Fixed_Y_Map
+                lb t0, 0(a0) # Gets MOVE_Y info
+                blt t0,zero, STOP_JUMP # If t1 = -1 (aka, player would start jumping), reset
+                    # If t0 = 0 (not jumping) or t1 = 1 (freefall), reset MOVE_Y and JUMP
+                    sh zero, 0(a0) # MOVE_Y = 0 and JUMP = 0
+                    j Fixed_Y_Map
+                STOP_JUMP:
+                    # if t0 = -1 (jumping) check if player is already jumping or not
+                    li t0,8
+                    lbu t1,1(a0) # Gets JUMP info
+                    slt t0,t0,t1 # t1 > 8 ? t0 = 1 : t0 = 0
+                    sb t0, 0(a0) # MOVE_Y = t0 
+                    sb zero,1(a0) # reseting jump byte
+                    j Fixed_Y_Map
         
         CAN_MOVE_Y:    
           sb a6, 7(a3)    # Stores new Y offset

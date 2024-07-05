@@ -55,8 +55,8 @@ beqz a7,NORMAL
 	mv t3,zero	# t3 = 0 (Resets column counter)
 	
 	PRINT_LINE:	
-		lb t4,0(a0)	# loads word(4 pixels) on t4
-		sb t4,0(t0)	# prints 4 pixels from t4
+		lb t4,0(a0)	# loads byte(1 pixel) on t4
+		sb t4,0(t0)	# prints 1 pixel from t4
 		
 		addi t0,t0,1	# increments bitmap address
 		addi a0,a0,1	# increments image address
@@ -544,7 +544,6 @@ RENDER_MAP:
 	
 	RENDER_MAP_GetCurrentX:
 	add s3,t3,a6 	# s3 will be compared with t3 (column counter) to go to next line
-#	addi s3,s3,-1   # sub is necessary (eg.: starts on X = 19, width = 2, ends on X = 21-1 = 20)
 	beqz t3,RENDER_MAP_NoTrailX
 	
 	sub t3,t3,a1	# t3 now is the column counter related to the screen matrix
@@ -559,8 +558,7 @@ RENDER_MAP:
 	addi s3,t0,1	# if rendering a full screen (20 wide) with offset, will need to render 21 tiles
 		
 	RENDER_MAP_GetCurrentY:
-	add s2,t2,a7 	# s2 will be compared with t2 (column counter) to go to next line 
-#	addi s2,s2,-1   # sub is necessary (eg.: starts on Y = 6, height = 3, ends on X = 9-1 = 8)
+	add s2,t2,a7 	# s2 will be compared with t2 (column counter) to go to next line
 	beqz t2,RENDER_MAP_NoTrailY
 	
 	sub t2,t2,a2	# t2 now is the column counter related to the screen matrix
@@ -574,8 +572,6 @@ RENDER_MAP:
 	li t0, m_screen_height
 	blt a7,t0 RENDER_MAP_LOOP # If height of rendering area is smaller than the screen's height, ignore
 	addi s2,t0,1	# if rendering a full screen (15 wide) with offset, will need to render 16 tiles
-#	mv t2,zero	# t2 = 0 (Resets line counter)
-#	mv t3,zero	# t3 = 0 (Resets column counter)
 
 	
 	
@@ -585,282 +581,14 @@ RENDER_MAP_LOOP:
 	j CONTINUE_RENDER_MAP
 
 	NotBackground:
-	li t0,74
-	bne t1,t0, NotBreakBlock
-	la t0, BreakBlock
-	j CONTINUE_RENDER_MAP
-	
-	NotBreakBlock:
-	li t0,126
-	bne t1,t0, NotBush2A
-	la t0, Bush2A
-	j CONTINUE_RENDER_MAP
-
-	NotBush2A:
-	li t0,127
-	bne t1,t0, NotBush2B
-	la t0, Bush2B
-	j CONTINUE_RENDER_MAP
-
-	NotBush2B:
-	li t0,14
-	bne t1,t0, NotDoorLeftTop
-#	# la t0, DoorLeftTop
-	li t1,0
-	j CONTINUE_RENDER_MAP
-
-	NotDoorLeftTop:
-	li t0,12
-	bne t1,t0, NotDoorLeftMiddle
-#	# la t0, DoorLeft
-	li t1,0
-	j CONTINUE_RENDER_MAP
-
-	NotDoorLeftMiddle:
-	li t0,10
-	bne t1,t0, NotDoorLeftBottom
-#	# la t0, DoorLeft
-	li t1,0
-	j CONTINUE_RENDER_MAP
-
-	NotDoorLeftBottom:
-	li t0,6
-	bne t1,t0, NotDoorRightTop
-#	# la t0, DoorRightTop
-	li t1,0
-	j CONTINUE_RENDER_MAP
-
-	NotDoorRightTop:
-	li t0, 4 
-	bne t1,t0, NotDoorRightMiddle
-#	# la t0, DoorRight
-	li t1,0
-	j CONTINUE_RENDER_MAP
-
-	NotDoorRightMiddle:
-	li t0, 2 
-	bne t1,t0, NotDoorRightBottom
-#	# la t0, DoorRight
-	li t1,0
-	j CONTINUE_RENDER_MAP
-
-	NotDoorRightBottom:
-	li t0, 198 
-	bne t1,t0, NotDoorFrame
-	la t0, DoorFrame
-	j CONTINUE_RENDER_MAP
-
-	NotDoorFrame:
-	li t0, 64 
-	bne t1,t0, NotGround1A
-	la t0, Ground1A
-	j CONTINUE_RENDER_MAP
-
-	NotGround1A:
-	li t0, 72 
-	bne t1,t0, NotGround1B
-	la t0, Ground1B
-	j CONTINUE_RENDER_MAP
-
-	NotGround1B:
-	li t0, 80 
-	bne t1,t0, NotGround1C
-	la t0, Ground1C
-	j CONTINUE_RENDER_MAP
-
-	NotGround1C:
-	li t0, 88 
-	bne t1,t0, NotGround1D
-	la t0, Ground1D
-	j CONTINUE_RENDER_MAP
-	
-	NotGround1D:
-	li t0, 98 
-	bne t1,t0, NotGround2A
-	la t0, Ground2A
-	j CONTINUE_RENDER_MAP
-
-	NotGround2A:
-	li t0, 106 
-	bne t1,t0, NotGround2B
-	la t0, Ground2B
-	j CONTINUE_RENDER_MAP
-
-	NotGround2B:
-	li t0, 114 
-	bne t1,t0, NotGround2C
-	la t0, Ground2C
-	j CONTINUE_RENDER_MAP
-
-	NotGround2C:
-	li t0, 84 
-	bne t1,t0, NotGround3A
-	la t0, Ground3A
-	j CONTINUE_RENDER_MAP
-
-	NotGround3A: 
-	li t0, 92 
-	bne t1,t0, NotGround3B
-	la t0, Ground3B
-	j CONTINUE_RENDER_MAP
-
-	NotGround3B:
-	li t0, 100 
-	bne t1,t0, NotGround3C
-	la t0, Ground3C
-	j CONTINUE_RENDER_MAP
-
-	NotGround3C:
-	li t0, 128 
-	bne t1,t0, NotItemHolderA
-	la t0, ItemHolderA
-	j CONTINUE_RENDER_MAP
-
-	NotItemHolderA:
-	li t0, 136 
-	bne t1,t0, NotItemHolderB
-	la t0, ItemHolderB
-	j CONTINUE_RENDER_MAP
-
-	NotItemHolderB:
-	li t0, 144 
-	bne t1,t0, NotItemHolderC
-	la t0, ItemHolderC
-	j CONTINUE_RENDER_MAP
-
-	NotItemHolderC:
-	li t0, 152 
-	bne t1,t0, NotItemHolderD
-	la t0, ItemHolderD
-	j CONTINUE_RENDER_MAP
-
-	NotItemHolderD:
-	li t0, 160 
-	bne t1,t0, NotItemHolderE
-	la t0, ItemHolderE
-	j CONTINUE_RENDER_MAP
-
-	NotItemHolderE:
-	li t0, 168 
-	bne t1,t0, NotItemHolderF
-	la t0, ItemHolderF
-	j CONTINUE_RENDER_MAP
-
-	NotItemHolderF:
-	li t0, 176
-	bne t1,t0, NotItemHolderG
-	la t0, ItemHolderG
-	j CONTINUE_RENDER_MAP
-
-	NotItemHolderG:
-	li t0, 94
-	bne t1,t0, NotLavaB
-	la t0, LavaB
-	j CONTINUE_RENDER_MAP
-
-	NotLavaB:
-	li t0, 102
-	bne t1,t0, NotLavaT
-	la t0, LavaT
-	j CONTINUE_RENDER_MAP
-
-	NotLavaT:
-	li t0, 90
-	bne t1,t0, NotPipe1H
-	la t0, Pipe1H
-	j CONTINUE_RENDER_MAP
-
-	NotPipe1H:
-	li t0, 82
-	bne t1,t0, NotPipe1V
-	la t0, Pipe1V
-	j CONTINUE_RENDER_MAP
-
-	NotPipe1V:
-	li t0, 68
-	bne t1,t0, NotPipe2H
-	la t0, Pipe2H
-	j CONTINUE_RENDER_MAP
-
-	NotPipe2H:
-	li t0, 122
-	bne t1,t0, NotPipe2V
-	la t0, Pipe2V
-	j CONTINUE_RENDER_MAP
-
-	NotPipe2V:
-	li t0, 118
-	bne t1,t0, NotPipe3V2
-	la t0, Pipe3V2
-	j CONTINUE_RENDER_MAP
-
-	NotPipe3V2:
-	li t0, 110
-	bne t1,t0, NotPipe3V
-	la t0, Pipe3V
-	j CONTINUE_RENDER_MAP
-
-	NotPipe3V:
-	li t0, 96
-	bne t1,t0, NotSlide1L
-	la t0, Slide1L
-	j CONTINUE_RENDER_MAP
-
-	NotSlide1L:
-	li t0, 104
-	bne t1,t0, NotSlide1R
-	la t0, Slide1R
-	j CONTINUE_RENDER_MAP
-
-	NotSlide1R:
-	li t0, 78
-	bne t1,t0, NotSpikeL
-	la t0, SpikeL
-	j CONTINUE_RENDER_MAP
-
-	NotSpikeL:
-	li t0, 86
-	bne t1,t0, NotSpikeR
-	la t0, SpikeR
-	j CONTINUE_RENDER_MAP
-
-	NotSpikeR:
-	li t0, 120
-	bne t1,t0, NotTile1A
-	la t0, Tile1A
-	j CONTINUE_RENDER_MAP
-
-	NotTile1A:
-	li t0, 66
-	bne t1,t0, NotTile1B
-	la t0, Tile1B
-	j CONTINUE_RENDER_MAP
-
-	NotTile1B:
-	li t0, 76
-	bne t1,t0, NotTile2A
-	la t0, Tile2A
-	j CONTINUE_RENDER_MAP
-
-	NotTile2A:
-	li t0, 116
-	bne t1,t0, NotTile3A
-	la t0, Tile3A
-	j CONTINUE_RENDER_MAP
-
-	NotTile3A:
-	li t0, 124
-	bne t1,t0, NotTile3B
-	la t0, Tile3B
-	j CONTINUE_RENDER_MAP
-
-	NotTile3B:
-	li t0, 70 
-	bne t1,t0, NoTile
-	la t0, Tile3C
-	
-	NoTile:
-	li t1,0 # If no valid tile is detected, the background color will be applied
+#		li t0, 40
+# -- > Do we need to check if door is openned?
+		la t0, Tileset # Loads Tileset address to t0
+		addi t1,t1,-1  # t1 = Tile Number - 1 (so that if t1 = 1, 0 tiles will be skipped)
+		slli t1,t1,8   # t1 = (Tile Number - 1) x 256
+		add t0,t0,t1  # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles) 
+#	NoTile:
+#	li t1,0 # If no valid tile is detected, the background color will be applied
 	 
 	CONTINUE_RENDER_MAP:
 	# Storing Registers on Stack

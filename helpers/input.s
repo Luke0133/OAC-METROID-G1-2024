@@ -1,21 +1,10 @@
 ######## INPUT ###########################
 # Uso de Registradores temporarios
 INPUT_CHECK:
-    li t1,0xFF200000  	    # KDMMIO Address
-    lw t0, 0(t1)	    # Reads the Keyboard Control bit
-    andi t0, t0, 0x0001	    # Masks the least significant bit
-#########################    
-    mv s1,a0
-    mv s2,a7
-    mv a0,t0
-	li a7, 1
-    ecall	
-	la a0, DEBUG
-    li a7, 4
-    ecall
- mv a0,s1
-    mv a7,s2
-#####################
+    li t1,0xFF210000  	  # KDMMIO Address
+    lw t0, 0(t1)	      # Reads the Keyboard Control bit
+    andi t0, t0, 0x0001	  # Masks the least significant bit
+
     la a0, PLYR_STATUS      # Loads Player Status
     bnez t0, CONTINUE_CHECK # if an input is detected, continue checking
     j NO_INPUT 		    # otherwise no input was detected 
@@ -125,36 +114,90 @@ INPUT_CHECK:
     INPUT.K: # Shoots
         li t1, 1     # Loads attacking status (1 = attacking)
         sb t1, 5(a0) # Stores new attack status on PLYR_STATUS
-        j END_INPUT_CHECK
+        #j BEAM_OPERATIONS
     
     INPUT.DEL: # Kills Player
         #call KILL_PLYR
         j END_INPUT_CHECK
 
-#    INPUT.P: #for testing
- #       la t0, PLYR_STATUS
-#        lb t1, 0(t0)
-#        addi t1,zero,1
-#        sb t1, 0(t0)
-#        j END_INPUT_CHECK
-
 	END_INPUT_CHECK:
-#    la a1, PLYR_STATUS      # Loads Player Status
-#    lbu a0, 0(a1)
-#    li a7, 1
-#    ecall
-#    lbu a0, 1(a1)
-#    ecall
-#    lbu a0, 2(a1)
-#    ecall
-#    lbu a0, 3(a1)
-#    ecall
-#    lbu a0, 4(a1)
-   # ecall
-  #  lbu a0, 5(a1)
- #   ecall
-#   la a0, DEBUG
-  #  li a7, 4
-  #  ecall
-      
 		ret	
+
+#BEAM_OPERATIONS: 
+#    la t1, BEAMS # loads plyrs_status attacking
+#    li t4, BEAMS_NUMBER # max counter of number beams
+#    li t3, 0
+
+#    CHECK_BEAM_LOOP:
+#        lb t2, 0(t1) #loads if beam_1 is active
+#        beqz t2, RESET_BEAM_LOOP
+#        li t2, 1
+#        sb t2, 0(t1)
+#        j SET_BEAM_POSITION
+
+#        RESET_BEAM_LOOP:
+#        addi t3, t3, 1
+#        addi t1, t1, 16
+#        beq t3,t4, END_BEAM_LOOP 
+#        j CHECK_BEAM_LOOP
+#
+#        END_BEAM_LOOP:
+#           j END_BEAM_OPERATIONS
+#
+#    SET_BEAM_POSITION:
+#        lb t2, 1(a0) # Loads PLYRS horizontal direction
+#        beqz t2, SET_BEAM_LEFT
+#        li t5, 1
+#        beq t2, t5, SET_BEAM_RIGHT
+#        li t5, 2
+#        beq t2, t5, SET_BEAM_UP
+#         
+#
+#    SET_BEAM_LEFT:
+#       la t0, PLYR_POS
+#       lh t2, 0(t0) # loads player current x direction        
+#       sh t2, 2(t1) # stores player direction in beams initial position
+#       lb t2, 4(t0) # loads player current y direction  
+#       sb t2, 8(t1) # stores player direction in beams initial position
+#       li t2, 0 # left
+#       sb t2, 1(t1) # store beam's direction
+#       j END_BEAM_OPERATIONS
+
+#    SET_BEAM_RIGHT:
+#       la t0, PLYR_POS
+#       lh t2, 0(t0) # loads player current x direction        
+#       sh t2, 2(t1) # stores player direction in beams initial position
+#       lb t2, 4(t0) # loads player current y direction  
+#       sb t2, 8(t1) # stores player direction in beams initial position
+#       li t2, 1 # right
+#       sb t2, 1(t1) # store beam's direction
+#       j END_BEAM_OPERATIONS
+
+#    SET_BEAM_UP:
+#       la t0, PLYR_POS
+#       lh t2, 0(t0) # loads player current x direction        
+#       sh t2, 2(t1) # stores player direction in beams initial position
+#       lb t2, 4(t0) # loads player current y direction   
+#       sb t2, 8(t1) # stores player direction in beams initial position
+#       li t2, 2 # up
+#       sb t2, 1(t1) # store beam's direction
+#
+#    END_BEAM_OPERATIONS:
+#       ret
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#

@@ -20,9 +20,6 @@
 #   t5,t3 = Temporary Registers
 
 
-
-
-
 CHECK_HORIZONTAL_COLLISION:
 li s8 1
 #################################
@@ -54,7 +51,7 @@ li s8 1
             UPWARDS_THIRD_CHECK: # If MOVE_Y = -1 (up)
                 la t1, PLYR_POS # Loads PLYR_POS address
                 lb t1, 7(t1)    # Loads Y offset
-                li t5, 4        # Represents the desired offset
+                li t5, 8        # Represents the desired offset
                 bge t5, t1 SKIP_THIRD_CHECK # If Y offset is zero, there's no need to check 3 tiles
                 # Otherwise, t5 is already = 2 , so it'll check 3 tiles horizontally (or 2 if on morph ball)
                     li t5, 2        # Represents the desired offset
@@ -74,7 +71,7 @@ li s8 1
                 j CHECK_MAP_COLLISION
         
         CHECK_X_RIGHT:
-            li t0, 4 # t0 = 8 offset pixels 
+            li t0, 4 # t0 = 4 offset pixels 
             beq t2, t0, CONTINUE_CHECK_X_RIGHT # offset = 0 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
             j END_HORIZONTAL_COLLISION 
             
@@ -122,17 +119,22 @@ li s8 0
             j CHECK_Y_UP_LEFT
             
             CHECK_Y_UP_RIGHT:
-                li t0, 8 # X offset 8
-                blt t2,t0, CHECK_1_TILE_RIGHT 
-                li t5, 4 # Check two tiles upwards - case 3
+                li t0, 8 # Compare X offset with 8
+                blt t2,t0, CHECK_1_TILE_RIGHT
+                li t0,12 # Compare X offset with 12
+                bge t2,t0, CHECK_1_TILE_RIGHT_2
+                li t5, 4 # Check two tiles downwards - case 3
                 
                 CHECK_1_TILE_RIGHT:
                     j CHECK_MAP_COLLISION
+                CHECK_1_TILE_RIGHT_2:
+                    addi t3,t3,1
+                    j CHECK_MAP_COLLISION 
             
             CHECK_Y_UP_LEFT:
-                li t0, 4 # X offset 4
-                blt t2,t0, CHECK_1_TILE_LEFT 
-                li t0, 12 # X offset 12
+                li t0, 4 # Compare X offset with 4
+                bge t0,t2, CHECK_1_TILE_LEFT 
+                li t0, 12 # Compare X offset with 12
                 bge t2,t0, CHECK_RIGHT_TILE_LEFT
                 li t5, 4 # Check two tiles upwards - case 3
                 
@@ -152,41 +154,28 @@ li s8 0
         CONTINUE_CHECK_Y_DOWN: 
             add t3,t3,t4     # 1 matrix Y (down)
             add t3,t3,t4     # 1 matrix Y (down)
-###########################
-#            mv s1,a0
-#            mv s2,a7
-#            lbu s3, 10(a3) # t5 = PLYR_MATRIX Y
-#            sub a0,t3,a2
-#            addi a0,a0,-3
-#            sub a0,a0,s3
-#            li s4,60
-#            div a0,a0,s4
-#            li a7,1
-#            ecall
-#            la a0, DEBUG
-#            li a7, 4
-#            ecall
-#            mv a0,s1
-#            mv a7,s2
-######################
-            
             lbu t0,13(a3)    # Loads Facing direction (0 = Right, 1 = Left)
             lbu t2, 6(a3)    # t2 = Player's Y offset
             beqz t0, CHECK_Y_DOWN_RIGHT # t0 = 0 ? CHECK_Y_UP_RIGHT : CHECK_Y_UP_LEFT
             j CHECK_Y_DOWN_LEFT
             
             CHECK_Y_DOWN_RIGHT:
-                li t0, 8 # X offset 8
+                li t0, 8 # Compare X offset with 8
                 blt t2,t0, CHECK_1_TILE_DOWN_RIGHT 
+                li t0,12 # Compare X offset with 12
+                bge t2,t0, CHECK_1_TILE_DOWN_RIGHT_2
                 li t5, 4 # Check two tiles downwards - case 3
                 
-                CHECK_1_TILE_DOWN_RIGHT:
+                CHECK_1_TILE_DOWN_RIGHT: # Checks the tile to the left
                     j CHECK_MAP_COLLISION
+                CHECK_1_TILE_DOWN_RIGHT_2: # Checks the tile to the right
+                    addi t3,t3,1
+                    j CHECK_MAP_COLLISION 
             
             CHECK_Y_DOWN_LEFT:
-                li t0, 4 # X offset 4
-                blt t2,t0, CHECK_1_TILE_DOWN_LEFT 
-                li t0, 12 # X offset 3
+                li t0, 4 # Compare X offset with 4
+                bge t0,t2, CHECK_1_TILE_DOWN_LEFT 
+                li t0, 12 # Compare X offset with 12
                 bge t2,t0, CHECK_RIGHT_TILE_DOWN_LEFT # Will check the tile on the right and not the one the player is currently at
                 li t5, 4 # Check two tiles downwards - case 3
                 
@@ -219,105 +208,47 @@ CHECK_MAP_COLLISION:
 START_CHECK_MAP_COLLISION:
 
     bnez a0, CONTINUE_CHECK_MAP_COLLISION_1 # a0 != 0 ? CONTINUE_CHECK_MAP_COLLISION_1 : ret
-            ###########################
-#        beqz s8,NONONOONON0
-#            mv s1,a0
-#            mv s2,a7
-#            la a0, DEBUG
-#            li a7, 4
-#            ecall
-#            mv a0,s1
-#            mv a7,s2
-#            NONONOONON0:
-######################
     ret
     CONTINUE_CHECK_MAP_COLLISION_1:
-                        ###########################
-#                        beqz s8,NONONOONO
-#            mv s1,a0
-#            mv s2,a7
-#            lbu s3, 10(a3) # t5 = PLYR_MATRIX Y
-#            sub a0,t3,a2
-#            addi a0,a0,-3
-#            lbu s6, 8(a3) # t5 = PLYR_MATRIX Y
-#            sub s5,a0,s6
-#          #  sub a0,a0,s4
-#            li s4,60
-#          #  mul s4,s4,s3
-#          #  sub a0,a0,s4
-#            div s5,s5,s4
-#            mul s4,s5,s4
-#            sub a0,a0,s4
-#            li a7,1
-#            ecall
-#            la a0, DEBUG2
-#            li a7, 4
-#            ecall
-#            mv a0,s5
-#            li a7,1
-#            ecall
-#            la a0, DEBUG2
-#            li a7, 4
-#            ecall
-#            mv a0,t5
-#            li a7,1
-#            ecall
-#            la a0, DEBUG
-#            li a7, 4
-#            ecall
-#            mv a0,s1
-#            mv a7,s2
-#            NONONOONO:
-######################
-    lbu t1, 0(t3) # Loads normalized map address
+    lbu t1, 0(t3) # Loads tile from current map
 
-    bnez t1,COLLISION_NotBackground # if it is a dark tile where can move
-	li a0, 1 # Only option when player can move
+    li t0, 3
+    blt t0, t1,COLLISION_NotBackground # If tile isn't passthrough or breakable (t1 > 3)
+    # If tile is passthrough or breakable (0 <= t1 <= 3)
+        li a0, 1 # Only option when player can move
+        beq a0,t1, COLLISION_BREAKABLE  # If tile is breakable, there needs to be a check if it was broken
+            j CONTINUE_CHECK_MAP_COLLISION_2 # Otherwise, continue checking collision
+    
+    COLLISION_BREAKABLE:
+# ---> make breakable block work :)
+    # li a0, 0 # Player can't move  
     j CONTINUE_CHECK_MAP_COLLISION_2
 	
 	COLLISION_NotBackground:
-    li t0,14
-	bne t1,t0, COLLISION_NotDoorLeftTop
-    # j SMTH DOOR
+        li t0,36
+        bge t1,t0, COLLISION_SPECIAL  # If current tile is a door or a damaging tile (t1 >= 36)
+            j COLLISION_BLOCKED # If tile isn't special (3 < t1 < 36)
 
-	COLLISION_NotDoorLeftTop:
-	li t0,12
-	bne t1,t0, COLLISION_NotDoorLeftMiddle
-    # j SMTH DOOR
+	COLLISION_SPECIAL:
+        li t0,40
+        bge t1,t0, COLLISION_DOOR   # If tile is a door (t1 >= 40)
+            j COLLISION_DAMAGE  # If tile deals damage (36 <= t1 < 40)
 
-    COLLISION_NotDoorLeftMiddle:
-	li t0,10
-	bne t1,t0, COLLISION_NotDoorLeftBottom
-    # j SMTH DOOR
+    COLLISION_DOOR:
+# ---> make doors work :)
+        j COLLISION_BLOCKED # For now >:[
     
-    COLLISION_NotDoorLeftBottom:
-	li t0,6
-	bne t1,t0, COLLISION_NotDoorRightTop
-    # j SMTH DOOR
-
-    COLLISION_NotDoorRightTop:
-	li t0, 4 
-	bne t1,t0, COLLISION_NotDoorRightMiddle
-    # j SMTH DOOR
+    COLLISION_DAMAGE:
+# ---> make damage work :)
+        j COLLISION_BLOCKED # For now >:[
     
-	COLLISION_NotDoorRightMiddle:
-	li t0, 2 
-	bne t1,t0, COLLISION_NotDoorRightBottom
-    # j SMTH DOOR
-
-	COLLISION_NotDoorRightBottom:
-    li t0, 102
-	bne t1,t0, COLLISION_NotLavaT
-	# j SMTH KILL PLAYER
-    
-	COLLISION_NotLavaT:
-    li a0, 0 # Player can't move  
-    
+    COLLISION_BLOCKED:
+        li a0, 0 # Player can't move  
     CONTINUE_CHECK_MAP_COLLISION_2:
     bnez t5, CONTINUE_CHECK_MAP_COLLISION_3 # t5 != 0 ? CONTINUE_CHECK_MAP_COLLISION_4 : RET
 ###########################
 #            beqz s8,NONONOONON
-#            mv s1,a0
+#            mv s3,a0
 #            mv s2,a7
 #            la a0, DEBUG
 #            li a7, 4
@@ -351,15 +282,4 @@ START_CHECK_MAP_COLLISION:
             li t5,0
             addi t3,t3,1
             j START_CHECK_MAP_COLLISION
-            
-            #lbu t0, 13(a3) # Loads horizontal facing direction
-            ## 0 = right, 1 = left
-            #beqz t0, VERTICAL_COLLISION_CHECK_RIGHT # t0 = 0 ? VERTICAL_COLLISION_CHECK_RIGHT : VERTICAL_COLLISION_CHECK_LEFT
-            #
-            #VERTICAL_COLLISION_CHECK_LEFT:
-            #    addi t3,t3,-1 #looks on the tile on the left of player's position
-            #    j START_CHECK_MAP_COLLISION
-            #
-            #VERTICAL_COLLISION_CHECK_RIGHT:
-            #    addi t3,t3,1 #looks on the tile on the right of player's position
-            #    j START_CHECK_MAP_COLLISION
+
