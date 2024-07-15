@@ -1,4 +1,4 @@
-.include "helpers/MACROSv21.s" # Macros para bitmap display
+.include "helpers/MACROSv24.s" # Macros para bitmap display
 .include "helpers/data.s"
 #.include "helpers/dataold.s"
 
@@ -10,7 +10,7 @@ DEBUG1: .string "rarara\n"
 .text
 li s1, 0  # Reseting time
 main:
-	call SETUP
+	j SETUP
 
 ##########################    GAME LOOP    ##########################
 #                Main operations for the game to run                #
@@ -31,14 +31,30 @@ GAME_LOOP:
     xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 
 	call INPUT_CHECK	# Checa input do jogador
-la a0 PLYR_POS
-lb a0,6(a0)
-li a7, 1
+
+	call PHYSICS
+
+la t0 MAP_INFO
+lb a0,2(t0)
+li a7 1
+ecall
+la a0 DEBUG2
+li a7 4
+ecall
+lbu a0,3(t0)
+li a7 1
+ecall
+la a0 DEBUG2
+li a7 4
+ecall
+lbu a0,3(t0)
+lbu a1,5(t0)
+add a0,a0,a1
+li a7 1
 ecall
 la a0 DEBUG
-li a7,4
+li a7 4
 ecall
-	call PHYSICS
 
 	call MAP_MOVE_RENDER
 	
@@ -58,7 +74,7 @@ ecall
 	ecall       # syscall
 	mv s1,a0    # new time is stored in s1, in order to be compared later		
 
-#	call MUSIC.PLAY
+	call MUSIC.PLAY
 	
 	j GAME_LOOP	# Volta para ENGINE_LOOP
 

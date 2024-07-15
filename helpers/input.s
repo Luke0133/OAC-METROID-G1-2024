@@ -1,7 +1,7 @@
 ######## INPUT ###########################
 # Uso de Registradores temporarios
 INPUT_CHECK:
-    li t1,0xFF210000  	  # KDMMIO Address
+    li t1,KDMMIO_ADDRESS  	  # KDMMIO Address
     lw t0, 0(t1)	      # Reads the Keyboard Control bit
     andi t0, t0, 0x0001	  # Masks the least significant bit
 
@@ -42,9 +42,19 @@ INPUT_CHECK:
 
     CHECK_INPUT.K:
     li t1, 'k'	  # Loads ascii value of 'k' key
-    bne t0,t1, CHECK_INPUT.DEL
+    bne t0,t1, CHECK_INPUT.1
     j INPUT.K # If 'k' key was pressed
-    
+
+    CHECK_INPUT.1:
+    li t1, '1'
+    bne t0,t1, CHECK_INPUT.2
+    j INPUT.1
+
+    CHECK_INPUT.2:
+    li t1, '2'
+    bne t0,t1, CHECK_INPUT.DEL
+    j INPUT.2
+
     CHECK_INPUT.DEL:
     li t1, 127	# Loads ascii value of del key
     bne t0,t1, NO_INPUT
@@ -114,8 +124,27 @@ INPUT_CHECK:
     INPUT.K: # Shoots
         li t1, 1     # Loads attacking status (1 = attacking)
         sb t1, 5(a0) # Stores new attack status on PLYR_STATUS
+        j END_INPUT_CHECK
         #j BEAM_OPERATIONS
     
+    INPUT.1: # Change to map 1
+        la t0 MAP_INFO
+        li t1, 1
+        sb t1, 0(t0)
+        li t1, 4
+        sb t1, 1(t0)
+
+        j SETUP
+
+    INPUT.2: # Change to map 2
+        la t0 MAP_INFO
+        li t1, 2
+        sb t1, 0(t0)
+        li t1, 4
+        sb t1, 1(t0)
+
+        j SETUP
+
     INPUT.DEL: # Kills Player
         #call KILL_PLYR
         j END_INPUT_CHECK

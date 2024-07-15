@@ -1,14 +1,14 @@
 #########################################################################
-# Rotina de tratamento de excecao e interrupcao		v2.1		#
+# Rotina de tratamento de excecao e interrupcao		v2.4		#
 # Lembre-se: Os ecalls originais do Rars possuem precedencia sobre	#
 # 	     estes definidos aqui					#
 # Os ecalls 1XX usam o BitMap Display e Keyboard Display MMIO Tools	#
-# Usar o RARS14_Custom4	(misa)						#
+# Usar o RARS16_Custom1	(misa)						#
 # Marcus Vinicius Lamar							#
-# 2020/1								#
+# 2024/1								#
 #########################################################################
 
-# incluir o MACROSv20.s no início do seu programa!!!!
+# incluir o MACROSv24.s no início do seu programa!!!!
 
 .data
 .align 2
@@ -95,14 +95,13 @@ PC:     		.string "PC: "
 Addrs:  		.string "Addrs: "
 Instr:  		.string "Instr: "
 
-
+############################################################################################################
 ### Obs.: a forma 'LABEL: instrucao' embora fique feio facilita o debug no Rars, por favor nao reformatar!!!
-
-########################################################################################
+############################################################################################################
 .text
 
 
-###### Devem ser colocadas aqui as identificações das interrupções e exceções ###
+###### Devem ser colocadas aqui as identificações das interrupções e exceções #######
 
 	csrwi ucause,1		# caso ocorra dropdown vai gerar exceção de instrução inválida
 
@@ -344,6 +343,11 @@ ecallException:   addi    sp, sp, -264              # Salva todos os registrador
     addi    t0, zero, 102             # ecall 2 = print float
     beq     t0, a7, goToPrintFloat
 
+    addi    t0, zero, 3               # ecall 3 = print double
+    beq     t0, a7, goToPrintDouble
+    addi    t0, zero, 103             # ecall 2 = print double
+    beq     t0, a7, goToPrintDouble
+
     addi    t0, zero, 4               # ecall 4 = print string
     beq     t0, a7, goToPrintString
     addi    t0, zero, 104             # ecall 4 = print string
@@ -358,6 +362,11 @@ ecallException:   addi    sp, sp, -264              # Salva todos os registrador
     beq     t0, a7, goToReadFloat
     addi    t0, zero, 106             # ecall 6 = read float
     beq     t0, a7, goToReadFloat
+
+    addi    t0, zero, 7               # ecall 7 = read Double
+    beq     t0, a7, goToReadDouble
+    addi    t0, zero, 107             # ecall 7 = read Double
+    beq     t0, a7, goToReadDouble
 
     addi    t0, zero, 8               # ecall 8 = read string
     beq     t0, a7, goToReadString
@@ -374,52 +383,69 @@ ecallException:   addi    sp, sp, -264              # Salva todos os registrador
     addi    t0, zero, 112             # ecall 12 = read char
     beq     t0, a7, goToReadChar
 
+
     addi    t0, zero, 30              # ecall 30 = time
     beq     t0, a7, goToTime
     addi    t0, zero, 130             # ecall 30 = time
     beq     t0, a7, goToTime
     
+    addi    t0, zero, 31              # ecall 31 = MIDI out
+    beq     t0, a7, goToMidiOut       # Generate tone and return immediately
+    addi    t0, zero, 131             # ecall 31 = MIDI out
+    beq     t0, a7, goToMidiOut
+    
     addi    t0, zero, 32              # ecall 32 = sleep
     beq     t0, a7, goToSleep
     addi    t0, zero, 132             # ecall 32 = sleep
     beq     t0, a7, goToSleep
+    
+    addi    t0, zero, 33              # ecall 33 = MIDI out synchronous
+    beq     t0, a7, goToMidiOutSync   # Generate tone and return upon tone completion
+    addi    t0, zero, 133             # ecall 33 = MIDI out synchronous
+    beq     t0, a7, goToMidiOutSync
+   
+    addi    t0, zero, 34       		# ecall 34 = print hex
+    beq     t0, a7, goToPrintHex
+    addi    t0, zero, 134		# ecall 34 = print hex
+    beq     t0, a7, goToPrintHex
+   
+#    Print Bin não implementado ainda
+#    addi    t0, zero, 35       	# ecall 35 = print bin
+#    beq     t0, a7, goToPrintBin
+#    addi    t0, zero, 134		# ecall 35 = print bin
+#    beq     t0, a7, goToPrintBin
+   
+    addi    t0, zero, 36              # ecall 36 = PrintIntUnsigned
+    beq     t0, a7, goToPrintIntUnsigned
+    addi    t0, zero, 136             # ecall 36 = PrintIntUnsigned
+    beq     t0, a7, goToPrintIntUnsigned
+    
 
     addi    t0, zero, 41              # ecall 41 = random
     beq     t0, a7, goToRandom
     addi    t0, zero, 141             # ecall 41 = random
     beq     t0, a7, goToRandom
 
-    addi    t0, zero, 34       		# ecall 34 = print hex
-    beq     t0, a7, goToPrintHex
-    addi    t0, zero, 134		# ecall 34 = print hex
-    beq     t0, a7, goToPrintHex
-    
-    addi    t0, zero, 31              # ecall 31 = MIDI out
-    beq     t0, a7, goToMidiOut       # Generate tone and return immediately
-    addi    t0, zero, 131             # ecall 31 = MIDI out
-    beq     t0, a7, goToMidiOut
+    addi    t0, zero, 42              # ecall 41 = random
+    beq     t0, a7, goToRandom2
+    addi    t0, zero, 142             # ecall 41 = random
+    beq     t0, a7, goToRandom2
 
-    addi    t0, zero, 33              # ecall 33 = MIDI out synchronous
-    beq     t0, a7, goToMidiOutSync   # Generate tone and return upon tone completion
-    addi    t0, zero, 133             # ecall 33 = MIDI out synchronous
-    beq     t0, a7, goToMidiOutSync
+
+    addi    t0, zero, 47              # ecall 47 = DrawLine
+    beq     t0, a7, goToBRES
+    addi    t0, zero, 147              # ecall 47 = DrawLine
+    beq     t0, a7, goToBRES    
 
     addi    t0, zero, 48              # ecall 48 = CLS
     beq     t0, a7, goToCLS
     addi    t0, zero, 148              # ecall 48 = CLS
     beq     t0, a7, goToCLS
 
-    addi    t0, zero, 47              # ecall 47 = DrawLine
-    beq     t0, a7, goToBRES
-    addi    t0, zero, 147              # ecall 47 = DrawLine
-    beq     t0, a7, goToBRES    
-       
 
-    addi    t0, zero, 36              # ecall 36 = PrintIntUnsigned
-    beq     t0, a7, goToPrintIntUnsigned
-    addi    t0, zero, 136             # ecall 36 = PrintIntUnsigned
-    beq     t0, a7, goToPrintIntUnsigned
 
+
+    jal NaoExisteEcall  # ecall inexistente
 
 	## end execution ##
 	goToExit:   	DE1(s8,goToExitDE2)		# se for a DE1 pula
@@ -440,6 +466,11 @@ ecallException:   addi    sp, sp, -264              # Salva todos os registrador
 			jal     printFloat		# chama printFloat
 			j       endEcall
 
+	goToPrintDouble: NAOTEM_F(s8,NaoExisteEcall)
+			jal     printDouble		# chama printDuble
+			j       endEcall
+
+
 	goToReadChar:	jal     readChar              	# chama readChar
 			j       endEcall
 
@@ -452,6 +483,11 @@ ecallException:   addi    sp, sp, -264              # Salva todos os registrador
 	goToReadFloat:	NAOTEM_F(s8,NaoExisteEcall)
 			jal     readFloat               # chama readFloat
 			j       endEcall
+
+	goToReadDouble:	NAOTEM_F(s8,NaoExisteEcall)
+			jal     readDouble               # chama readDouble
+			j       endEcall
+
 
 	goToPrintHex:	jal     printHex                # chama printHex
 			j       endEcall
@@ -472,6 +508,9 @@ ecallException:   addi    sp, sp, -264              # Salva todos os registrador
 			j       endEcall
 
 	goToRandom:	jal     Random                 	# chama random
+			j       endEcall
+
+	goToRandom2:	jal     Random2                 # chama random2
 			j       endEcall
 
 	goToCLS:	jal     clsCLS                 	# chama CLS
@@ -821,8 +860,7 @@ loopReadCharKDMMIO:  	lw     	a0, 0(t0)   			# le o bit de flag do teclado
    			lw 	a0, 4(t0)			# le o ascii da tecla pressionada
 			j fimreadChar				# fim Read Char
 
-					
-												
+										
 ##### Tratamento para uso com o teclado PS2 da DE2 usando Buffer0 teclado
 #### muda a0, t0,t1,t2,t3 e s0
 #### Cuidar: ao entrar s0 ja deve conter o endereco la s0,LabelScanCode  #####
@@ -1265,6 +1303,44 @@ fimprintFloat:		jal 	printString			# imprime a string em a0
 			addi 	sp, sp, 4			# libera espaco
 			ret					# retorna
 
+#################################
+# printDouble                   #
+# imprime Double em fa0         #
+# na posicao (a1,a2)	cor a3  #
+#################################
+# muda s0, s1
+
+printDouble: 
+
+
+
+
+
+
+fimprintDouble:
+
+			ret
+
+
+#################################
+# readDouble      	 	#
+# fa0 = Double digitado        	#
+# 2017/2			#
+#################################
+
+readDouble: 
+
+
+
+
+
+
+fimreadDouble:
+
+			ret
+
+
+
 
 #################################
 # readFloat       	 	#
@@ -1475,12 +1551,6 @@ Time:  	DE1(s8,Time.DE1)
 Time.DE1:	csrr a0, time			#  Le time LOW
 		csrr a1, timeh 			#  Le time HIGH
 		ret
-#Time.DE2: 	#li 	t0, TimerLOW		# endereco do Timer
-#		li 	t0, STOPWATCH		# carrega endereco do StopWatch
-#	 	lw 	a0, 0(t0)		# carrega o valor do contador de ms
-#	 	#lw	a1, 4(t0)		# parte mais significativa
-#	 	li 	a1, 0x0000		# contador eh de 32 bits
-#fimTime: 	ret				# retorna
 
 
 ############################################
@@ -1495,22 +1565,12 @@ Sleep:  DE1(s8,Sleep.DE1)
 Sleep.DE1:	csrr 	t0, time		# Le o tempo do sistema
 		add 	t1, t0, a0		# soma com o tempo solicitado
 Sleep.Loop:	csrr	t0, time		# Le o tempo do sistema
-		blt	t0, t1, Sleep.Loop	# t0<t1 ?
+		bltu	t0, t1, Sleep.Loop	# t0<t1 ?
 		ret
-
-#sleepDE2:	#li	t0,TimerLOW		# Endereco do TimerLOW
-#		li 	t0, STOPWATCH		# endereco StopWatch
-#		lw 	t1, 0(t0)		# carrega o contador de ms
-#		add 	t2, a0, t1		# soma com o tempo solicitado pelo usuario
-#		
-#LoopSleep: 	lw 	t1, 0(t0)		# carrega o contador de ms
-#		blt 	t1, t2, LoopSleep	# nao chegou ao fim volta ao loop
-#	
-#fimSleep: 	ret				# retorna
 
 
 ############################################
-#  Random                            	   #
+#  Random         41                       #
 #  a0    =    numero randomico        	   #
 ############################################
 
@@ -1522,6 +1582,26 @@ Random:	 DE1(s8,Random.DE1)
 Random.DE1: 	li 	t0, LFSR	# carrega endereco do LFSR
 		lw 	a0, 0(t0)	# le a word em a0
 		ret			# retorna
+
+
+############################################
+#  Random 42                           	   #
+#  			                   #
+#  a1    =    Valor máximo                 #
+#  output a0 = numero randomico        	   #
+############################################
+
+Random2:	DE1(s8,Random2.DE1)
+		li 	a7,42			# Chama o ecall do Rars
+		ecall	
+		ret				# saida
+	
+Random2.DE1: 	li 	t0, LFSR	# carrega endereco do LFSR
+		lw 	a0, 0(t0)	# le a word em a0
+		jal 	__umodsi3
+		#remu 	a0,a0,a1	# numero entre 0 e a1
+		ret			# retorna
+
 
 
 #################################
@@ -1700,11 +1780,10 @@ printIntUnsigned.fim:	ret
 
 
 
-
-
 ###########################################################################
 # lib de operações multiplicação, divisão e resto para a ISA RV32I
 # Nomenclatura usada pelo gcc
+###########################################################################
 
 # Multiplicação signed em a0 e a1  retorno em a0
 # https://github.com/gcc-mirror/gcc/tree/master/libgcc/config/epiphany

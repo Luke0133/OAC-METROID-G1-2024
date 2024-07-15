@@ -5,6 +5,11 @@
 # 3 - Matrixes (Map Matrixes)
 # 4 - Samus (Player's sprites)
 
+MUSIC.NOTES: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60,397,62,3573,62,397,60,397,62,397,64,2382,59,1191,59,397,64,397,65,397,67,4764,65,2382,64,2382,65,3573,69,397,67,397,65,397,67,2382,64,1191,64,397,67,397,71,397,73,9528
+MUSIC.STATUS: .word 0,0
+
+
+.eqv KDMMIO_ADDRESS 0xFF210000
 ####### Informations related to frame rate  ####### 
 .eqv frame_rate 50 # T ms por frame 
 ####### .eqv related to tiles  ####### 
@@ -18,17 +23,42 @@
 .eqv right_hor_border 184
 .eqv top_ver_border 64
 .eqv bottom_ver_border 176
+
 ####### Map informations ####### 
 CURRENT_MAP: .word 0
-MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render once, 2 - render twice, 3 - switch map)
+MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render once, 2 - render twice, 3 - switch map (through door), 4 - switch map (through cheat input))
                 23, 0 # x of matrix, y of matrix
                 8, 0 # X, and Y Tile Offset (0, 4, 8 or 12)
+
+## Parameters for Map 1 Reset ## 
+.eqv resetmap1X 23
+.eqv resetmap1Y 0
+.eqv resetmap1Xoff 8
+.eqv resetmap1Yoff 0
+.eqv resetmap1plyrXscreen 152
+.eqv resetmap1plyrYscreen 160
+.eqv resetmap1plyrX 33
+.eqv resetmap1plyrY 10
+.eqv resetmap1plyrXoff 0
+.eqv resetmap1plyrYoff 0
+
+## Parameters for Map 2 Reset ## 
+.eqv resetmap2X 0
+.eqv resetmap2Y 0
+.eqv resetmap2Xoff 0
+.eqv resetmap2Yoff 0
+.eqv resetmap2plyrXscreen 32
+.eqv resetmap2plyrYscreen 96
+.eqv resetmap2plyrX 2
+.eqv resetmap2plyrY 6
+.eqv resetmap2plyrXoff 0
+.eqv resetmap2plyrYoff 0
 
 ####### Player informations #########
 PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
 PLYR_POS: .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
-		  .byte 160, 0,   # Stores Player's current and old top left Y respectively, both related to the screen 
-		        0, 0 # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+		  .byte 160, 0  # Stores Player's current and old top left Y respectively, both related to the screen 
+		        0, 0    # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 
 PLYR_MATRIX: .byte 33, 0, 10, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)

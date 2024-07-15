@@ -83,8 +83,7 @@ PHYSICS:
       #  sb zero, 0(a0) # MOVE_X = 0
         j Fixed_X_Map
         
-        CAN_MOVE_X:
-        ###############        
+        CAN_MOVE_X:       
         
         sb a6, 6(a3)    # Stores new X offset
         sb a7, 8(a3)    # Stores new X coordinate on matrix
@@ -158,7 +157,7 @@ CHECK_MOVE_Y:
     lb t0, 0(a0)	       # Loads information from MOVE_Y
     la a1, CURRENT_MAP     # Loads CURRENT_MAP's address
     lw a2, 0(a1) 	       # a2 has the current map's address 
-    la a3, PLYR_POS        # Loads Player Position
+    la a3, PLYR_POS        # Loads Player Position address
     
     bnez t0, MOVE_PLAYER_Y # If there's Y movement, go to MOVE_PLAYER_Y
         lbu t1, 4(a3)  # Loads Player's Y related to screen
@@ -231,13 +230,13 @@ CHECK_MOVE_Y:
                 j CONTINUE_MOVE_PLAYER_Y
         
         CONTINUE_MOVE_PLAYER_Y:
-        # t1 will hold the value for multiplying t0 (MOVE_Y)
+        # t1 will hold the value to multiply with t0 (MOVE_Y)
         sb t2, 1(a0)
         sll a4, t0, t1  # Multiplies the value stored on MOVE_Y by 4. a0 will store the movement of the player (+/- 4 pixels)
-        
-        
+
         lbu t2, 1(a0)   # Loads JUMP information
         lbu a6, 7(a3)	# Loads Player's Y offset
+
         add a6,a6,a4	# Adds the X Movement to the Player's Offset
         
         lbu a7, 10(a3)	# Loads Player's Y on Matrix
@@ -269,7 +268,8 @@ CHECK_MOVE_Y:
                 lb t0, 0(a0) # Gets MOVE_Y info
                 blt t0,zero, STOP_JUMP # If t1 = -1 (aka, player would start jumping), reset
                     # If t0 = 0 (not jumping) or t1 = 1 (freefall), reset MOVE_Y and JUMP
-                    sh zero, 0(a0) # MOVE_Y = 0 and JUMP = 0
+                    sb zero, 0(a0) # MOVE_Y = 0
+                    sb zero, 1(a0) # JUMP = 0
                     j Fixed_Y_Map
                 STOP_JUMP:
                     # if t0 = -1 (jumping) check if player is already jumping or not
@@ -314,7 +314,7 @@ CHECK_MOVE_Y:
             lbu t1, 2(a2)    # Loads Map matrix height
             li t3, m_screen_height # Loads Map screen width related to matrix
             sub t1,t1,t3    # t1 = Map Matrix Height - Screen Matrix Height (t1 = Map's Y when it's on rightmost part of the map)
-            beq t0,t1, Fixed_X_Map  # If on rightmost part of the map, map won't move
+            beq t0,t1, Fixed_Y_Map  # If on rightmost part of the map, map won't move
             # otherwise, move the map right
         
         MOVE_SCREEN_Y:

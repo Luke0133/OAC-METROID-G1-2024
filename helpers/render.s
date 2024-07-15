@@ -473,8 +473,8 @@ RENDER_LIFE:
 	ret
 	
 RENDER_LIFE_POINTS:
-	la t0, PLYR_HEALTH
-	lb a0, 0(t0)
+	la t0, PLYR_INFO
+	lbu a0, 0(t0)
 
 	#a3 = bgr fundo e bgr frente no a4
 	li a1,32 # a1 = column
@@ -484,7 +484,7 @@ RENDER_LIFE_POINTS:
 	li a7,101 # syscal for 'print integer'
 	ecall
 		
-	lb a0, 0(t0)
+	lbu a0, 0(t0)
 	
 	li a1,32 # a1 = column
 	li a2,28 # a2 = row 

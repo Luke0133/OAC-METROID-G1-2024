@@ -4,7 +4,7 @@
 .include "physics.s"
 .include "render.s"		
 #.include "renderold.s"									
-.include "SYSTEMv21.s"
+.include "SYSTEMv24.s"
 .include "map_op.s"
 .include "sprite_op.s"
 .include "collision.s"
