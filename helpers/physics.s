@@ -125,31 +125,37 @@ PHYSICS:
         MOVE_SCREEN_X:
             li t3, 2       # t3 = 2 (map will be rendered again)
             sb t3, 5(a1)   # Stores t3 on CURRENT_MAP's rendering byte
-
             sh t2,2(a3)    # Stores player's original X on old X related to screen
     
             # Updating map's X offset
+            lbu t2, 6(a1)  # Loads Map X postition on Matrix
             lbu a6, 8(a1)  # Loads map's X offset
             add a6,a6,a4  # Adds the X Movement to the map's Offset
-            li t1,0
-            bge a6, zero, NO_X_OFFSET_NEGATIVE_CORRECTION
-           
-            li t1, -1
-            addi a6,a6,tile_size # Corrects negative offset by adding 16
-            j NO_X_OFFSET_CORRECTION
-            
+            li t1,0  # Right now, the map's X won't be updated 
+            bge a6, zero, NO_X_OFFSET_NEGATIVE_CORRECTION 
+            # If y offset is currently negative
+                beqz t2 TOP_OF_MAP_RESET
+                # If map isn't currently on 0x0
+                    li t1, -1
+                    addi a6,a6,tile_size # Corrects negative offset by adding 16
+                    j NO_X_OFFSET_CORRECTION
+                TOP_OF_MAP_RESET:
+                # If on top of the map (0x0), reset X offset to 0
+                    li a6,0
+                    j NO_X_OFFSET_CORRECTION
+
             NO_X_OFFSET_NEGATIVE_CORRECTION:
-            li t0, tile_size
-            blt a6,t0, NO_X_OFFSET_CORRECTION
-            li t1,1
-            sub a6,a6,t0 # Corrects values that surpass 16 by subtracting 16 from them
-    
+            # If x offset is currently positive
+                li t0, tile_size
+                blt a6,t0, NO_X_OFFSET_CORRECTION
+                li t1,1
+                sub a6,a6,t0 # Corrects values that surpass 16 by subtracting 16 from them
+
             NO_X_OFFSET_CORRECTION:
-            sb a6, 8(a1)   # Stores Map new X offset that is equal to player's X offset
-            lbu t0, 6(a1)  # Loads Map X postition on Matrix
-            add t0,t0,t1  # adds to the X -1, 0 or 1 (moves map horizontally)
-            sb t0, 6(a1)   # Stores Map X postition on Matrix
-            j CHECK_MOVE_Y
+                sb a6, 8(a1)   # Stores Map new X offset that is equal to player's X offset
+                add t2,t2,t1  # adds to the X -1, 0 or 1 (moves map horizontally)
+                sb t2, 6(a1)   # Stores Map X postition on Matrix
+                j CHECK_MOVE_Y
       
       
 CHECK_MOVE_Y:
@@ -324,26 +330,33 @@ CHECK_MOVE_Y:
             sb t2,5(a3)    # Stores player's original Y on old Y related to screen
 
             # Updating map's Y offset
+            lbu t2, 7(a1)  # Loads Map Y postition on Matrix
             lbu a6, 9(a1)  # Loads map's Y offset
             add a6,a6,a4  # Adds the Y Movement to the map's Offset
-            li t1,0
-            bge a6, zero, NO_Y_OFFSET_NEGATIVE_CORRECTION
-            
-            li t1, -1
-            addi a6,a6,tile_size # Corrects negative offset by adding 16
-            j NO_Y_OFFSET_CORRECTION
-            
+            li t1,0  # Right now, the map's Y won't be updated 
+            bge a6, zero, NO_Y_OFFSET_NEGATIVE_CORRECTION 
+            # If y offset is currently negative
+                beqz t2 TOP_OF_MAP_RESET
+                # If map isn't currently on 0x0
+                    li t1, -1
+                    addi a6,a6,tile_size # Corrects negative offset by adding 16
+                    j NO_Y_OFFSET_CORRECTION
+                TOP_OF_MAP_RESET:
+                # If on top of the map (0x0), reset Y offset to 0
+                    li a6,0
+                    j NO_Y_OFFSET_CORRECTION
+
             NO_Y_OFFSET_NEGATIVE_CORRECTION:
-            li t0, tile_size
-            blt a6,t0, NO_Y_OFFSET_CORRECTION
-            li t1,1
-            sub a6,a6,t0 # Corrects values that surpass 16 by subtracting 16 from them
+            # If y offset is currently positive
+                li t0, tile_size
+                blt a6,t0, NO_Y_OFFSET_CORRECTION
+                li t1,1
+                sub a6,a6,t0 # Corrects values that surpass 16 by subtracting 16 from them
 
             NO_Y_OFFSET_CORRECTION:
-            sb a6, 9(a1)   # Stores Map new Y offset that is equal to player's Y offset
-            lbu t0, 7(a1)  # Loads Map Y postition on Matrix
-            add t0,t0,t1  # adds to the Y -1, 0 or 1 (moves map horizontally)
-            sb t0, 7(a1)   # Stores Map Y postition on Matrix
+                sb a6, 9(a1)   # Stores Map new Y offset that is equal to player's Y offset
+                add t2,t2,t1  # adds to the Y -1, 0 or 1 (moves map horizontally)
+                sb t2, 7(a1)   # Stores Map Y postition on Matrix
 
     END_PHYSICS:
       ret
