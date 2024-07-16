@@ -34,22 +34,14 @@ GAME_LOOP:
 
 	call PHYSICS
 
-la t0 MAP_INFO
-lb a0,2(t0)
+la t0 PLYR_POS
+lh a0,6(t0)
 li a7 1
 ecall
 la a0 DEBUG2
 li a7 4
 ecall
-lbu a0,3(t0)
-li a7 1
-ecall
-la a0 DEBUG2
-li a7 4
-ecall
-lbu a0,3(t0)
-lbu a1,5(t0)
-add a0,a0,a1
+lbu a0,7(t0)
 li a7 1
 ecall
 la a0 DEBUG

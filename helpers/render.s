@@ -245,18 +245,24 @@ RENDER_PLAYER:
 	mv a5, s0		# Gets frame 
 	lbu a6, 0(t0)   # Loads Player's sprite status
 	li a7, 0 		# Operation (0 - normal operation)
-
-	# Loading informations for Checking Sprite
-	lbu t1, 1(t0)	# Loads Player's horizontal direction (0 = Right, 1 = Left)
-	lbu t2, 6(t0)   # Loads Player's MOVE_X value (-1 left, 1 right, 0 not moving on X axis)
-	lbu t3, 7(t0)   # Loads Player's MOVE_Y value (-1 up, 1 right, 0 not moving on Y axis)
-	lbu t4, 2(t0)	# Loads Player's vertical direction (0 = Normal, 1 = Up)
-	lbu t5, 5(t0)	# Loads Player's attacking status (0 - no, 1 - yes)
 	
 	beqz a0, RENDER_PLAYER_NORMAL # If a0 = 0,  then player will be rendered normally
 	j RENDER_PLAYER_TRAIL     # Otherwise (a0 = 1) render player's trail
 
 	RENDER_PLAYER_NORMAL:
+		# Loading informations for Checking Sprite
+		lbu t1, 1(t0)	# Loads Player's horizontal direction (0 = Right, 1 = Left)
+		lbu t2, 4(t0)   # Loads Player's morph ball status
+		
+		beqz t2, RENDER_PLAYER_STAND # ball mode = 0 ?  RENDER_PLAYER_STAND : RENDER_PLAYER_BALL
+		j RENDER_PLAYER_BALL
+		
+	RENDER_PLAYER_STAND:
+		lbu t2, 6(t0)   # Loads Player's MOVE_X value (-1 left, 1 right, 0 not moving on X axis)
+		lbu t3, 7(t0)   # Loads Player's MOVE_Y value (-1 up, 1 right, 0 not moving on Y axis)
+		lbu t4, 2(t0)	# Loads Player's vertical direction (0 = Normal, 1 = Up)
+		lbu t5, 5(t0)	# Loads Player's attacking status (0 - no, 1 - yes)
+
 		beqz t1, RENDER_PLYR_RIGHT # Checks if player is looking right
 		j RENDER_PLYR_LEFT	   # If player is looking left
 
@@ -424,13 +430,21 @@ RENDER_PLAYER:
 						RENDER_MOVEMENT_LEFT_UP_ATTACK:
 							la a0, Samus_Left_Up_Attack  # Loads Player's Image Address
 							j START_RENDER_PLAYER         # Start rendering player
+		
+		RENDER_PLAYER_BALL:
+			la a0, Morph_Ball # Loads morph ball image address
+			addi a2, a2, tile_size # Adds 16 to Player's Y
+			li a3, 16 # Loads 16 to width of rendering area
+			li a4, 16 # Loads 16 to height of rendering area	
+			# j START_RENDER_PLAYER
 
 		START_RENDER_PLAYER:
 			mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
 			call RENDER	# Calls RENDER procedure
 			mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
 			ret			# End of procedure
-	
+		
+
 	RENDER_PLAYER_TRAIL:
 		xori a5,s0,1	# Gets oposite frame
 		li a6, 4	# Width (Number of Tiles) = 2

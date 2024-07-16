@@ -10,6 +10,7 @@ INPUT_CHECK:
     j NO_INPUT 		    # otherwise no input was detected 
     
     CONTINUE_CHECK:
+    lb t3, 4(a0) # loads ball mode
     la t0, PLYR_INPUT
     li t2, 1   # There is input
     sb t2, 0(t0) 
@@ -65,26 +66,24 @@ INPUT_CHECK:
         li t2, 0   # There isn't input
         sb t2, 0(t0) 
 
-
         la a0, PLYR_STATUS      # Loads Player Status
         li t1, 0        # Loads vertical direction (0 = normal)
         sb t1, 2(a0)    # Stores new direction on PLYR_STATUS
-######## NAO DESATIVAR ATAQUE AQUI
-        sb t1, 5(a0)            
-######## VER SE VAI ALTERAR AQUI O MOVE_Y        
+
+        sb t1, 5(a0)                  
 	    sb zero, 6(a0)  # Stores new direction on MOVE_X
-     #   ret
         j END_INPUT_CHECK 
 
     INPUT.W:  # Looking Up
+        beqz t3, W.NOT_MORPH_BALL # t3 != 0 ? BALL = OFF : BALL = ON (If on ball mode, deactivate it)
+        j OUT_OF_MORPH_BALL
+        
+        W.NOT_MORPH_BALL:
         li t1, 1      # Loads vertical direction (1 = up)
         sb t1, 2(a0)  # Stores new direction on PLYR_STATUS
 	    j END_INPUT_CHECK
 	
     INPUT.A: # Moves player left
-#        li t1, 1      # Loads direction (1 = left)
-#        sb t1, 1(a0)  # Stores new direction on PLYR_STATUS
-
         li t1, -1     # Loads direction for MOVE_X (-1 = left)
         sb t1, 6(a0)  # Stores new direction on MOVE_X
         j END_INPUT_CHECK    
@@ -94,35 +93,36 @@ INPUT_CHECK:
         lbu t1, 1(t0)
         slt t1, zero, t1 # t1 > 0 ? t1=1 : t1=0 --> if t1 = 1 or 2 (morph ball ability aquired) then go into morph ball
         beqz t1, SkipMorphBallTransformation  
-            li t1, 1      # Loads morph ball mode (1 = enabled)
-            sb t1, 4(a0)  # Stores new direction on PLYR_STATUS
-#           ANIMATION FOR GOING INTO MORPH BALL
+        bnez t3, SkipMorphBallTransformation
+            j INTO_MORPH_BALL
         SkipMorphBallTransformation:
         j END_INPUT_CHECK
-    INPUT.D:          # Moves player right
-#        li t1, 0      # Loads direction (0 = right)
-#        sb t1, 1(a0)  # Stores new direction on PLYR_STATUS
 
+    INPUT.D:          # Moves player right
         li t1, 1      # Loads direction for MOVE_X (1 = right)
         sb t1, 6(a0)  # Stores new direction on MOVE_X
         j END_INPUT_CHECK 
 	
     INPUT.SPACE:
-
-        lb t1, 7(a0)  # Loads current direction on MOVE_Y
-        beqz t1, CAN_JUMP
-        j END_INPUT_CHECK
-        CAN_JUMP:
-        li t1, 1     # Loads vertical direction (1 = freefall)
-        sb t1, 3(a0) # Stores new direction on PLYR_STATUS
+        beqz t3, SPACE.NOT_MORPH_BALL
+        j OUT_OF_MORPH_BALL
+        SPACE.NOT_MORPH_BALL:
+            lb t1, 7(a0)  # Loads current direction on MOVE_Y
+            beqz t1, CAN_JUMP
+            j END_INPUT_CHECK
+            CAN_JUMP:
+                li t1, 1     # Loads vertical direction (1 = freefall)
+                sb t1, 3(a0) # Stores new direction on PLYR_STATUS
         
-        li t1, -1      # Loads direction for MOVE_Y (-1 = up)
-        sb t1, 7(a0)  # Stores new direction on MOVE_Y
+                li t1, -1      # Loads direction for MOVE_Y (-1 = up)
+                sb t1, 7(a0)  # Stores new direction on MOVE_Y
 
-	    j END_INPUT_CHECK
+	            j END_INPUT_CHECK
 	
     INPUT.K: # Shoots
-        li t1, 1     # Loads attacking status (1 = attacking)
+        beqz t3, K.SHOOT
+        j END_INPUT_CHECK
+        K.SHOOT:    li t1, 1     # Loads attacking status (1 = attacking)
         sb t1, 5(a0) # Stores new attack status on PLYR_STATUS
         j END_INPUT_CHECK
         #j BEAM_OPERATIONS
@@ -148,6 +148,15 @@ INPUT_CHECK:
     INPUT.DEL: # Kills Player
         #call KILL_PLYR
         j END_INPUT_CHECK
+    
+
+    INTO_MORPH_BALL:
+        li t1, 1      # Loads morph ball mode (1 = enabled)
+        sb t1, 4(a0)  # Stores new direction on PLYR_STATUS
+        j END_INPUT_CHECK
+
+    OUT_OF_MORPH_BALL:
+        sb zero, 4(a0) # key = up ? ball = 0 
 
 	END_INPUT_CHECK:
 		ret	

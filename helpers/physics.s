@@ -134,13 +134,13 @@ PHYSICS:
             li t1,0  # Right now, the map's X won't be updated 
             bge a6, zero, NO_X_OFFSET_NEGATIVE_CORRECTION 
             # If y offset is currently negative
-                beqz t2 TOP_OF_MAP_RESET
+                beqz t2 LEFTMOST_PART_OF_MAP_RESET
                 # If map isn't currently on 0x0
                     li t1, -1
                     addi a6,a6,tile_size # Corrects negative offset by adding 16
                     j NO_X_OFFSET_CORRECTION
-                TOP_OF_MAP_RESET:
-                # If on top of the map (0x0), reset X offset to 0
+                LEFTMOST_PART_OF_MAP_RESET:
+                # If on leftmost part of the map (0x0), reset X offset to 0
                     li a6,0
                     j NO_X_OFFSET_CORRECTION
 

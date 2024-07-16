@@ -54,13 +54,18 @@ li s8 1
                 li t5, 8        # Represents the desired offset
                 bge t5, t1 SKIP_THIRD_CHECK # If Y offset is zero, there's no need to check 3 tiles
                 # Otherwise, t5 is already = 2 , so it'll check 3 tiles horizontally (or 2 if on morph ball)
-                    li t5, 2        # Represents the desired offset
+                    li t5, 2    # Checks 3 tiles horizontally (or 2 if on morph ball)
                     j CONTINUE_CHECK_X_DIRECTION
         SKIP_THIRD_CHECK:
             li t5,1 # Checks 2 tiles horizontally (or 1 if on morph ball)
         CONTINUE_CHECK_X_DIRECTION:
-        blt t0, zero, CHECK_X_LEFT # t0 < 0 ? CHECK_X_LEFT : CHECK_X_RIGHT
-        j CHECK_X_RIGHT
+        lbu t1,16(a3) # Loads Player's morph ball byte
+        beqz t1,CHECK_X_SKIP_MORPH_BALL
+        add t3,t4,t3 # Increments width to Player's y on matrix
+        
+        CHECK_X_SKIP_MORPH_BALL:
+            blt t0, zero, CHECK_X_LEFT # t0 < 0 ? CHECK_X_LEFT : CHECK_X_RIGHT
+            j CHECK_X_RIGHT
         
         CHECK_X_LEFT:
             li t0, 12 # t0 = 8 offset pixels 
@@ -206,10 +211,14 @@ li s8 0
 CHECK_MAP_COLLISION:  
   #  li a4, 1 # Base case: player can move
 START_CHECK_MAP_COLLISION:
-
     bnez a0, CONTINUE_CHECK_MAP_COLLISION_1 # a0 != 0 ? CONTINUE_CHECK_MAP_COLLISION_1 : ret
     ret
+
     CONTINUE_CHECK_MAP_COLLISION_1:
+    bge t5, zero, CONTINUE_CHECK_MAP_COLLISION_2 # t5 != 0 ? CONTINUE_CHECK_MAP_COLLISION_4 : RET
+    ret
+
+    CONTINUE_CHECK_MAP_COLLISION_2:
     lbu t1, 0(t3) # Loads tile from current map
 
     li t0, 3
@@ -217,12 +226,12 @@ START_CHECK_MAP_COLLISION:
     # If tile is passthrough or breakable (0 <= t1 <= 3)
         li a0, 1 # Only option when player can move
         beq a0,t1, COLLISION_BREAKABLE  # If tile is breakable, there needs to be a check if it was broken
-            j CONTINUE_CHECK_MAP_COLLISION_2 # Otherwise, continue checking collision
+            j CONTINUE_CHECK_MAP_COLLISION_3 # Otherwise, continue checking collision
     
     COLLISION_BREAKABLE:
 # ---> make breakable block work :)
     # li a0, 0 # Player can't move  
-    j CONTINUE_CHECK_MAP_COLLISION_2
+    j CONTINUE_CHECK_MAP_COLLISION_3
 	
 	COLLISION_NotBackground:
         li t0,36
@@ -244,8 +253,8 @@ START_CHECK_MAP_COLLISION:
     
     COLLISION_BLOCKED:
         li a0, 0 # Player can't move  
-    CONTINUE_CHECK_MAP_COLLISION_2:
-    bnez t5, CONTINUE_CHECK_MAP_COLLISION_3 # t5 != 0 ? CONTINUE_CHECK_MAP_COLLISION_4 : RET
+    CONTINUE_CHECK_MAP_COLLISION_3:
+    blt zero, t5, CONTINUE_CHECK_MAP_COLLISION_4 # t5 != 0 ? CONTINUE_CHECK_MAP_COLLISION_4 : RET
 ###########################
 #            beqz s8,NONONOONON
 #            mv s3,a0
@@ -259,7 +268,7 @@ START_CHECK_MAP_COLLISION:
 ######################
     ret
     
-    CONTINUE_CHECK_MAP_COLLISION_3:
+    CONTINUE_CHECK_MAP_COLLISION_4:
     li t0, 3
     bge t5, t0, VERTICAL_COLLISION_CHECK # 1 != t5 ? VERTICAL_COLLISION_CHECK : HORIZONTAL_COLLISON_CHECK
     
