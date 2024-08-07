@@ -209,49 +209,331 @@ SETUP:
         la a0, Map3 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
-        
+
         lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
         lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map		
+        
+        li t1, 4
+        bne t2, t1 CONTINUE_MAP3_SETUP
+        # If t2 = 4, player and map's coordinates are changed
+            li t2, 2
+            sb t2, 5 (t0)  # Stores new rendering byte (2 - render twice) 
 
-        la t0, PLYR_POS # Loads Player Position
-        lbu a3, 5(t0)	# Loads player's X offset
-        li a4, 0		# Y offset (0, 4, 8, 12)	
+            # Reseting map's coordinates
+            li a1, resetmap3X
+            sb a1, 6(t0)   # Stores new X on Map (starting X on Matrix (top left))
+            li a2, resetmap3Y
+            sb a2, 7(t0)   # Stores new Y on Map (starting Y on Matrix (top left))	
+            li a3, resetmap3Xoff
+            sb a3, 8(t0)   # Stores new X offset on Map
+            li a4, resetmap3Yoff
+            sb a4, 9(t0)   # Stores new Y offset on Map	
+
+            # Reseting player's coordinates
+            la t0, PLYR_POS
+            li t1, resetmap3plyrXscreen
+            sh t1, 0(t0)   # Stores new player's X related to the screen
+            li t1, resetmap3plyrYscreen
+            sb t1, 4(t0)   # Stores new player's Y related to the screen
+
+            li t1, resetmap3plyrXoff    
+            sb t1, 6(t0)   # Stores new player's X offset
+            li t1, resetmap3plyrYoff
+            sb t1, 7(t0)   # Stores new player's Y offset
+
+            li t1, resetmap3plyrX
+            sb t1, 8(t0)   # Stores new player's X related to the matrix
+            li t1, resetmap3plyrY
+            sb t1, 10(t0)  # Stores new player's Y related to the matrix
+
+        CONTINUE_MAP3_SETUP:
         li a5, 0		# Frame = 0
         li a6, m_screen_width	# Screen Width = 20
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
-        
+
         call RENDER_MAP
 
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
         lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
-
-        la t0, PLYR_POS # Loads Player Position
-        lbu a3, 5(t0)	# Loads player's X offset
-        li a4, 0		# Y offset (0, 4, 8, 12)	
-        li a5, 1		# Frame = 0
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map	
+        li a5, 1		# Frame = 1
         li a6, m_screen_width	# Screen Width = 20
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
-
         call RENDER_MAP
 
         j END_SETUP
 
 
     MAP4_SETUP:
+        la a0, Map4 	# Map Address
+        la t0, CURRENT_MAP # Loads CURRENT_MAP address
+        sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
+
+        lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map		
+        
+        li t1, 4
+        bne t2, t1 CONTINUE_MAP4_SETUP
+        # If t2 = 4, player and map's coordinates are changed
+            li t2, 2
+            sb t2, 5 (t0)  # Stores new rendering byte (2 - render twice) 
+
+            # Reseting map's coordinates
+            li a1, resetmap4X
+            sb a1, 6(t0)   # Stores new X on Map (starting X on Matrix (top left))
+            li a2, resetmap4Y
+            sb a2, 7(t0)   # Stores new Y on Map (starting Y on Matrix (top left))	
+            li a3, resetmap4Xoff
+            sb a3, 8(t0)   # Stores new X offset on Map
+            li a4, resetmap4Yoff
+            sb a4, 9(t0)   # Stores new Y offset on Map	
+
+            # Reseting player's coordinates
+            la t0, PLYR_POS
+            li t1, resetmap4plyrXscreen
+            sh t1, 0(t0)   # Stores new player's X related to the screen
+            li t1, resetmap4plyrYscreen
+            sb t1, 4(t0)   # Stores new player's Y related to the screen
+
+            li t1, resetmap4plyrXoff    
+            sb t1, 6(t0)   # Stores new player's X offset
+            li t1, resetmap4plyrYoff
+            sb t1, 7(t0)   # Stores new player's Y offset
+
+            li t1, resetmap4plyrX
+            sb t1, 8(t0)   # Stores new player's X related to the matrix
+            li t1, resetmap4plyrY
+            sb t1, 10(t0)  # Stores new player's Y related to the matrix
+
+        CONTINUE_MAP4_SETUP:
+        li a5, 0		# Frame = 0
+        li a6, m_screen_width	# Screen Width = 20
+        li a7, m_screen_height	# Screen Height = 15
+        li t3, 0		# Starting X for rendering (top left, related to Matrix)
+        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+
+        call RENDER_MAP
+
+        la t0, CURRENT_MAP # Loads CURRENT_MAP address
+        lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map	
+        li a5, 1		# Frame = 1
+        li a6, m_screen_width	# Screen Width = 20
+        li a7, m_screen_height	# Screen Height = 15
+        li t3, 0		# Starting X for rendering (top left, related to Matrix)
+        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        call RENDER_MAP
+
         j END_SETUP
 
     MAP5_SETUP:
+        la a0, Map5 	# Map Address
+        la t0, CURRENT_MAP # Loads CURRENT_MAP address
+        sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
+
+        lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map		
+        
+        li t1, 4
+        bne t2, t1 CONTINUE_MAP5_SETUP
+        # If t2 = 4, player and map's coordinates are changed
+            li t2, 2
+            sb t2, 5 (t0)  # Stores new rendering byte (2 - render twice) 
+
+            # Reseting map's coordinates
+            li a1, resetmap5X
+            sb a1, 6(t0)   # Stores new X on Map (starting X on Matrix (top left))
+            li a2, resetmap5Y
+            sb a2, 7(t0)   # Stores new Y on Map (starting Y on Matrix (top left))	
+            li a3, resetmap5Xoff
+            sb a3, 8(t0)   # Stores new X offset on Map
+            li a4, resetmap5Yoff
+            sb a4, 9(t0)   # Stores new Y offset on Map	
+
+            # Reseting player's coordinates
+            la t0, PLYR_POS
+            li t1, resetmap5plyrXscreen
+            sh t1, 0(t0)   # Stores new player's X related to the screen
+            li t1, resetmap5plyrYscreen
+            sb t1, 4(t0)   # Stores new player's Y related to the screen
+
+            li t1, resetmap5plyrXoff    
+            sb t1, 6(t0)   # Stores new player's X offset
+            li t1, resetmap5plyrYoff
+            sb t1, 7(t0)   # Stores new player's Y offset
+
+            li t1, resetmap5plyrX
+            sb t1, 8(t0)   # Stores new player's X related to the matrix
+            li t1, resetmap5plyrY
+            sb t1, 10(t0)  # Stores new player's Y related to the matrix
+
+        CONTINUE_MAP5_SETUP:
+        li a5, 0		# Frame = 0
+        li a6, m_screen_width	# Screen Width = 20
+        li a7, m_screen_height	# Screen Height = 15
+        li t3, 0		# Starting X for rendering (top left, related to Matrix)
+        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+
+        call RENDER_MAP
+
+        la t0, CURRENT_MAP # Loads CURRENT_MAP address
+        lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map	
+        li a5, 1		# Frame = 1
+        li a6, m_screen_width	# Screen Width = 20
+        li a7, m_screen_height	# Screen Height = 15
+        li t3, 0		# Starting X for rendering (top left, related to Matrix)
+        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        call RENDER_MAP
+
         j END_SETUP
         
     MAP6_SETUP:
+        la a0, Map6 	# Map Address
+        la t0, CURRENT_MAP # Loads CURRENT_MAP address
+        sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
+
+        lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map		
+        
+        li t1, 4
+        bne t2, t1 CONTINUE_MAP6_SETUP
+        # If t2 = 4, player and map's coordinates are changed
+            li t2, 2
+            sb t2, 5 (t0)  # Stores new rendering byte (2 - render twice) 
+
+            # Reseting map's coordinates
+            li a1, resetmap6X
+            sb a1, 6(t0)   # Stores new X on Map (starting X on Matrix (top left))
+            li a2, resetmap6Y
+            sb a2, 7(t0)   # Stores new Y on Map (starting Y on Matrix (top left))	
+            li a3, resetmap6Xoff
+            sb a3, 8(t0)   # Stores new X offset on Map
+            li a4, resetmap6Yoff
+            sb a4, 9(t0)   # Stores new Y offset on Map	
+
+            # Reseting player's coordinates
+            la t0, PLYR_POS
+            li t1, resetmap6plyrXscreen
+            sh t1, 0(t0)   # Stores new player's X related to the screen
+            li t1, resetmap6plyrYscreen
+            sb t1, 4(t0)   # Stores new player's Y related to the screen
+
+            li t1, resetmap6plyrXoff    
+            sb t1, 6(t0)   # Stores new player's X offset
+            li t1, resetmap6plyrYoff
+            sb t1, 7(t0)   # Stores new player's Y offset
+
+            li t1, resetmap6plyrX
+            sb t1, 8(t0)   # Stores new player's X related to the matrix
+            li t1, resetmap6plyrY
+            sb t1, 10(t0)  # Stores new player's Y related to the matrix
+
+        CONTINUE_MAP6_SETUP:
+        li a5, 0		# Frame = 0
+        li a6, m_screen_width	# Screen Width = 20
+        li a7, m_screen_height	# Screen Height = 15
+        li t3, 0		# Starting X for rendering (top left, related to Matrix)
+        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+
+        call RENDER_MAP
+
+        la t0, CURRENT_MAP # Loads CURRENT_MAP address
+        lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map	
+        li a5, 1		# Frame = 1
+        li a6, m_screen_width	# Screen Width = 20
+        li a7, m_screen_height	# Screen Height = 15
+        li t3, 0		# Starting X for rendering (top left, related to Matrix)
+        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        call RENDER_MAP
+
         j END_SETUP
         
     MAP7_SETUP:
+        la a0, Map7 	# Map Address
+        la t0, CURRENT_MAP # Loads CURRENT_MAP address
+        sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
+
+        lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map		
+        
+        li t1, 4
+        bne t2, t1 CONTINUE_MAP7_SETUP
+        # If t2 = 4, player and map's coordinates are changed
+            li t2, 2
+            sb t2, 5 (t0)  # Stores new rendering byte (2 - render twice) 
+
+            # Reseting map's coordinates
+            li a1, resetmap7X
+            sb a1, 6(t0)   # Stores new X on Map (starting X on Matrix (top left))
+            li a2, resetmap7Y
+            sb a2, 7(t0)   # Stores new Y on Map (starting Y on Matrix (top left))	
+            li a3, resetmap7Xoff
+            sb a3, 8(t0)   # Stores new X offset on Map
+            li a4, resetmap7Yoff
+            sb a4, 9(t0)   # Stores new Y offset on Map	
+
+            # Reseting player's coordinates
+            la t0, PLYR_POS
+            li t1, resetmap7plyrXscreen
+            sh t1, 0(t0)   # Stores new player's X related to the screen
+            li t1, resetmap7plyrYscreen
+            sb t1, 4(t0)   # Stores new player's Y related to the screen
+
+            li t1, resetmap7plyrXoff    
+            sb t1, 6(t0)   # Stores new player's X offset
+            li t1, resetmap7plyrYoff
+            sb t1, 7(t0)   # Stores new player's Y offset
+
+            li t1, resetmap7plyrX
+            sb t1, 8(t0)   # Stores new player's X related to the matrix
+            li t1, resetmap7plyrY
+            sb t1, 10(t0)  # Stores new player's Y related to the matrix
+
+        CONTINUE_MAP7_SETUP:
+        li a5, 0		# Frame = 0
+        li a6, m_screen_width	# Screen Width = 20
+        li a7, m_screen_height	# Screen Height = 15
+        li t3, 0		# Starting X for rendering (top left, related to Matrix)
+        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+
+        call RENDER_MAP
+
+        la t0, CURRENT_MAP # Loads CURRENT_MAP address
+        lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+        lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+        lbu a3, 8(t0)   # Loads current X offset on Map
+        lbu a4, 9(t0)   # Loads current Y offset on Map	
+        li a5, 1		# Frame = 1
+        li a6, m_screen_width	# Screen Width = 20
+        li a7, m_screen_height	# Screen Height = 15
+        li t3, 0		# Starting X for rendering (top left, related to Matrix)
+        li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        call RENDER_MAP
+
         j END_SETUP
 
 END_SETUP:

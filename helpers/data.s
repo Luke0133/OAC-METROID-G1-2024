@@ -54,6 +54,66 @@ MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render once, 2 - render 
 .eqv resetmap2plyrXoff 0
 .eqv resetmap2plyrYoff 0
 
+## Parameters for Map 3 Reset ## 
+.eqv resetmap3X 0
+.eqv resetmap3Y 0
+.eqv resetmap3Xoff 0
+.eqv resetmap3Yoff 0
+.eqv resetmap3plyrXscreen 32
+.eqv resetmap3plyrYscreen 96
+.eqv resetmap3plyrX 2
+.eqv resetmap3plyrY 6
+.eqv resetmap3plyrXoff 0
+.eqv resetmap3plyrYoff 0
+
+## Parameters for Map 4 Reset ## 
+.eqv resetmap4X 0
+.eqv resetmap4Y 30
+.eqv resetmap4Xoff 0
+.eqv resetmap4Yoff 0
+.eqv resetmap4plyrXscreen 32
+.eqv resetmap4plyrYscreen 96
+.eqv resetmap4plyrX 2
+.eqv resetmap4plyrY 36
+.eqv resetmap4plyrXoff 0
+.eqv resetmap4plyrYoff 0
+
+## Parameters for Map 5 Reset ## 
+.eqv resetmap5X 20
+.eqv resetmap5Y 0
+.eqv resetmap5Xoff 0
+.eqv resetmap5Yoff 0
+.eqv resetmap5plyrXscreen 272
+.eqv resetmap5plyrYscreen 96
+.eqv resetmap5plyrX 37
+.eqv resetmap5plyrY 6
+.eqv resetmap5plyrXoff 0
+.eqv resetmap5plyrYoff 0
+
+## Parameters for Map 6 Reset ## 
+.eqv resetmap6X 0
+.eqv resetmap6Y 0
+.eqv resetmap6Xoff 0
+.eqv resetmap6Yoff 0
+.eqv resetmap6plyrXscreen 272
+.eqv resetmap6plyrYscreen 96
+.eqv resetmap6plyrX 17
+.eqv resetmap6plyrY 6
+.eqv resetmap6plyrXoff 0
+.eqv resetmap6plyrYoff 0
+
+## Parameters for Map 7 Reset ## 
+.eqv resetmap7X 0
+.eqv resetmap7Y 0
+.eqv resetmap7Xoff 0
+.eqv resetmap7Yoff 0
+.eqv resetmap7plyrXscreen 272
+.eqv resetmap7plyrYscreen 96
+.eqv resetmap7plyrX 17
+.eqv resetmap7plyrY 6
+.eqv resetmap7plyrXoff 0
+.eqv resetmap7plyrYoff 0
+
 ####### Player informations #########
 PLYR_INFO: .byte 100, 2 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
 PLYR_POS: .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  

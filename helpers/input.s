@@ -53,8 +53,33 @@ INPUT_CHECK:
 
     CHECK_INPUT.2:
     li t1, '2'
-    bne t0,t1, CHECK_INPUT.DEL
+    bne t0,t1, CHECK_INPUT.3
     j INPUT.2
+
+    CHECK_INPUT.3:
+    li t1, '3'
+    bne t0,t1, CHECK_INPUT.4
+    j INPUT.3
+
+    CHECK_INPUT.4:
+    li t1, '4'
+    bne t0,t1, CHECK_INPUT.5
+    j INPUT.4
+
+    CHECK_INPUT.5:
+    li t1, '5'
+    bne t0,t1, CHECK_INPUT.6
+    j INPUT.5
+
+    CHECK_INPUT.6:
+    li t1, '6'
+    bne t0,t1, CHECK_INPUT.7
+    j INPUT.6
+
+    CHECK_INPUT.7:
+    li t1, '7'
+    bne t0,t1, CHECK_INPUT.DEL
+    j INPUT.7
 
     CHECK_INPUT.DEL:
     li t1, 127	# Loads ascii value of del key
@@ -134,6 +159,9 @@ INPUT_CHECK:
         li t1, 4
         sb t1, 1(t0)
 
+        li t1,0
+        sb t1,1(a0)
+
         j SETUP
 
     INPUT.2: # Change to map 2
@@ -142,6 +170,69 @@ INPUT_CHECK:
         sb t1, 0(t0)
         li t1, 4
         sb t1, 1(t0)
+
+        li t1,0
+        sb t1,1(a0)
+
+        j SETUP
+
+    INPUT.3: # Change to map 3
+        la t0 MAP_INFO
+        li t1, 3
+        sb t1, 0(t0)
+        li t1, 4
+        sb t1, 1(t0)
+
+        li t1,0
+        sb t1,1(a0)
+
+        j SETUP
+
+    INPUT.4: # Change to map 4
+        la t0 MAP_INFO
+        li t1, 4
+        sb t1, 0(t0)
+        li t1, 4
+        sb t1, 1(t0)
+
+        li t1,0
+        sb t1,1(a0)
+
+        j SETUP
+
+    INPUT.5: # Change to map 5
+        la t0 MAP_INFO
+        li t1, 5
+        sb t1, 0(t0)
+        li t1, 4
+        sb t1, 1(t0)
+
+        li t1,1
+        sb t1,1(a0)
+
+        j SETUP
+
+    INPUT.6: # Change to map 6
+        la t0 MAP_INFO
+        li t1, 6
+        sb t1, 0(t0)
+        li t1, 4
+        sb t1, 1(t0)
+
+        li t1,1
+        sb t1,1(a0)
+
+        j SETUP
+
+    INPUT.7: # Change to map 7
+        la t0 MAP_INFO
+        li t1, 7
+        sb t1, 0(t0)
+        li t1, 4
+        sb t1, 1(t0)
+
+        li t1,1
+        sb t1,1(a0)
 
         j SETUP
 
