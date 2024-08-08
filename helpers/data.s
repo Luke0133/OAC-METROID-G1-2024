@@ -30,6 +30,91 @@ MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render once, 2 - render 
                 23, 0 # x of matrix, y of matrix
                 8, 0 # X, and Y Tile Offset (0, 4, 8 or 12)
 
+
+
+####### Player informations #########
+PLYR_INFO: .byte 100, 2 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
+PLYR_POS: .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
+		  .byte 160, 0  # Stores Player's current and old top left Y respectively, both related to the screen 
+		        0, 0    # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+
+PLYR_MATRIX: .byte 33, 0, 10, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
+PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
+				   0,0 # Ball Mode (0 - Disabled, 1 - Enabled), Attacking (0 - no, 1 - yes) 
+
+MOVE_X: .byte 0 # -1 left, 1 right, 0 not moving on X axis
+MOVE_Y: .byte 0 # -1 up, 1 down, 0 not moving on Y axis
+JUMP: .byte 0 # counter of current height
+PLYR_INPUT: .byte 0
+PLYR_HEALTH: .byte 100, 0, 0, 0
+
+.eqv max_jump 80
+.eqv slow_jump 76
+.eqv medium_jump 40
+.eqv min_jump 32
+.eqv gravity 1
+
+.eqv standing_front_hitbox 8 # offset from the front of Samus' standing sprite 
+.eqv standing_back_hitbox 4  # offset from the back of Samus' standing sprite 
+.eqv SAM_WALK 20
+.eqv SAM_SHOOT 28
+.eqv SAM_BALL 16 
+
+## BEAM_ARRAY ##
+BEAMS:
+BEAM_1_INFO: .byte 0, 0, 0 ,0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=left,1=right,2=up), Number of times that has been rendered
+BEAM_1_POS: .half 240, 0 # Stores beam's current and old top left X respectively, both related to the screen  
+		    .byte 96, 0 # Stores beam's current and old top left Y respectively, both related to the screen 
+	     		  0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+BEAM_1_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+BEAM_2_INFO: .byte 0, 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=left,1=right,2=up),Number of times that has been rendered
+BEAM_2_POS: .half 240, 0 # Stores beam's current and old top left X respectively, both related to the screen  
+		    .byte 96, 0 # Stores beam's current and old top left Y respectively, both related to the screen 
+	     		  0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+BEAM_2_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+
+BEAM_3_INFO: .byte 0, 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=left,1=right,2=up),Number of times that has been rendered
+BEAM_3_POS: .half 240, 0 # Stores beam's current and old top left X respectively, both related to the screen  
+		    .byte 96, 0 # Stores beam's current and old top left Y respectively, both related to the screen 
+	     		  0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+BEAM_3_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+.eqv BEAMS_NUMBER 3
+
+# 0/1 if is active; 
+
+##############           Enemies            ##############
+## ZOOMER ##
+ZOOMER_INFO: .byte 0, 0 # Stores Zoomer's health points, Rendering (0 - Disabled, 1 - Enabled)
+ZOOMER_POS: .half 240, 0 # Stores Zoomer's current and old top left X respectively, both related to the screen  
+		    .byte 96, 0 # Stores Zoomer's current and old top left Y respectively, both related to the screen 
+	     		  0, 0 # Stores Zoomer's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+ZOOMER_MATRIX: .byte 0, 0, 0, 0 # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+ZOOMER_STATUS: .byte 0,0 # Sprite's Number, Movement Direction (Clockwise: 0 - Right/Top, 1 - Down/Right, 2 - Left/Bottom, 3 - Up/Left and
+			 #                                      Counter-Clockwise: 4 - Left/Top, 5 - Down/Left, 6 - Right/Bottom, 7 - Up/Right)
+.eqv ZOOMER_HEALTH 50
+
+## RIPPER ##
+RIPPER_INFO: .byte 0, 0 # Stores Ripper's health points, Rendering (0 - Disabled, 1 - Enabled)
+RIPPER_POS: .half 80, 0 # Stores Ripper's current and old top left X respectively, both related to the screen  
+	  		.byte 180, 0 # Stores Ripper's current and old top left Y respectively, both related to the screen 
+	   		  	  0, 0 # Stores Ripper's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+RIPPER_MATRIX: .byte 0, 0, 0, 0 # Stores Ripper's top left new and old X and new and old Y respectively, all related to the map matrix 
+RIPPER_STATUS: .byte 0,0 # Sprite's Number, Movement Direction (0 = Right, 1 = Left)
+.eqv ZOOMER_HEALTH 50
+
+## RIDLEY ##
+RIDLEY_INFO: .byte 0, 0 # Stores Ridley's health points, Rendering (0 - Disabled, 1 - Enabled)
+RIDLEY_POS: .half 80, 0 # Stores Ridley's current and old top left X respectively, both related to the screen  
+	    .byte 180, 0 # Stores Ridley's current and old top left Y respectively, both related to the screen 
+RIDLEY_MATRIX: .byte 0, 0, 0, 0 # Stores Ridley's top left new and old X and new and old Y respectively, all related to the map matrix 
+RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - Freefall)
+.eqv RIDLEY_HEALTH 200
+
+############################################        Map Parameters        ############################################
+
 ## Parameters for Map 1 Reset ## 
 .eqv resetmap1X 23
 .eqv resetmap1Y 0
@@ -113,88 +198,6 @@ MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render once, 2 - render 
 .eqv resetmap7plyrY 6
 .eqv resetmap7plyrXoff 0
 .eqv resetmap7plyrYoff 0
-
-####### Player informations #########
-PLYR_INFO: .byte 100, 2 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
-PLYR_POS: .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
-		  .byte 160, 0  # Stores Player's current and old top left Y respectively, both related to the screen 
-		        0, 0    # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-
-PLYR_MATRIX: .byte 33, 0, 10, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
-PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
-				   0,0 # Ball Mode (0 - Disabled, 1 - Enabled), Attacking (0 - no, 1 - yes) 
-
-MOVE_X: .byte 0 # -1 left, 1 right, 0 not moving on X axis
-MOVE_Y: .byte 0 # -1 up, 1 down, 0 not moving on Y axis
-JUMP: .byte 0 # counter of current height
-PLYR_INPUT: .byte 0
-PLYR_HEALTH: .byte 100, 0, 0, 0
-
-.eqv max_jump 80
-.eqv slow_jump 76
-.eqv medium_jump 40
-.eqv min_jump 32
-.eqv gravity 1
-
-
-.eqv standing_front_hitbox 8 # offset from the front of Samus' standing sprite 
-.eqv standing_back_hitbox 4  # offset from the back of Samus' standing sprite 
-.eqv SAM_WALK 20
-.eqv SAM_SHOOT 28
-.eqv SAM_BALL 16 
-
-## BEAM_ARRAY ##
-BEAMS:
-BEAM_1_INFO: .byte 0, 0, 0 ,0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=left,1=right,2=up), Number of times that has been rendered
-BEAM_1_POS: .half 240, 0 # Stores beam's current and old top left X respectively, both related to the screen  
-		    .byte 96, 0 # Stores beam's current and old top left Y respectively, both related to the screen 
-	     		  0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-BEAM_1_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
-
-BEAM_2_INFO: .byte 0, 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=left,1=right,2=up),Number of times that has been rendered
-BEAM_2_POS: .half 240, 0 # Stores beam's current and old top left X respectively, both related to the screen  
-		    .byte 96, 0 # Stores beam's current and old top left Y respectively, both related to the screen 
-	     		  0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-BEAM_2_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
-
-
-BEAM_3_INFO: .byte 0, 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=left,1=right,2=up),Number of times that has been rendered
-BEAM_3_POS: .half 240, 0 # Stores beam's current and old top left X respectively, both related to the screen  
-		    .byte 96, 0 # Stores beam's current and old top left Y respectively, both related to the screen 
-	     		  0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-BEAM_3_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
-
-.eqv BEAMS_NUMBER 3
-
-# 0/1 if is active; 
-
-##############           Enemies            ##############
-## ZOOMER ##
-ZOOMER_INFO: .byte 0, 0 # Stores Zoomer's health points, Rendering (0 - Disabled, 1 - Enabled)
-ZOOMER_POS: .half 240, 0 # Stores Zoomer's current and old top left X respectively, both related to the screen  
-		    .byte 96, 0 # Stores Zoomer's current and old top left Y respectively, both related to the screen 
-	     		  0, 0 # Stores Zoomer's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-ZOOMER_MATRIX: .byte 0, 0, 0, 0 # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-ZOOMER_STATUS: .byte 0,0 # Sprite's Number, Movement Direction (Clockwise: 0 - Right/Top, 1 - Down/Right, 2 - Left/Bottom, 3 - Up/Left and
-			 #                                      Counter-Clockwise: 4 - Left/Top, 5 - Down/Left, 6 - Right/Bottom, 7 - Up/Right)
-.eqv ZOOMER_HEALTH 50
-
-## RIPPER ##
-RIPPER_INFO: .byte 0, 0 # Stores Ripper's health points, Rendering (0 - Disabled, 1 - Enabled)
-RIPPER_POS: .half 80, 0 # Stores Ripper's current and old top left X respectively, both related to the screen  
-	  		.byte 180, 0 # Stores Ripper's current and old top left Y respectively, both related to the screen 
-	   		  	  0, 0 # Stores Ripper's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-RIPPER_MATRIX: .byte 0, 0, 0, 0 # Stores Ripper's top left new and old X and new and old Y respectively, all related to the map matrix 
-RIPPER_STATUS: .byte 0,0 # Sprite's Number, Movement Direction (0 = Right, 1 = Left)
-.eqv ZOOMER_HEALTH 50
-
-## RIDLEY ##
-RIDLEY_INFO: .byte 0, 0 # Stores Ridley's health points, Rendering (0 - Disabled, 1 - Enabled)
-RIDLEY_POS: .half 80, 0 # Stores Ridley's current and old top left X respectively, both related to the screen  
-	    .byte 180, 0 # Stores Ridley's current and old top left Y respectively, both related to the screen 
-RIDLEY_MATRIX: .byte 0, 0, 0, 0 # Stores Ridley's top left new and old X and new and old Y respectively, all related to the map matrix 
-RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - Freefall)
-.eqv RIDLEY_HEALTH 200
 
 ################################################        Tiles        ################################################
 # Stores all tiles used in the game, that can be rendered by checking the value on the map matrixes (search "Matrixes")

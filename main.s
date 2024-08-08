@@ -23,7 +23,7 @@ GAME_LOOP:
 ### Frame rate check
     li a7,30	# Ecall 30: Gets current time
     ecall 		# Syscall
-    sub a0, a0, #  # a0 = current time - last frame's time
+    sub a0, a0, s1 #  # a0 = current time - last frame's time
     li t0, frame_rate	# Loads frame rate (time (in ms) per frame)
     bltu a0,t0, GAME_LOOP  # While a0 < minimum time for a frame, keep looping 
 
@@ -72,4 +72,3 @@ GAME_LOOP:
 
 
 .include "helpers/helpers.s"
-

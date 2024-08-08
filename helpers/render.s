@@ -447,7 +447,7 @@ RENDER_PLAYER:
 
 	RENDER_PLAYER_TRAIL:
 		xori a5,s0,1	# Gets oposite frame
-		li a6, 4	# Width (Number of Tiles) = 2
+		li a6, 3	# Width (Number of Tiles) = 2
 		li a7, 4	# Height (Number of Tiles) = 2
 
 		la t0, PLYR_MATRIX  # Loads PLYR_MATRIX address
@@ -760,23 +760,10 @@ RENDER_MAP_LOOP:
 			
 	addi t3,t3,1	# Increments column counter (current X on Matrix)
 	addi s0,s0,1	# Goes to next byte
-################
-#	li t0, m_screen_width 		# Largura da matriz para o tamanho de uma tela (320 pixels de largura)
-################
-#	beqz a3, No_X_Offset
-#	addi t0,t0,1
-#	No_X_Offset:
-#	bge t3,t0,CONTINUE_LINE	# if column counter >= width, repeat
 	bge t3,s3,CONTINUE_LINE	# if column counter >= width, repeat
 	j RENDER_MAP_LOOP	# if column counter < width, repeat
 	CONTINUE_LINE:
-## DEBUG
-#	mv t5,a0
-#	li a0, 1000
-#	li a7, 32
-#	ecall
-#	mv a0,t5
-##
+
 		add s0,s0,s1	# s0 = Current Address on Matrix + Matrix Width
 		li t0, m_screen_width
 		bge s3,t0, MINUS_WIDTH
@@ -789,13 +776,6 @@ RENDER_MAP_LOOP:
 		CONTINUE_LINE2:
 		
 		addi t2,t2,1	# Increments line counter (current Y on Matrix)
-################		
-	#	li t0, m_screen_height 			# Altura da matriz para o tamanho de uma tela (240 pixels de altura)
-################
-#		beqz a4, No_Y_Offset	  # If there's an Y offset, we need to check for 21 tiles to be rendered (2 lines being cropped)
-#			addi t0,t0,1	  # t0 += 1
-#		No_Y_Offset:
-#		bge t2,t0,CONTINUE_COLUMN # If height > line counter, repeat
 		bge t2,s2,CONTINUE_COLUMN # If height > line counter, repeat
 		j RENDER_MAP_LOOP	  # Return to beggining of loop
 		CONTINUE_COLUMN:

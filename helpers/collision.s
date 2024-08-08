@@ -10,18 +10,12 @@
 #################################################################
 #     -----------     DONT USE THESE registers           -----------    #
 #	a0 = MOVE_X/MOVE_Y address (located on main.s)		#
-#	a1 = CURRENT_MAP address (located on main.s)		#
 #	a2 = current map's address (located on matrix.data)	#
 #   a3 = PLYR_POS
-#   a4 = Move_X/Y in tile format
-#   a6 = player offset (t4)
-#   a7 = player x on matrix 
-#   s11 = what to add to map matrix (-1, 0 or 1)
-#   t5,t3 = Temporary Registers
 
 
 CHECK_HORIZONTAL_COLLISION:
-li s8 1
+#li s8 1
 #################################
     lbu t1, 8(a3)  # t1 = Player's X related to matrix
     lbu t2, 6(a3)  # t2 = Player's X offset
@@ -90,7 +84,7 @@ li s8 1
         ret 
         
 CHECK_VERTICAL_COLLISION:
-li s8 0
+#li s8 0
 #################################
     lbu t1, 8(a3) # t1 = PLYR_MATRIX Y
     lbu t2, 7(a3) # t2 = PLYR_Y OFFSET
@@ -112,14 +106,17 @@ li s8 0
     j CHECK_Y_DOWN
     
     CHECK_Y_UP:
-        ## TODO: Implement sprite ball colision testing
         beqz t2 CONTINUE_CHECK_Y_UP # offset = 0 ? CONTINUE_CHECK_X_LEFT : END_HORIZONTAL_COLLISION
         j END_VERTICAL_COLLISION
     
         CONTINUE_CHECK_Y_UP: 
-            sub t3,t3,t4    # - 1 matrix Y (up)
-            lbu t0,13(a3)    # Loads Facing direction (0 = Right, 1 = Left)
-            lbu t2, 6(a3)    # t2 = Player's Y offset
+            lbu t1, 16(a3) # loads PLYR'S morph ball byte
+            bnez t1, CONTINUE_CHECK_Y_UP2 # Morph Ball != 0 ? CONTINUE_CHECK_Y_UP2 : SUB from MATRIX
+            sub t3,t3,t4   # -1 matrix Y (up)
+            
+            CONTINUE_CHECK_Y_UP2: 
+            lbu t0,13(a3)  # Loads Facing direction (0 = Right, 1 = Left)
+            lbu t2, 6(a3)  # t2 = Player's Y offset
             beqz t0, CHECK_Y_UP_RIGHT # t0 = 0 ? CHECK_Y_UP_RIGHT : CHECK_Y_UP_LEFT
             j CHECK_Y_UP_LEFT
             
@@ -191,7 +188,6 @@ li s8 0
                     j CHECK_MAP_COLLISION
 
     END_VERTICAL_COLLISION:
-   
         li a0,1
         ret 
 
@@ -255,17 +251,7 @@ START_CHECK_MAP_COLLISION:
         li a0, 0 # Player can't move  
     CONTINUE_CHECK_MAP_COLLISION_3:
     blt zero, t5, CONTINUE_CHECK_MAP_COLLISION_4 # t5 != 0 ? CONTINUE_CHECK_MAP_COLLISION_4 : RET
-###########################
-#            beqz s8,NONONOONON
-#            mv s3,a0
-#            mv s2,a7
-#            la a0, DEBUG
-#            li a7, 4
-#            ecall
-#            mv a0,s1
-#            mv a7,s2
-#            NONONOONON:
-######################
+
     ret
     
     CONTINUE_CHECK_MAP_COLLISION_4:

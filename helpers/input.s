@@ -115,8 +115,11 @@ INPUT_CHECK:
 	
     INPUT.S:
         la t0, PLYR_INFO
-        lbu t1, 1(t0)
+        lbu t1, 1(t0) # Loads player's abilities
+        lb t2, 7(a0)  # Loads direction on MOVE_Y
         slt t1, zero, t1 # t1 > 0 ? t1=1 : t1=0 --> if t1 = 1 or 2 (morph ball ability aquired) then go into morph ball
+        
+        bnez t2, SkipMorphBallTransformation
         beqz t1, SkipMorphBallTransformation  
         bnez t3, SkipMorphBallTransformation
             j INTO_MORPH_BALL
@@ -247,7 +250,28 @@ INPUT_CHECK:
         j END_INPUT_CHECK
 
     OUT_OF_MORPH_BALL:
-        sb zero, 4(a0) # key = up ? ball = 0 
+        lb t1, 7(a0)  # Loads direction on MOVE_Y
+        beqz t1, CONTINUE_OUT_OF_MORPH_BALL
+            j END_INPUT_CHECK
+        CONTINUE_OUT_OF_MORPH_BALL:
+        li t1, -1      # Loads direction for MOVE_Y (-1 = up)
+        sb t1, 7(a0)  # Stores new direction on MOVE_Y
+
+        # Setting arguments for COLLISION CHECK
+        la a0, MOVE_Y
+        la a1, CURRENT_MAP
+        lw a2, 0(a1)
+        la a3, PLYR_POS
+        # MOVE_Y will return to 0 afterwards
+        mv s11, ra # storing return address in s11
+        call CHECK_VERTICAL_COLLISION
+        mv ra, s11 # loading return address from s11
+
+        la t0, PLYR_STATUS      # Loads Player Status
+        beqz a0, SKIP_OUT_OF_MORPH_BALL
+            sb zero, 4(t0) # key = up ? ball = 0 
+        SKIP_OUT_OF_MORPH_BALL: 
+        sb zero, 7(t0)  # Stores new direction on MOVE_Y
 
 	END_INPUT_CHECK:
 		ret	
@@ -259,7 +283,7 @@ INPUT_CHECK:
 
 #    CHECK_BEAM_LOOP:
 #        lb t2, 0(t1) #loads if beam_1 is active
-#        beqz t2, RESET_BEAM_LOOP
+#        bnez t2, RESET_BEAM_LOOP
 #        li t2, 1
 #        sb t2, 0(t1)
 #        j SET_BEAM_POSITION
@@ -278,7 +302,7 @@ INPUT_CHECK:
 #        beqz t2, SET_BEAM_LEFT
 #        li t5, 1
 #        beq t2, t5, SET_BEAM_RIGHT
-#        li t5, 2
+#        lb t2, 2(a0) # Loads PLYRS vertical direction
 #        beq t2, t5, SET_BEAM_UP
 #         
 #
