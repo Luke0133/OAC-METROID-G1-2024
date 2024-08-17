@@ -34,20 +34,6 @@ GAME_LOOP:
 
 	call PHYSICS
 
-la t0 PLYR_POS
-lb a0,6(t0)
-li a7 1
-ecall
-#la a0 DEBUG2
-#li a7 4
-#ecall
-#lbu a0,7(t0)
-#li a7 1
-#ecall
-la a0 DEBUG
-li a7 4
-ecall
-
 	call MAP_MOVE_RENDER
 	
 	call UPDATE_STATUS
