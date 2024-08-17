@@ -250,18 +250,19 @@ INPUT_CHECK:
         j END_INPUT_CHECK
 
     OUT_OF_MORPH_BALL:
-        lb t1, 7(a0)  # Loads direction on MOVE_Y
-        beqz t1, CONTINUE_OUT_OF_MORPH_BALL
-            j END_INPUT_CHECK
-        CONTINUE_OUT_OF_MORPH_BALL:
+    #    lb t1, 7(a0)  # Loads direction on MOVE_Y
+    #    beqz t1, CONTINUE_OUT_OF_MORPH_BALL
+    #        j END_INPUT_CHECK
+    #    CONTINUE_OUT_OF_MORPH_BALL:
         li t1, -1      # Loads direction for MOVE_Y (-1 = up)
         sb t1, 7(a0)  # Stores new direction on MOVE_Y
 
         # Setting arguments for COLLISION CHECK
         la a0, MOVE_Y
         la a1, CURRENT_MAP
-        lw a2, 0(a1)
-        la a3, PLYR_POS
+        lw a1, 0(a1)
+        la a2, PLYR_POS
+
         # MOVE_Y will return to 0 afterwards
         mv s11, ra # storing return address in s11
         call CHECK_VERTICAL_COLLISION

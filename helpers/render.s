@@ -223,13 +223,13 @@ RENDER_COLOR:
 #     -----------           argument registers           -----------    #
 #       a0 = 0 - render player sprite; 1 - render player's trail        #	
 #     -----------          temporary registers           -----------    #
-#       t0 =  PLYR STATUS                           #
-#       t1 =  HORIZONTAL DIRECTION                                       #
-#       t2 =  MOVEX                                              #
-#       t3 =  MOVEY                                            # 
-#		t4 =  VERTICAL DIRECTION
-#		t5 =  ATTACKING STATUS
-#
+#       t0 =  PLYR STATUS                                               #
+#       t1 =  HORIZONTAL DIRECTION                                      #
+#       t2 =  MOVEX                                                     #
+#       t3 =  MOVEY                                                     # 
+#		t4 =  VERTICAL DIRECTION                                        #
+#		t5 =  ATTACKING STATUS                                          #
+#                                                                       #
 # 	 ----------------------- description --------------------------
 # 		this procedure is similar to a finite state machine, where samus 
 # 		can be render according to her PLYR_STATUS
@@ -244,7 +244,7 @@ RENDER_PLAYER:
 	lbu a2, 4(t2)	# Loads top left Y coordinate related to sprite	
 	mv a5, s0		# Gets frame 
 	lbu a6, 0(t0)   # Loads Player's sprite status
-	li a7, 0 		# Operation (0 - normal operation)
+	mv a7,zero 		# Operation (0 - normal operation)
 	
 	beqz a0, RENDER_PLAYER_NORMAL # If a0 = 0,  then player will be rendered normally
 	j RENDER_PLAYER_TRAIL     # Otherwise (a0 = 1) render player's trail
@@ -509,38 +509,38 @@ RENDER_LIFE_POINTS:
 
 	ret
 
-###############################         RENDER MAP         ##############################
-#    Takes a given map matrix and renders tiles acoording to the value stored on it.   	#
-#   -- t2 and t3 are recieved as arguments:                                             #
-#       > t2: line where rendering will begin (Y related to Matrix)                     #
-#       > t3: column where rendering will begin (X related to Matrix)                   #
-#   -- the arguments t2 and t3 are related to the full matrix, and not the 20 x 15      # 
-#       screen matrix. They'll later be converted to the line and column related to     #
-#       the screen sized matrix.                                                        #
-#       Obs.: If you aren't rendering a sprite's trail, set t2 and t3 to 0              # 	
-#     ------------               argument registers                  ------------      	#
-#       a0 = Map Matrix Address                                                         #
-#       a1 = starting X on Matrix (top left)                                            #
-#       a2 = starting Y on Matrix (top left)                                            #	
-#       a3 = X offset (0, 4, 8, 12)                                                     #
-#       a4 = Y offset (0, 4, 8, 12)                                                     #	 		  
-#       a5 = frame (0 or 1)                                                             #
-#       a6 = width (Related to Matrix) of rendering area                                #
-#       a7 = height (Related to Matrix) of rendering area                               #
-#     ------------            saved registers (uses stack)           ------------      	#
-#       s0 = current X and Y address on Matrix                                          #
-#       s1 = Matrix Width                                                               #
-#       s2 = Y where line loop will stop                                                #
-#       s3 = X where column loop will stop                                              #			
-#     ------------                temporary registers                ------------      	#
-#       t0 = temporary operations                                                       #
-#       t1 = tile to be rendered                                                        #				
-#       t2 = line counter (and also current Y) related to Matrix                        #
-#       t3 = column counter (and also current X) related to Matrix                      #
-#       t4 = temporary register for moving info                                         #
-#       t5 = temporary register for moving info                                         #
-#       t6 = temporary register for moving info                                         #
-#########################################################################################
+###############################          RENDER MAP          ##############################
+#    Takes a given map matrix and renders tiles acoording to the value stored on it.      #
+#   -- t2 and t3 are recieved as arguments:                                               #
+#       > t2: line where rendering will begin (Y related to Matrix)                       #
+#       > t3: column where rendering will begin (X related to Matrix)                     #
+#   -- the arguments t2 and t3 are related to the full matrix, and not the 20 x 15        # 
+#       screen matrix. They'll later be converted to the line and column related to       #
+#       the screen sized matrix.                                                          #
+#       Obs.: If you aren't rendering a sprite's trail, set t2 and t3 to 0                # 	
+#     -------------               argument registers                  -------------       #
+#       a0 = Map Matrix Address                                                           #
+#       a1 = starting X on Matrix (top left)                                              #
+#       a2 = starting Y on Matrix (top left)                                              #	
+#       a3 = X offset (0, 4, 8, 12)                                                       #
+#       a4 = Y offset (0, 4, 8, 12)                                                       #	 		  
+#       a5 = frame (0 or 1)                                                               #
+#       a6 = width (Related to Matrix) of rendering area                                  #
+#       a7 = height (Related to Matrix) of rendering area                                 #
+#     -------------            saved registers (uses stack)           -------------       #
+#       s0 = current X and Y address on Matrix                                            #
+#       s1 = Matrix Width                                                                 #
+#       s2 = Y where line loop will stop                                                  #
+#       s3 = X where column loop will stop                                                #			
+#     -------------                temporary registers                -------------    	  #
+#       t0 = temporary operations (in the begining, it has the address of tile to render) #
+#       t1 = tile to be rendered                                                          #				
+#       t2 = line counter (and also current Y) related to Matrix                          #
+#       t3 = column counter (and also current X) related to Matrix                        #
+#       t4 = temporary register for moving info                                           #
+#       t5 = temporary register for moving info                                           #
+#       t6 = temporary register for moving info                                           #
+###########################################################################################
 RENDER_MAP:
 
 # Storing Registers on Stack
@@ -586,8 +586,6 @@ RENDER_MAP:
 	li t0, m_screen_height
 	blt a7,t0 RENDER_MAP_LOOP # If height of rendering area is smaller than the screen's height, ignore
 	addi s2,t0,1	# if rendering a full screen (15 wide) with offset, will need to render 16 tiles
-
-	
 	
 RENDER_MAP_LOOP:
 	lbu t1,0(s0)	# loads byte stored on matrix for checking what is the tile
@@ -595,15 +593,53 @@ RENDER_MAP_LOOP:
 	j CONTINUE_RENDER_MAP
 
 	NotBackground:
-#		li t0, 40
-# -- > Do we need to check if door is openned?
+		li t0, 40 # Value where doors start
+		bge t1, t0, RENDER_DOOR # If it's a door
 		la t0, Tileset # Loads Tileset address to t0
 		addi t1,t1,-1  # t1 = Tile Number - 1 (so that if t1 = 1, 0 tiles will be skipped)
 		slli t1,t1,8   # t1 = (Tile Number - 1) x 256
 		add t0,t0,t1  # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles) 
-#	NoTile:
-#	li t1,0 # If no valid tile is detected, the background color will be applied
-	 
+		j CONTINUE_RENDER_MAP
+	RENDER_DOOR: 
+		mv t6,zero   # Resets counter
+		la t4, Doors # Loads Doors address
+		lw t4,0(t4)	 # Gets the current map's door address
+		lbu t5,0(t4) # Gets the number of doors in this map
+		addi t4,t4,1 # Starting address of the map's first door
+		RENDER_DOOR_LOOP:
+			# Checking if current door will be rendered
+			lbu tp, 0(t4) # Loads door's X on matrix
+			add t0,a1,t3  # Gets current X on map matrix
+			bne tp, t0, NEXT_IN_DOOR_LOOP # If door's X isn't the same as current X, skip this door
+			lbu tp, 1(t4) # Loads door's Y on matrix
+			add t0,a2,t2  # Gets current Y on map matrix
+			sub tp,t0,tp  # tp needs to be equal to 0, 1 or 2 in order to be a tile from this door
+			li t0,2 # 2 is the threshold to be compared with tp
+			bgtu tp,t0, NEXT_IN_DOOR_LOOP # If current Y is above the door's uppermost Y or bellow it's downmost Y, skip this door
+############## OLD ########################################################################################################################
+#	blt t2,tp, NEXT_IN_DOOR_LOOP # If current Y is above the door's Y, skip this door
+#	addi tp,tp,2 # tp now has the door's downmost Y (two tiles bellow door's starting Y)
+#	bgt t2,tp, NEXT_IN_DOOR_LOOP # If current Y is bellow the door's downmost Y, skip this door
+###########################################################################################################################################
+			# If none of the conditions on the branches were met, this current door will be rendered
+			lbu tp, 2(t4) # Loads door's state
+			bge tp,t0, END_RENDER_DOOR_LOOP # If door is open (state = 2 -- >= 2 for containing errors)
+			# Otherwise, check the following
+				la t0, Tileset # Loads Tileset address to t0
+				addi t1,t1,-1  # t1 = Tile Number - 1 (so that if t1 = 1, 0 tiles will be skipped)
+				add t1,t1,tp   # t1 will change if door is opening (tp = 1)
+				slli t1,t1,8   # t1 = (Tile Number - 1) x 256
+				add t0,t0,t1   # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles) 
+				j CONTINUE_RENDER_MAP
+			NEXT_IN_DOOR_LOOP:
+				addi t4,t4,3 # Going to the next door's address
+				addi t6,t6,1 # Iterating counter by 1
+				bge t6,t5, END_RENDER_DOOR_LOOP # If all of the map's doors were checked, end loop
+				j RENDER_DOOR_LOOP # otherwise, go back to the loop's begining
+	END_RENDER_DOOR_LOOP:
+	# This is only reached if no door was found (error) or if door is open, so background color will be rendered
+		mv t1,zero
+		
 	CONTINUE_RENDER_MAP:
 	# Storing Registers on Stack
 	addi sp,sp,-52
@@ -663,7 +699,7 @@ RENDER_MAP_LOOP:
 		li a0, 0x00 		# Black
 		mv a1, t4		# Top Left X
 		mv a2, t5		# Top Left Y	
-		li a6, 0
+		mv a6, zero
 		# a5 doesn't change
 		bnez t6, CropColor 
 		j NoCropColor
@@ -701,7 +737,7 @@ RENDER_MAP_LOOP:
 		# a0 has the tile address
 		mv a1, t4		# Top Left X where tile will start rendering
 		mv a2, t5		# Top Left Y where tile will start rendering			
-		li a6, 0		# Tiles only have one image, thus their status is allways 0
+		mv a6,zero		# Tiles only have one image, thus their status is allways 0
 		# If no offset is taken into account, will skip unecessary parameters  
 		bnez t6, Continue_Crop 
 		j Skip_Offset
@@ -717,8 +753,8 @@ RENDER_MAP_LOOP:
 			sub a4,s3, s2		# a4 will hold rendering height that is equal to the tile size (16) - Y offset
 			j Start_NormalRender
 		RightBottomCrop: # Will crop tile from the right or bottom
-			li s1, 0		# s1 = 0 (rendering will start from the left)
-			li s2, 0		# s2 = 0 (rendering will start from the top)
+			mv s1,zero		# s1 = 0 (rendering will start from the left)
+			mv s2,zero		# s2 = 0 (rendering will start from the top)
 			li s3, tile_size	# s3 = 16
 			sub a1,a1,a3		# a1 will shift left the ammount of a3 (currently X offset) 
 			sub a2,a2,a4		# a2 will shift up the ammount of a4 (currently Y offset)
@@ -736,7 +772,7 @@ RENDER_MAP_LOOP:
 		sub a2,a2,a4		# a2 will shift up the ammount of a4 (currently Y offset) 
 		li a3, tile_size	# Tile Width (Relative to Screen)
 		li a4, tile_size	# Tile Height (Relative to Screen)
-		li a7, 0		# Normal Render operations
+		mv a7,zero		# Normal Render operations
 		Start_NormalRender:
 		call RENDER_WORD
 	

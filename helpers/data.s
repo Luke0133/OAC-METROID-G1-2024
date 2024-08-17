@@ -1,9 +1,11 @@
 .data
 # ----> Summary: render.s stores rendering related procedures
 # 1 - General Data (Information related to game)
-# 2 - Tiles (Game's Tileset)
-# 3 - Matrixes (Map Matrixes)
-# 4 - Samus (Player's sprites)
+# 2 - Doors
+# 3 - Map Parameters
+# 4 - Tiles (Game's Tileset)
+# 5 - Matrixes (Map Matrixes)
+# 6 - Samus (Player's sprites)
 
 MUSIC.NOTES: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60,397,62,3573,62,397,60,397,62,397,64,2382,59,1191,59,397,64,397,65,397,67,4764,65,2382,64,2382,65,3573,69,397,67,397,65,397,67,2382,64,1191,64,397,67,397,71,397,73,9528
 MUSIC.STATUS: .word 0,0
@@ -112,6 +114,40 @@ RIDLEY_POS: .half 80, 0 # Stores Ridley's current and old top left X respectivel
 RIDLEY_MATRIX: .byte 0, 0, 0, 0 # Stores Ridley's top left new and old X and new and old Y respectively, all related to the map matrix 
 RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - Freefall)
 .eqv RIDLEY_HEALTH 200
+
+##############           Doors            ##############
+Doors: .word 0 # Holds the current "DoorsA" label based on the current map
+.byte
+# Bellow here all labels will follow the rules:
+# DoorA: N --> holds the number (N) of doors on map A
+# DoorA_B: X, Y, S, D --> holds the door's X and uppermost Y (on matrix), and its state (S)
+# Obs.: the state can be: 0 - closed, 1 - opening, 2 - open (background color)
+# Obs2.: the direction of a door is: left (if X = 1) or right (if X != 1)
+Doors1:  1
+Door1_1: 58,5,0
+
+Doors2: 3
+Door2_1: 1,5,0
+Door2_2: 18,5,0
+Door2_3: 1,35,0
+
+Doors3: 2
+Door3_1: 58,5,0
+Door3_2: 1,5,0
+
+Doors4: 2
+Door4_1: 1,35,0
+Door4_2: 1,5,0
+
+Doors5: 2
+Door5_1: 38,5,2
+Door5_2: 1,5,2
+
+Doors6: 1
+Door6_1: 18,5,0
+
+Doors7: 1
+Door7_1: 18,5,0
 
 ############################################        Map Parameters        ############################################
 
@@ -226,7 +262,6 @@ RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - 
 #  | 16. Ground2B     | 33. Tile3A        | 50. DoorRightBottom  |
 #  | 17. Ground2C     | 34. Tile3B        | 51. DoorRightBottomO |
 #  +------------------+-------------------+----------------------+
-#  
 
 .word 0 # Aligning bytes
 Tileset:

@@ -1,23 +1,22 @@
 .text
-##########################  PHYSICS    ##########################
-# Uppon calling PHYSICS, it is assumed that the address of the  #
-# current map is already stored on CURRENT_MAP. This label will	#
-#    store the current map's address, so it is a "pointer" to   #
-#    another "pointer". Remember that when loading the map's	#
-#   address (load address of CURRENT_MAP, then load word from	# 
-#      CURRENT_MAP: this will be the current map's address)	    #
-#################################################################
-#   -----------     registers used     -----------  #
-#	a0 = MOVE_X/MOVE_Y address (located on main.s)		#
-#	a1 = CURRENT_MAP address (located on main.s)		#
-#	a2 = current map's address (located on matrix.data)	#
-#   a3 = PLYR_POS
-#   a4 = Move_X/Y in tile format
-#   a6 = player offset (t4)
-#   a7 = player x on matrix 
-#   s10 = what to add to map matrix (-1, 0 or 1)
-#   s11 = ra storage
-#   t5,t3 = Temporary Registers
+##########################     PHYSICS     #########################
+#   Uppon calling PHYSICS, it is assumed that the address of the   #
+#     current map is already stored on CURRENT_MAP. This label     # 
+#  will check how the player will move and if the map should move  #
+#     as well. It'll first check horizontally and, afterwards,     #
+#      vertically, only when there's movement from the player      #
+#                                                                  #
+#  ----------------        registers used        ----------------  #
+#	 a0 = MOVE_X/MOVE_Y address (located on main.s)		           #
+#	 a1 = CURRENT_MAP address (located on main.s)		           #
+#	 a2 = current map's address (located on matrix.data)	       #
+#    a3 = PLYR_POS                                                 #
+#    a4 = Move_X/Y in tile format                                  #
+#    a6 = player offset (t4)                                       #
+#    a7 = player x on matrix                                       #
+#    t0 -- t5 = Temporary Registers                                #
+#                                                                  #
+####################################################################
 
 PHYSICS:
     la a0, MOVE_X	       # Loads address of MOVE_X
@@ -67,21 +66,40 @@ PHYSICS:
             sub a6,a6,t3	 # Offset gets corrected (relative to new X on matrix coordinate)
         
         SKIP_RIGHT_X:
-        
-        # Checking collision
-        mv s11, ra # storing return address in s11
-        
-        call CHECK_HORIZONTAL_COLLISION
-        
-        mv ra, s11 # loading return address from s11
-        # After checking collision
-        
-        lh t2, 0(a3)    # Loads Player's Current X
-        bnez a0, CAN_MOVE_X # a0 != 0 ? CAN_MOVE_X : Fixed_X_Map 
-        mv t5,t2 # storing PLYRS_current X in t5
-      #  la a0, MOVE_X	
-      #  sb zero, 0(a0) # MOVE_X = 0
-        j Fixed_X_Map
+        # Storing Registers on Stack
+            addi sp,sp,-32
+            sw a7,28(sp)
+            sw a6,24(sp)
+            sw a4,20(sp)
+            sw a3,16(sp)
+            sw a2,12(sp)
+            sw a1,8(sp)
+            sw a0,4(sp)
+            sw ra,0(sp)
+            
+            mv a1,a2 # Moves current map's address to a1 
+            mv a2,a3 # Moves PLYR_POS to a2
+            call CHECK_HORIZONTAL_COLLISION # Checking collision
+            mv t0,a0     # Moves result of collision check to t0 
+
+        # Procedure finished: Loading Registers from Stack
+            lw a7,28(sp)
+            lw a6,24(sp)
+            lw a4,20(sp)
+            lw a3,16(sp)
+            lw a2,12(sp)
+            lw a1,8(sp)
+            lw a0,4(sp)
+            lw ra,0(sp)
+            addi sp,sp,32
+
+            # After checking collision
+            lh t2, 0(a3)        # Loads Player's Current X
+            bnez t0, CAN_MOVE_X # a0 != 0 ? CAN_MOVE_X : Fixed_X_Map 
+            mv t5,t2            # storing PLYRS_current X in t5
+            #  la a0, MOVE_X	
+            #  sb zero, 0(a0) # MOVE_X = 0
+            j Fixed_X_Map
         
         CAN_MOVE_X:       
         
@@ -171,10 +189,27 @@ CHECK_MOVE_Y:
         lbu t1, 10(a3)  # Loads Player's Y related to screen
         sb t1, 11(a3)  # Stores Player's Y related to screen on old Y
         
-        mv s11, ra # storing return address in s11
-        call CHECK_VERTICAL_COLLISION  
-        mv ra, s11 # loading return address from s11
-        beqz a0, HAS_GROUND # a0 != 0 ? HAS_GROUND :  MOVE_PLAYER_Y
+        addi sp,sp,-20
+        sw a3,16(sp)
+        sw a2,12(sp)
+        sw a1,8(sp)
+        sw a0,4(sp)
+        sw ra,0(sp)
+
+        mv a1,a2 # Moves current map's address to a1 
+        mv a2,a3 # Moves PLYR_POS to a2
+        call CHECK_VERTICAL_COLLISION # Checking collision
+        mv t0,a0     # Moves result of collision check to t0 
+
+        # Procedure finished: Loading Registers from Stack
+        lw a3,16(sp)
+        lw a2,12(sp)
+        lw a1,8(sp)
+        lw a0,4(sp)
+        lw ra,0(sp)
+        addi sp,sp,20
+
+        beqz t0, HAS_GROUND # a0 != 0 ? HAS_GROUND :  MOVE_PLAYER_Y
         li t0, 1 # DOWN
         la a0, MOVE_Y	       # Loads address of MOVE_Y
         sb t0, 0(a0)	
@@ -260,17 +295,39 @@ CHECK_MOVE_Y:
             addi a7,a7, 1	 # Player's Y on matrix += 1 (goes to the right)
             sub a6,a6,t3	 # Offset gets corrected (relative to new Y on matrix coordinate)
         
-        SKIP_DOWN_Y:     
-            # Checking collision
-            mv s11, ra # storing return address in s11
-            call CHECK_VERTICAL_COLLISION
-            mv ra, s11 # loading return address from s11
+        SKIP_DOWN_Y:  
+        # Storing Registers on Stack
+            addi sp,sp,-32
+            sw a7,28(sp)
+            sw a6,24(sp)
+            sw a4,20(sp)
+            sw a3,16(sp)
+            sw a2,12(sp)
+            sw a1,8(sp)
+            sw a0,4(sp)
+            sw ra,0(sp)
+
+            mv a1,a2 # Moves current map's address to a1 
+            mv a2,a3 # Moves PLYR_POS to a2
+            call CHECK_VERTICAL_COLLISION # Checking collision
+            mv t0,a0     # Moves result of collision check to t0 
+
+        # Procedure finished: Loading Registers from Stack
+            lw a7,28(sp)
+            lw a6,24(sp)
+            lw a4,20(sp)
+            lw a3,16(sp)
+            lw a2,12(sp)
+            lw a1,8(sp)
+            lw a0,4(sp)
+            lw ra,0(sp)
+            addi sp,sp,32
             
             # After checking collision
             lbu t2, 4(a3)    # Loads Player's Current Y
-            bnez a0, CAN_MOVE_Y # a0 != 0 ? CAN_MOVE_Y : Fixed_Y_Map
+            bnez t0, CAN_MOVE_Y # t0 != 0 ? CAN_MOVE_Y : Fixed_Y_Map
                 mv t5,t2 # storing PLYRS_current Y in t5
-                la a0, MOVE_Y
+              #  la a0, MOVE_Y
                 lb t0, 0(a0) # Gets MOVE_Y info
                 blt t0,zero, STOP_JUMP # If t1 = -1 (aka, player would start jumping), reset
                     # If t0 = 0 (not jumping) or t1 = 1 (freefall), reset MOVE_Y and JUMP
