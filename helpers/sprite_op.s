@@ -8,36 +8,36 @@
 .text
 
 UPDATE_STATUS:
-    la t0,PLYR_STATUS # Loads Player Status
-    lb t1, 4(t0) # Loads Ball Byte 
-    bnez t1, SPRITE_BALL # t1 != 0 ? SPRITE_BALL : CHECK_VERTICAL_MOV
-    j CHECK_VERTICAL_MOV
+    la t0,PLYR_STATUS  # Loads Player Status
+    lb t1, 4(t0)       # Loads Ball Byte 
+    bnez t1, UPDATE_BALL_SPRITE # If player is on morph ball (t1 != 0), go to UPDATE_BALL_SPRITE
+    j CHECK_VERTICAL_MOV        # Otherwise, go to CHECK_VERTICAL_MOV
 
-SPRITE_BALL:
-    # CHECAR DIREÇÃO 0 (dir 0 -> 1 -> 2 -> 3 -> 0) 1 (esq 0 -> 3 -> 2 -> 1 -> 0)
-    lbu t1, 6(t0) # Loads MOVE_X to t1
-    blt t1, zero, BALL_SPRITE_LEFT # t1 < 0 ? BALL_SPRITE_LEFT : BALL_SPRITE_RIGHT
-    j BALL_SPRITE_RIGHT
+    UPDATE_BALL_SPRITE:
+        # CHECAR DIREÇÃO 0 (dir 0 -> 1 -> 2 -> 3 -> 0) 1 (esq 0 -> 3 -> 2 -> 1 -> 0)
+        lbu t1, 1(t0) # Loads player's facing direction into t1
+        bnez t1, UPDATE_BALL_SPRITE_LEFT # If player is looking left, go to UPDATE_BALL_SPRITE_LEFT
+        j UPDATE_BALL_SPRITE_RIGHT       # otherwise, go to UPDATE_BALL_SPRITE_RIGHT
 
-BALL_SPRITE_LEFT:
-    lbu t1, 0(t0) # Loads sprite number
-    li t2, 3 # t2 = max_sprite
-    beq t1,t2,RESET_SPRITE_BALL # t1 == t2 ? RESET_SPRITE : INC_SPRITE
-    addi t1,t1,1 # INC_SPRITE
-    sb t1, 0(t0) # Store sprite number in status
-    j END_UPDATE_STATUS
+        UPDATE_BALL_SPRITE_LEFT:
+            lbu t1, 0(t0) # Loads sprite number
+            li t2, 3 # t2 = max_sprite
+            beq t1,t2,RESET_SPRITE_BALL # t1 == t2 ? RESET_SPRITE : INC_SPRITE
+            addi t1,t1,1 # INC_SPRITE
+            sb t1, 0(t0) # Store sprite number in status
+            j END_UPDATE_STATUS
 
-BALL_SPRITE_RIGHT:
-    lbu t1, 0(t0) # Loads sprite number
-    li t2, 3 # t2 = max_sprite
-    beq t1,t2,RESET_SPRITE_BALL # t1 == t2 ? RESET_SPRITE : INC_SPRITE
-    addi t1,t1,1 # INC_SPRITE
-    sb t1, 0(t0) # Store sprite number in status
-    j END_UPDATE_STATUS
+        UPDATE_BALL_SPRITE_RIGHT:
+            lbu t1, 0(t0) # Loads sprite number
+            li t2, 3 # t2 = max_sprite
+            beq t1,t2,RESET_SPRITE_BALL # t1 == t2 ? RESET_SPRITE : INC_SPRITE
+            addi t1,t1,1 # INC_SPRITE
+            sb t1, 0(t0) # Store sprite number in status
+            j END_UPDATE_STATUS
 
-RESET_SPRITE_BALL:
-    sb zero, 0(t0) # Reset sprite number
-    j END_UPDATE_STATUS
+        RESET_SPRITE_BALL:
+            sb zero, 0(t0) # Reset sprite number
+            j END_UPDATE_STATUS
 
 CHECK_VERTICAL_MOV:
     lbu t1, 7(t0) # Loads MOVE_Y to t1

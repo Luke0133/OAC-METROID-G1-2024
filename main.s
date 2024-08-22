@@ -48,6 +48,8 @@ GAME_LOOP:
 	call RENDER_PLAYER
 	call RENDER_LIFE
 
+
+
 	li a7,30    # gets current time
 	ecall       # syscall
 	mv s1,a0    # new time is stored in s1, in order to be compared later		

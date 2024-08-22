@@ -238,7 +238,6 @@ RENDER_COLOR:
 RENDER_PLAYER:
 	la t0, PLYR_STATUS # Loads PLAYER_STATUS address
 	la t2,PLYR_POS	# Loads PLYR_POS address
-
 	# Loading informations for Rendering Sprite
 	lh a1, 0(t2)	# Loads top left X coordinate related to sprite
 	lbu a2, 4(t2)	# Loads top left Y coordinate related to sprite	
@@ -247,15 +246,14 @@ RENDER_PLAYER:
 	mv a7,zero 		# Operation (0 - normal operation)
 	
 	beqz a0, RENDER_PLAYER_NORMAL # If a0 = 0,  then player will be rendered normally
-	j RENDER_PLAYER_TRAIL     # Otherwise (a0 = 1) render player's trail
-
+	j RENDER_PLAYER_TRAIL         # Otherwise (a0 = 1) render player's trail
 	RENDER_PLAYER_NORMAL:
 		# Loading informations for Checking Sprite
 		lbu t1, 1(t0)	# Loads Player's horizontal direction (0 = Right, 1 = Left)
 		lbu t2, 4(t0)   # Loads Player's morph ball status
 		
-		beqz t2, RENDER_PLAYER_STAND # ball mode = 0 ?  RENDER_PLAYER_STAND : RENDER_PLAYER_BALL
-		j RENDER_PLAYER_BALL
+		beqz t2, RENDER_PLAYER_STAND # If player isn't on morph ball, go to RENDER_PLAYER_STAND
+		j RENDER_PLAYER_BALL         # Otherwise, go to RENDER_PLAYER_BALL
 		
 	RENDER_PLAYER_STAND:
 		lbu t2, 6(t0)   # Loads Player's MOVE_X value (-1 left, 1 right, 0 not moving on X axis)
@@ -267,14 +265,14 @@ RENDER_PLAYER:
 		j RENDER_PLYR_LEFT	   # If player is looking left
 
 		RENDER_PLYR_RIGHT:
-			add t1, t2, t3  # t1 = 0 ? ISN'T MOVING : IS MOVING
-			beqz t1,RENDER_IDLE_RIGHT # Checks if player is mooving or not
-			j NOT_IDLE_RIGHT	  # If player is moving or not
+			add t1, t2, t3  # t1 will be 0 if t2 (MOVE_X) = 0 and t3 (MOVE_Y) = 0
+			beqz t1,RENDER_IDLE_RIGHT # If t1 = 0, player isn't moving (go to RENDER_IDLE_RIGHT)
+			j NOT_IDLE_RIGHT	      # Otherwise, go to NOT_IDLE_RIGHT
 
 			RENDER_IDLE_RIGHT:
-				li a3, 20  # Sprite's Widht
+				li a3, 20   # Sprite's Widht
 				mv a6, t5	# Idle sprites have their status set to 1 if player is attacking
-				bnez t4, RENDER_IDLE_RIGHT_UP	# If player is looking up
+				bnez t4, RENDER_IDLE_RIGHT_UP # If player is looking up
 
 				# Otherwise, render normal idle 
 				la a0, Samus_Right_Idle # Loads Player's Image Address 
@@ -444,25 +442,52 @@ RENDER_PLAYER:
 			mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
 			ret			# End of procedure
 		
-
 	RENDER_PLAYER_TRAIL:
 		xori a5,s0,1	# Gets oposite frame
-		li a6, 3	# Width (Number of Tiles) = 2
-		li a7, 4	# Height (Number of Tiles) = 2
 
 		la t0, PLYR_MATRIX  # Loads PLYR_MATRIX address
 		lbu t3, 1(t0) # Loads Player's old X related to matrix (Starting X for rendering (top left, related to Matrix))
-		
 		lbu t2, 3(t0) # Loads Player's old Y related to matrix (Starting Y for rendering (top left, related to Matrix))
 
-		addi t3,t3,-1
-		addi t2,t2,-1
+		li a6, 2	    # Width (Number of Tiles) = 2
+		li a7, 2	    # Height (Number of Tiles) = 2
+		
+		lbu t1,11(t0)    # Loads player's MOVE_Y
+		sltu t1,zero,t1  # t1 != 0 ? t1 = 1 : t1 = 0
+		add a7,a7,t1     # If player is moving vertically (t0 != 0), the height will increase by 1 
+		
+		lbu t0, 8(t0)   # Loads Player's morph ball status
+		beqz t3,SKIP_MOVE_Y_RENDER_PLAYER_TRAIL   # If player is on leftmost side, don't increase the width
+		# otherwise, move the trail area by 1 tile left and check if player isn't on rightmost side of map
+		# in order to change the trail rendering width as needed 
+			addi t3,t3,-1     # Moves X left by 1 tile
+			
+			la t1 CURRENT_MAP # Loads CURRENT_MAP address
+			lw t1,0(t1)       # Gets current map's address
+			lbu t1,1(t1)      # Gets current map's width
+			sub t1,t1,t3      # t1 = Map's width - Player's old X related to matrix
+			li t4,4           # t2 is used for comparing
+			blt t1,t4,SET_NEW_WIDTH_RENDER_PLAYER_TRAIL # If t1 < 4, set the width to t1
+			# Otherwise, set a6 to 3/4 (trail width limit)
+			xori t1,t0,1	# If player is on morph ball (t0 = 1), t1 = 0 and vice versa
+			addi a6,t1,3    # Width (Number of Tiles) = 3 (on morph ball) or 4 (not on morph ball)
+			j SKIP_MOVE_Y_RENDER_PLAYER_TRAIL
+			SET_NEW_WIDTH_RENDER_PLAYER_TRAIL:
+				mv a6,t1    # Width (Number of Tiles) = t1 (t1 < 4)
+		SKIP_MOVE_Y_RENDER_PLAYER_TRAIL:
+		beqz t0, RENDER_PLAYER_TRAIL_STAND  # If player isn't on morph ball, go to RENDER_PLAYER_TRAIL_STAND
+		j START_RENDER_PLAYER_TRAIL         # otherwise, player is on morph ball and go to START_RENDER_PLAYER_TRAIL
+		
+		RENDER_PLAYER_TRAIL_STAND:
+			addi t2,t2,-1   # Moves Y up by 1 tile
+			addi a7,a7,1    # Height (Number of Tiles) = 3 (if not jumping) or 4 (if jumping)
+			j START_RENDER_PLAYER_TRAIL
 
-
-		mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
-		call SCENE_RENDER	# Calls SCENE_RENDER procedure
-		mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
-		ret			# End of procedure
+		START_RENDER_PLAYER_TRAIL:
+			mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
+			call SCENE_RENDER	# Calls SCENE_RENDER procedure
+			mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
+			ret			# End of procedure
 
 ##########################    RENDER LIFE AND WEAPONS    ##########################
 #              Renders life and weapons based on its usages                #
@@ -616,11 +641,6 @@ RENDER_MAP_LOOP:
 			sub tp,t0,tp  # tp needs to be equal to 0, 1 or 2 in order to be a tile from this door
 			li t0,2 # 2 is the threshold to be compared with tp
 			bgtu tp,t0, NEXT_IN_DOOR_LOOP # If current Y is above the door's uppermost Y or bellow it's downmost Y, skip this door
-############## OLD ########################################################################################################################
-#	blt t2,tp, NEXT_IN_DOOR_LOOP # If current Y is above the door's Y, skip this door
-#	addi tp,tp,2 # tp now has the door's downmost Y (two tiles bellow door's starting Y)
-#	bgt t2,tp, NEXT_IN_DOOR_LOOP # If current Y is bellow the door's downmost Y, skip this door
-###########################################################################################################################################
 			# If none of the conditions on the branches were met, this current door will be rendered
 			lbu tp, 2(t4) # Loads door's state
 			bge tp,t0, END_RENDER_DOOR_LOOP # If door is open (state = 2 -- >= 2 for containing errors)

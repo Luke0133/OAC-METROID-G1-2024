@@ -284,16 +284,16 @@ INPUT_CHECK:
 
 #    CHECK_BEAM_LOOP:
 #        lb t2, 0(t1) #loads if beam_1 is active
-#        bnez t2, RESET_BEAM_LOOP
-#        li t2, 1
-#        sb t2, 0(t1)
+#        bnez t2, BEAM_LOOP # if b2 is active then reset
+#        li t2, 1 # loads 1
+#        sb t2, 0(t1) #activate the beam
 #        j SET_BEAM_POSITION
 
-#        RESET_BEAM_LOOP:
-#        addi t3, t3, 1
-#        addi t1, t1, 16
-#        beq t3,t4, END_BEAM_LOOP 
-#        j CHECK_BEAM_LOOP
+#        BEAM_LOOP:
+#           addi t3, t3, 1
+#           addi t1, t1, 16
+#           beq t3,t4, END_BEAM_LOOP 
+#           j CHECK_BEAM_LOOP
 #
 #        END_BEAM_LOOP:
 #           j END_BEAM_OPERATIONS
@@ -338,19 +338,6 @@ INPUT_CHECK:
 #
 #    END_BEAM_OPERATIONS:
 #       ret
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
 #
 #
 #

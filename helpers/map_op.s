@@ -37,14 +37,14 @@ MAP_MOVE_RENDER:
 #    render a sprite's trail:                                         #
 #      a5 = frame for rendering (oposite of current frame)            #
 #      a6 = width (Related to Matrix) of rendering area               #
-#      a7 = height (Related to Matrix) of rendering area              #			
+#      a7 = height (Related to Matrix) of rendering area              #
 #      t2 = line where rendering will begin (Y related to Matrix)     #
 #      t3 = column where rendering will begin (X related to Matrix)   #     
 #######################################################################
 	
 SCENE_RENDER:
 # Storing Registers on Stack
-	addi sp,sp,-4
+    addi sp,sp,-4
     sw ra, 0(sp)
 # End of Stack Operations
 	bnez a0, SKIP_SCENE_RENDER_ARGUMENTS # If a0 = 1, the arguments bellow have already been set
@@ -56,12 +56,12 @@ SCENE_RENDER:
 		li t2, 0	# Starting Y for rendering (top left, related to Matrix)
 	SKIP_SCENE_RENDER_ARGUMENTS:
 	
-	la t0, CURRENT_MAP  # Loads CURRENT_MAP's address
+    la t0, CURRENT_MAP  # Loads CURRENT_MAP's address
     lw a0, 0(t0) 	# a0 now has the Map Address
     
     lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
     lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
-	lbu a3, 8(t0)   # Loads current X offset on Map
+    lbu a3, 8(t0)   # Loads current X offset on Map
     lbu a4, 9(t0)   # Loads current Y offset on Map
 	
 	call RENDER_MAP
@@ -71,3 +71,64 @@ SCENE_RENDER:
     addi sp,sp,4
 # End of Stack Operations
     ret
+
+##########################    SWITCH MAP    ###########################
+#    Will go from one map to another after, based on the door frame   #
+#                                                                     #
+#    --------------       argument registers        --------------    #
+#      a0 = FrameA_B address                                          #	
+#                                                                     #
+#    --------------         registers used          --------------    #
+#	   a1 = CURRENT_MAP address (located on main.s)		              #
+#	   a2 = current map's address (located on matrix.data)	          #
+#      a3 = PLYR_POS                                                  #
+#      a4 = Move_X/Y in tile format                                   #
+#      a6 = player offset (t4)                                        #
+#      a7 = player x on matrix                                        #
+#      t0 -- t5 = Temporary Registers                                 #  
+#                                                                     #
+#######################################################################
+
+SWITCH_MAP:
+	la a1,CURRENT_MAP
+	lw a2,0(a1)
+	lbu a3
+	SWITCH_LOOP:
+
+		
+		addi sp,sp,-32
+		sw a7,28(sp)
+		sw a6,24(sp)
+		sw a4,20(sp)
+		sw a3,16(sp)
+		sw a2,12(sp)
+		sw a1,8(sp)
+		sw a0,4(sp)
+		sw ra,0(sp)
+		
+		lbu a1, 6(t0)   # Loads current X on Map (starting X on Matrix (top left))
+		lbu a2, 7(t0)   # Loads current Y on Map (starting Y on Matrix (top left))	
+		lbu a3, 8(t0)   # Loads current X offset on Map
+		lbu a4, 9(t0)   # Loads current Y offset on Map
+		mv a5,s0	# Current frame
+		li a6, m_screen_width	# Screen Width = 20     # width (Related to Matrix) of rendering area  # CHANGE
+		li a7, m_screen_height	# Screen Height = 15    # height (Related to Matrix) of rendering area
+		li t3, 0	# Starting X for rendering (top left, related to Matrix)     # CHANGE
+		li t2, 0	# Starting Y for rendering (top left, related to Matrix)     # CHANGE
+
+		call RENDER_MAP
+
+	# Procedure finished: Loading Registers from Stack
+		lw a7,28(sp)
+		lw a6,24(sp)
+		lw a4,20(sp)
+		lw a3,16(sp)
+		lw a2,12(sp)
+		lw a1,8(sp)
+		lw a0,4(sp)
+		lw ra,0(sp)
+		addi sp,sp,32
+
+	j SETUP
+
+	

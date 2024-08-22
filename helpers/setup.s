@@ -11,7 +11,9 @@ SETUP:
     lbu t1, 0 (t0)  # Loads byte related to map number
     lbu t2, 1 (t0)  # Loads rendering byte (0 - don't render, 1 - render once, 2 - render twice, 
                     # 3 - switch map (through door), 4 - switch map (through cheat input)) 
-    la t5, Doors    # Doors info address
+                   
+    la t4, Doors    # Doors info address
+    la t5, Frames   # Frames info address
 
     li t0, 1 
     bne t0, t1, SKIP_MAP1_SETUP 
@@ -75,7 +77,9 @@ SETUP:
     
     MAP1_SETUP:
         la t0, Doors1   # Doors address
-        sw t0,0(t5)     # Stores Doors1 address on Doors address
+        sw t0,0(t4)     # Stores Doors1 address on Doors address
+        la t0, Frames1  # Frames address
+        sw t0,0(t5)     # Stores Frames1 address on Doors address
         la a0, Map1 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
@@ -144,7 +148,9 @@ SETUP:
 
     MAP2_SETUP:
         la t0, Doors2   # Doors address
-        sw t0,0(t5)     # Stores Doors2 address on Doors address
+        sw t0,0(t4)     # Stores Doors2 address on Doors address
+        la t0, Frames2  # Frames address
+        sw t0,0(t5)     # Stores Frames2 address on Doors address
         la a0, Map2 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map2 address on CURRENT_MAP
@@ -212,7 +218,9 @@ SETUP:
 
     MAP3_SETUP:
         la t0, Doors3   # Doors address
-        sw t0,0(t5)     # Stores Doors3 address on Doors address
+        sw t0,0(t4)     # Stores Doors3 address on Doors address
+        la t0, Frames3  # Frames address
+        sw t0,0(t5)     # Stores Frames3 address on Doors address
         la a0, Map3 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map3 address on CURRENT_MAP
@@ -281,7 +289,9 @@ SETUP:
 
     MAP4_SETUP:
         la t0, Doors4   # Doors address
-        sw t0,0(t5)     # Stores Doors4 address on Doors address
+        sw t0,0(t4)     # Stores Doors4 address on Doors address
+        la t0, Frames4  # Frames address
+        sw t0,0(t5)     # Stores Frames4 address on Doors address
         la a0, Map4 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map4 address on CURRENT_MAP
@@ -349,7 +359,9 @@ SETUP:
 
     MAP5_SETUP:
         la t0, Doors5   # Doors address
-        sw t0,0(t5)     # Stores Doors5 address on Doors address
+        sw t0,0(t4)     # Stores Doors5 address on Doors address
+        la t0, Frames5  # Frames address
+        sw t0,0(t5)     # Stores Frames5 address on Doors address
         la a0, Map5 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map5 address on CURRENT_MAP
@@ -417,7 +429,9 @@ SETUP:
         
     MAP6_SETUP:
         la t0, Doors6   # Doors address
-        sw t0,0(t5)     # Stores Doors6 address on Doors address
+        sw t0,0(t4)     # Stores Doors6 address on Doors address
+        la t0, Frames6  # Frames address
+        sw t0,0(t5)     # Stores Frames6 address on Doors address
         la a0, Map6 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map6 address on CURRENT_MAP
@@ -485,7 +499,9 @@ SETUP:
         
     MAP7_SETUP:
         la t0, Doors7   # Doors address
-        sw t0,0(t5)     # Stores Doors7 address on Doors address
+        sw t0,0(t4)     # Stores Doors7 address on Doors address
+        la t0, Frames7  # Frames address
+        sw t0,0(t5)     # Stores Frames7 address on Doors address
         la a0, Map7 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map7 address on CURRENT_MAP

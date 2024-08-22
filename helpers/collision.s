@@ -155,7 +155,8 @@ CHECK_VERTICAL_COLLISION:
     j CHECK_Y_DOWN          # otherwise check down
     
     CHECK_Y_UP:
-        beqz t3 CONTINUE_CHECK_Y_UP # If player's Y offset is 0, continue checking
+        li t1,2
+        bge t1,t3 CONTINUE_CHECK_Y_UP # If player's Y offset is 0, continue checking
         j END_VERTICAL_COLLISION    # otherwise, end procedure
     
         CONTINUE_CHECK_Y_UP:
@@ -273,9 +274,9 @@ li a0,1  # Sets a0 to 1 (can move)
                     beq a4,t0, SKIP_DOOR_CHECK_MAP_COLLISION # If no door was detected and other tiles should be checked, continue
                     j CONTINUE_CHECK_MAP_COLLISION_3  # If no door was detected and only doors should be checked, skip to the end
             SKIP_DOOR_CHECK_MAP_COLLISION:
-                li t0, 3      # Loads t0 = 3 for comparison
-                blt t0, t1,COLLISION_NotBackground # If tile isn't passthrough or breakable (t1 > 3)
-                # If tile is passthrough or breakable (0 <= t1 <= 3), a0 should still be 1, otherwise procedure would've ended before
+                li t0, 4      # Loads t0 = 4 for comparison
+                bge t1,t0,COLLISION_NOT_BACKGROUND # If tile isn't part of background or isn't breakable (t1 >= 4)
+                # If tile is breakable or part of background (0 <= t1 <= 3), a0 should still be 1, otherwise procedure would've ended before
                     beq a0,t1, COLLISION_BREAKABLE   # If tile is breakable, there needs to be a check if it was broken
                     j CONTINUE_CHECK_MAP_COLLISION_3 # Otherwise, continue checking collision
         
@@ -284,10 +285,39 @@ li a0,1  # Sets a0 to 1 (can move)
                 # li a0, 0 # Player can't move  
                 j CONTINUE_CHECK_MAP_COLLISION_3
             
-            COLLISION_NotBackground:
+            COLLISION_NOT_BACKGROUND:
+                beq t0,t1,COLLISION_DOOR_FRAME  # If t1 = 4, it's a door frame
                 li t0,36   # Tile from which collision behaves differently
                 bge t1,t0, COLLISION_SPECIAL  # If current tile is a door or a damaging tile (t1 >= 36)
                     j COLLISION_BLOCKED # If tile isn't special (3 < t1 < 36)
+            
+            COLLISION_DOOR_FRAME:
+                mv t0,zero   # Resets counter
+                la t1, Frames # Loads Frames address
+                lw t1,0(t1)	 # Gets the current map's door frame address
+                lbu t2,0(t1) # Gets the number of door frames in this map
+                addi t1,t1,1 # Starting address of the map's first door frame
+                COLLISION_DOOR_FRAME_LOOP:
+                    # Checking if current door frame is the one player is colliding with
+                    lbu t3, 0(t1) # Loads door frame's X on matrix
+                    bne t3, a6, NEXT_IN_COLLISION_DOOR_FRAME_LOOP # If door frame's X isn't the same as current X, skip it       
+                    lbu t3, 1(t1) # Loads door frame's Y on matrix
+                    sub t3,a7,t3  # t3 needs to be equal to 0, 1 or 2 in order to be a tile from this door frame
+                    li t4,2       # 2 is the threshold to be compared with t3
+                    bgtu t3,t4, NEXT_IN_COLLISION_DOOR_FRAME_LOOP # If current Y is above the door frame's uppermost Y or bellow it's downmost Y, skip it                       
+                    # If the correct door tile is the one being checked, continue as follows   
+                        mv a0,t1       # Moves current door frame's address to a0
+                        addi sp,sp,32  # Freeing stack since it won't return to Physics
+                        j CONTINUE_CHECK_MAP_COLLISION_3                            
+                    NEXT_IN_COLLISION_DOOR_FRAME_LOOP:                                  
+                        addi t1,t1,6 # Going to the next door's address                                  
+                        addi t0,t0,1 # Iterating counter by 1                                   
+                        bge t0,t2, END_COLLISION_DOOR_FRAME_LOOP # If all of the map's doors were checked, end loop                                  
+                        j COLLISION_DOOR_FRAME_LOOP # otherwise, go back to the loop's begining                     
+                END_COLLISION_DOOR_FRAME_LOOP:                     
+                # This is only reached if no door frame was found (error) 
+                    j CONTINUE_CHECK_MAP_COLLISION_3     
+
 
             COLLISION_SPECIAL:
                 li t0,40   # Tile from which door tiles begin
@@ -305,7 +335,7 @@ li a0,1  # Sets a0 to 1 (can move)
                 lbu t2,0(t1) # Gets the number of doors in this map
                 addi t1,t1,1 # Starting address of the map's first door
                 COLLISION_DOOR_LOOP:
-                    # Checking if current door will be rendered
+                    # Checking if current door is the one player is colliding with
                     lbu t3, 0(t1) # Loads door's X on matrix
                     bne t3, a6, NEXT_IN_COLLISION_DOOR_LOOP # If door's X isn't the same as current X, skip this door
                     lbu t3, 1(t1) # Loads door's Y on matrix

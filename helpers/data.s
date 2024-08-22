@@ -119,35 +119,70 @@ RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - 
 Doors: .word 0 # Holds the current "DoorsA" label based on the current map
 .byte
 # Bellow here all labels will follow the rules:
-# DoorA: N --> holds the number (N) of doors on map A
-# DoorA_B: X, Y, S, D --> holds the door's X and uppermost Y (on matrix), and its state (S)
+# DoorsA: N --> holds the number (N) of doors on map A
+# DoorA_B: X, Y, S --> holds the door's X and uppermost Y (on matrix), and its state (S)
 # Obs.: the state can be: 0 - closed, 1 - opening, 2 - open (background color)
 # Obs2.: the direction of a door is: left (if X = 1) or right (if X != 1)
 Doors1:  1
-Door1_1: 58,5,0
+Door1_0: 58,5,2
 
 Doors2: 3
-Door2_1: 1,5,0
-Door2_2: 18,5,0
-Door2_3: 1,35,0
+Door2_0: 1,5,2
+Door2_1: 18,5,2
+Door2_2: 1,35,2
 
 Doors3: 2
-Door3_1: 58,5,0
-Door3_2: 1,5,0
+Door3_0: 58,5,2
+Door3_1: 1,5,2
 
 Doors4: 2
-Door4_1: 1,35,0
-Door4_2: 1,5,0
+Door4_0: 1,35,2
+Door4_1: 1,5,2
 
 Doors5: 2
-Door5_1: 38,5,2
-Door5_2: 1,5,2
+Door5_0: 38,5,2
+Door5_1: 1,5,2
 
 Doors6: 1
-Door6_1: 18,5,0
+Door6_0: 18,5,2
 
 Doors7: 1
-Door7_1: 18,5,0
+Door7_0: 18,5,2
+
+##############           Door Frames            ##############
+Frames: .word 0 # Holds the current "FrameA" label based on the current map
+.byte
+# Bellow here all labels will follow the rules:
+# FramesA: N --> holds the number (N) of door frames on map A
+# FrameA_B: X, Y, M, D, Dir, Ydoor --> holds the door's X and uppermost Y (on matrix), the number of the map to which player will go next (M),
+# the number of the door from which the player will leave on next map (D), direction (Dir) to where screen will go (0 = right, 1 = left), 
+# top left Y (Ydoor) of map matrix where switch will be set (for vertical maps, doors can be on different Y levels)
+
+Frames1:  1
+Frame1_0: 59,5,2,0,0,0
+
+Frames2: 3
+Frame2_0: 0,5,0,1,1,0
+Frame2_1: 19,5,0,3,0,0
+Frame2_2: 0,35,0,7,1,0
+
+Frames3: 2
+Frame3_0: 59,5,0,2,1,0
+Frame3_1: 0,5,0,4,0,30
+
+Frames4: 2
+Frame4_0: 0,35,0,3,1,0
+Frame4_1: 0,5,0,5,1,0
+
+Frames5: 2
+Frame5_0: 39,5,2,4,0,0
+Frame5_1: 0,5,2,6,1,0
+
+Frames6: 1
+Frame6_0: 19,5,0,5,0,0
+
+Frames7: 1
+Frame7_0: 19,5,0,2,0,30
 
 ############################################        Map Parameters        ############################################
 
@@ -1192,7 +1227,7 @@ DoorRightBottomO: # 16 x 16 = 256 bytes
 
 
 Map1: # 60 x 15 (Horizontal Map) -- 900 bytes
-.byte 1,60,15 # Map type (1 - Horizontal Camera Movement, Widht, Height)
+.byte 1,60,15 # Map type (1 - Horizontal Camera Movement, Width, Height)
 .byte 5,5,11,5,5,5,11,5,5,7,5,5,5,5,14,5,7,5,6,6,6,6,5,6,6,7,5,5,5,5,14,5,7,7,5,5,5,5,14,5,7,7,5,5,5,5,14,5,7,7,5,5,5,5,6,6,5,6,9,9,
 12,5,7,5,12,5,7,5,12,5,14,13,14,0,0,5,5,5,5,7,7,5,5,7,5,5,14,13,14,0,0,5,5,5,14,13,14,0,0,5,5,5,14,13,14,0,0,5,5,5,14,13,14,0,7,5,5,7,7,5,
 5,12,5,5,5,12,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,5,12,
@@ -3110,10 +3145,10 @@ Morph_Ball: # 16 x 64, Height per sprite: 16
 199,199,199,199,103,14,103,103,32,14,14,103,199,199,199,199,
 199,199,199,199,199,199,14,14,14,14,199,199,199,199,199,199,
 
-################################################        Samus        ################################################
-# Stores all sprites used for Samus in the game
+################################################        Beam        ################################################
 # 
-# --> Total ammount of data: 31,664 bytes or ~31 KiB + 2 bytes (half word alignment)
+# 
+#
 #
 #
 ######################################################################################################################
