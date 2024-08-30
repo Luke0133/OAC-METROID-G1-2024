@@ -128,6 +128,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
         
         call RENDER_MAP
   
@@ -141,6 +142,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
 
         call RENDER_MAP
 
@@ -199,6 +201,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
 
         call RENDER_MAP
 
@@ -212,6 +215,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
         call RENDER_MAP
 
         j END_SETUP
@@ -269,6 +273,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
 
         call RENDER_MAP
 
@@ -282,6 +287,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
         call RENDER_MAP
 
         j END_SETUP
@@ -340,6 +346,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
 
         call RENDER_MAP
 
@@ -353,6 +360,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
         call RENDER_MAP
 
         j END_SETUP
@@ -410,6 +418,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
 
         call RENDER_MAP
 
@@ -423,6 +432,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
         call RENDER_MAP
 
         j END_SETUP
@@ -480,7 +490,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
-
+        li tp, 0        # Map won't be dislocated
         call RENDER_MAP
 
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
@@ -493,6 +503,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated 
         call RENDER_MAP
 
         j END_SETUP
@@ -550,6 +561,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
 
         call RENDER_MAP
 
@@ -563,6 +575,7 @@ SETUP:
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
+        li tp, 0        # Map won't be dislocated
         call RENDER_MAP
 
         j END_SETUP

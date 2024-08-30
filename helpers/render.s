@@ -241,6 +241,7 @@ RENDER_PLAYER:
 	# Loading informations for Rendering Sprite
 	lh a1, 0(t2)	# Loads top left X coordinate related to sprite
 	lbu a2, 4(t2)	# Loads top left Y coordinate related to sprite	
+
 	mv a5, s0		# Gets frame 
 	lbu a6, 0(t0)   # Loads Player's sprite status
 	mv a7,zero 		# Operation (0 - normal operation)
@@ -454,6 +455,11 @@ RENDER_PLAYER:
 		
 		lbu t1,11(t0)    # Loads player's MOVE_Y
 		sltu t1,zero,t1  # t1 != 0 ? t1 = 1 : t1 = 0
+		lb t4,12(t0)     # Loads player's JUMP
+		bge t4,zero,SKIP_JUMP_CORRECTION      # t4 < 0 ? t4 = 1 : t4 = 0
+			li t1,1        # Will add 1 to the height
+			sb zero,12(t0) # Sets JUMP to 0
+		SKIP_JUMP_CORRECTION:
 		add a7,a7,t1     # If player is moving vertically (t0 != 0), the height will increase by 1 
 		
 		lbu t0, 8(t0)   # Loads Player's morph ball status
@@ -552,11 +558,14 @@ RENDER_LIFE_POINTS:
 #       a5 = frame (0 or 1)                                                               #
 #       a6 = width (Related to Matrix) of rendering area                                  #
 #       a7 = height (Related to Matrix) of rendering area                                 #
+#       tp = X dislocation factor (how many tiles should rendering be shifted to)         #
+#                                                                                         #
 #     -------------            saved registers (uses stack)           -------------       #
 #       s0 = current X and Y address on Matrix                                            #
 #       s1 = Matrix Width                                                                 #
 #       s2 = Y where line loop will stop                                                  #
-#       s3 = X where column loop will stop                                                #			
+#       s3 = X where column loop will stop                                                #
+#                                                                                         #			
 #     -------------                temporary registers                -------------    	  #
 #       t0 = temporary operations (in the begining, it has the address of tile to render) #
 #       t1 = tile to be rendered                                                          #				
@@ -565,11 +574,13 @@ RENDER_LIFE_POINTS:
 #       t4 = temporary register for moving info                                           #
 #       t5 = temporary register for moving info                                           #
 #       t6 = temporary register for moving info                                           #
+#                                                                                         #
 ###########################################################################################
 RENDER_MAP:
 
 # Storing Registers on Stack
-	addi sp,sp,-16
+	addi sp,sp,-20
+	sw ra,16(sp)
 	sw s3,12(sp)
 	sw s2,8(sp)
 	sw s1,4(sp)
@@ -593,7 +604,8 @@ RENDER_MAP:
 	RENDER_MAP_NoTrailX:
 	beqz a3, RENDER_MAP_GetCurrentY # If there's no X offset
 	li t0, m_screen_width
-	blt a6,t0 RENDER_MAP_GetCurrentY # If width of rendering area is smaller than the screen's width, ignore
+	blt a6,t0, RENDER_MAP_GetCurrentY   # If width of rendering area is smaller than the screen's width, ignore
+	blt zero,tp, RENDER_MAP_GetCurrentY # If map is dislocated, ignore the next step
 	addi s3,t0,1	# if rendering a full screen (20 wide) with offset, will need to render 21 tiles
 		
 	RENDER_MAP_GetCurrentY:
@@ -626,6 +638,10 @@ RENDER_MAP_LOOP:
 		add t0,t0,t1  # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles) 
 		j CONTINUE_RENDER_MAP
 	RENDER_DOOR: 
+	# Storing tp on stack cuz we don't really have any registers to use anymore :/
+		addi sp,sp,-4
+		sw tp,0(sp)
+	# End of stack operations, begin:
 		mv t6,zero   # Resets counter
 		la t4, Doors # Loads Doors address
 		lw t4,0(t4)	 # Gets the current map's door address
@@ -650,7 +666,7 @@ RENDER_MAP_LOOP:
 				add t1,t1,tp   # t1 will change if door is opening (tp = 1)
 				slli t1,t1,8   # t1 = (Tile Number - 1) x 256
 				add t0,t0,t1   # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles) 
-				j CONTINUE_RENDER_MAP
+				j END_RENDER_DOOR_LOOP_GLOBAL
 			NEXT_IN_DOOR_LOOP:
 				addi t4,t4,3 # Going to the next door's address
 				addi t6,t6,1 # Iterating counter by 1
@@ -659,6 +675,11 @@ RENDER_MAP_LOOP:
 	END_RENDER_DOOR_LOOP:
 	# This is only reached if no door was found (error) or if door is open, so background color will be rendered
 		mv t1,zero
+	END_RENDER_DOOR_LOOP_GLOBAL: # After any case of the loop, go here
+	# Restoring tp from stack
+		lw tp,0(sp)
+		addi sp,sp,4
+	# End of stack operations, begin:
 		
 	CONTINUE_RENDER_MAP:
 	# Storing Registers on Stack
@@ -675,25 +696,29 @@ RENDER_MAP_LOOP:
 	sw a0,12(sp)
 	sw t2,8(sp)
 	sw t3,4(sp)
-	sw ra,0(sp)
+	sw tp,0(sp)
 	
 	# End of Stack Operations
 	mv a0, t0 # Moves t0 (storing tile address) to a0
 	# Defining rendering coordinates
 	li t0, tile_size 	# Tile size = 16
-	mul t4,t3,t0		# t4 gets the X value relative to the screen (t3 (current X) * tile size)
+	add t6,tp,t3        # t6 gets t3 (current X) + tp (X dislocation)
+	mul t4,t6,t0		# t4 gets the X value relative to the screen ((t3 + tp) * tile size)
 	mul t5,t2,t0		# t5 gets the Y value relative to the screen (t2 (current Y) * tile size)
 	# Obs.: don't use t4 and t5 until stack is saved, unless it's related to rendering coordinates
 	li t6,0
 	bnez a3, X_Offset 	# If there's a X offset
 	j Check_Y_Offset
 	X_Offset:
-		bnez t3, TryRightOffset  # If t3 (current colum, i.e., current X) = 0, it's on the left border
-		li t6,1			 # t6 = 1: Cropping leftmost tile
+		add t0,t3,tp
+		bnez t0, TryRightOffset  # If t3 (current colum, i.e., current X) = 0, it's on the left border
+		li t6,1			         # t6 = 1: Cropping leftmost tile
 		j START_RENDER_MAP  	 # start rendering process
 		TryRightOffset:
 		li t0, m_screen_width    # screen width related to matrix = 20
-		bne t3, t0, NoX_Offset   # If t3 = 20, it's on the right border
+		sub t0,t0,t3             # t0 = screen width - t3 (current X) 
+		sub t0,t0,tp             # t0 = screen width - t3 (current X) - tp (X dislocation) 
+		bne zero, t0, NoX_Offset # If t0 <= 0 (t3 + tp >= 20), it's on the right border
 		li t6,2			 # t6 = 2: Cropping rightmost tile
 		NoX_Offset:
 		j START_RENDER_MAP	 # start rendering process
@@ -810,7 +835,7 @@ RENDER_MAP_LOOP:
 	lw a0,12(sp)
 	lw t2,8(sp)
 	lw t3,4(sp)
-	lw ra,0(sp)
+	lw tp,0(sp)
 	addi sp,sp,52
 # End of Stack Operations
 			
@@ -836,11 +861,12 @@ RENDER_MAP_LOOP:
 		j RENDER_MAP_LOOP	  # Return to beggining of loop
 		CONTINUE_COLUMN:
 	# Procedure finished: Loading Registers from Stack
+		lw ra,16(sp)	
 		lw s3,12(sp)
 		lw s2,8(sp)
 		lw s1,4(sp)
 		lw s0,0(sp)
-		addi sp,sp,16	
+		addi sp,sp,20
 	# End of Stack Operations: Return to caller		
 		ret
 

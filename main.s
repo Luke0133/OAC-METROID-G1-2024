@@ -6,6 +6,7 @@
 DEBUG: .string "\n"
 DEBUG2: .string " x "
 DEBUG1: .string "rarara\n"
+DEBUG11: .string "pasou\n"
 		
 .text
 li s1, 0  # Reseting time
@@ -21,8 +22,7 @@ main:
 
 GAME_LOOP:
 ### Frame rate check
-    li a7,30	# Ecall 30: Gets current time
-    ecall 		# Syscall
+    csrr a0,3073
     sub a0, a0, s1 #  # a0 = current time - last frame's time
     li t0, frame_rate	# Loads frame rate (time (in ms) per frame)
     bltu a0,t0, GAME_LOOP  # While a0 < minimum time for a frame, keep looping 
@@ -50,11 +50,9 @@ GAME_LOOP:
 
 
 
-	li a7,30    # gets current time
-	ecall       # syscall
-	mv s1,a0    # new time is stored in s1, in order to be compared later		
+	csrr s1,3073    # new time is stored in s1, in order to be compared later		
 
-	call MUSIC.PLAY
+	#call MUSIC.PLAY
 	
 	j GAME_LOOP	# Volta para ENGINE_LOOP
 

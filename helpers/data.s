@@ -11,27 +11,36 @@ MUSIC.NOTES: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60
 MUSIC.STATUS: .word 0,0
 
 
-.eqv KDMMIO_ADDRESS 0xFF210000
+.eqv KDMMIO_ADDRESS 0xFF200000
 ####### Informations related to frame rate  ####### 
 .eqv frame_rate 50 # T ms por frame 
+.eqv  frame_rate_switch 100
 ####### .eqv related to tiles  ####### 
 .eqv tile_size 16	# Tile size (use powers of 2 in order to use tile_size_shift)
 .eqv tile_size_shift 4  # Power value that gives tile size (2^tile_size_shift = tile_size)
 
 ####### .eqv related to screen  ####### 
-.eqv m_screen_width 20
-.eqv m_screen_height 15
-.eqv left_hor_border 119
-.eqv right_hor_border 184
-.eqv top_ver_border 64
-.eqv bottom_ver_border 176
-
+.eqv m_screen_width 20            # Width of screen in 16x16 tiles
+.eqv m_screen_height 15           # Height of screen in 16x16 tiles
+.eqv left_hor_border 119          # X on screen (in pixels) from where screen will move left instead of player
+.eqv right_hor_border 184         # X on screen (in pixels) from where screen will move right instead of player
+.eqv top_ver_border 94            # Y on screen (in pixels) from where screen will move up instead of player
+.eqv bottom_ver_border 96        # Y on screen (in pixels) from where screen will move down instead of player
+.eqv m_door_right_X_distance 18   # Distance between a door on right side of screen to the left side of screen in 16x16 tiles
+                                  # It won't be needed for doors on the left, but the distance is 1
+								   
 ####### Map informations ####### 
-CURRENT_MAP: .word 0
-MAP_INFO: .byte 1, 0, # num_map, (0 - don't render, 1 - render once, 2 - render twice, 3 - switch map (through door), 4 - switch map (through cheat input))
+CURRENT_MAP: .word 0  # Stores the address of current map
+MAP_INFO: .byte 1, 0, # Current Map's Number, render byte (0 - don't render, 1 - render once, 2 - render twice, 3 - switch map (through door), 4 - switch map (through cheat input))
                 23, 0 # x of matrix, y of matrix
-                8, 0 # X, and Y Tile Offset (0, 4, 8 or 12)
+                8, 0  # X, and Y Tile Offset (0, 4, 8 or 12)
+                0, 0  # X dislocation, direction of map switch (0 - next map on the right, 1 - next map on the left) 
 
+####### Map informations for switching between maps ####### 
+NEXT_MAP: .word 0    # Stores the address of next map
+NEXT_MAP_INFO: .byte 0, 0 # Next Map's Number, Number of iterations on switch
+                     0, 0 # x of matrix, y of matrix
+                     0, 0 # X dislocation, next door number
 
 
 ####### Player informations #########
@@ -124,30 +133,30 @@ Doors: .word 0 # Holds the current "DoorsA" label based on the current map
 # Obs.: the state can be: 0 - closed, 1 - opening, 2 - open (background color)
 # Obs2.: the direction of a door is: left (if X = 1) or right (if X != 1)
 Doors1:  1
-Door1_0: 58,5,2
+Door1_0: 58,5,0
 
 Doors2: 3
-Door2_0: 1,5,2
-Door2_1: 18,5,2
-Door2_2: 1,35,2
+Door2_0: 1,5,0
+Door2_1: 18,5,0
+Door2_2: 1,35,0
 
 Doors3: 2
-Door3_0: 58,5,2
-Door3_1: 1,5,2
+Door3_0: 58,5,0
+Door3_1: 1,5,0
 
 Doors4: 2
-Door4_0: 1,35,2
-Door4_1: 1,5,2
+Door4_0: 1,35,0
+Door4_1: 1,5,0
 
 Doors5: 2
-Door5_0: 38,5,2
-Door5_1: 1,5,2
+Door5_0: 38,5,0
+Door5_1: 1,5,0
 
 Doors6: 1
-Door6_0: 18,5,2
+Door6_0: 18,5,0
 
 Doors7: 1
-Door7_0: 18,5,2
+Door7_0: 18,5,0
 
 ##############           Door Frames            ##############
 Frames: .word 0 # Holds the current "FrameA" label based on the current map
@@ -162,27 +171,27 @@ Frames1:  1
 Frame1_0: 59,5,2,0,0,0
 
 Frames2: 3
-Frame2_0: 0,5,0,1,1,0
-Frame2_1: 19,5,0,3,0,0
-Frame2_2: 0,35,0,7,1,0
+Frame2_0: 0,5,1,0,1,0
+Frame2_1: 19,5,3,0,0,0
+Frame2_2: 0,35,7,0,1,0
 
 Frames3: 2
-Frame3_0: 59,5,0,2,1,0
-Frame3_1: 0,5,0,4,0,30
+Frame3_0: 59,5,4,0,1,0
+Frame3_1: 0,5,2,1,0,30
 
 Frames4: 2
-Frame4_0: 0,35,0,3,1,0
-Frame4_1: 0,5,0,5,1,0
+Frame4_0: 0,35,3,1,1,0
+Frame4_1: 0,5,5,0,1,0
 
 Frames5: 2
-Frame5_0: 39,5,2,4,0,0
-Frame5_1: 0,5,2,6,1,0
+Frame5_0: 39,5,4,1,0,0
+Frame5_1: 0,5,6,0,1,0
 
 Frames6: 1
-Frame6_0: 19,5,0,5,0,0
+Frame6_0: 19,5,5,1,0,0
 
 Frames7: 1
-Frame7_0: 19,5,0,2,0,30
+Frame7_0: 19,5,2,2,0,30
 
 ############################################        Map Parameters        ############################################
 

@@ -184,8 +184,14 @@ CHECK_VERTICAL_COLLISION:
                 j CHECK_MAP_COLLISION           
     
     CHECK_Y_DOWN:
-        li t1,2    # Loads number 2 for comparing with Y offset 
-        bge t1, t3 CONTINUE_CHECK_Y_DOWN # If player's Y offset <= 2, continue checking
+        li t4,0 # If Y offset != 14
+        li t5,0 # If Y offset != 14
+        beqz t3 CONTINUE_CHECK_Y_DOWN    # If player's Y offset = 0, continue checking
+        li t1,14    # Loads number 14 for comparing with Y offset 
+        mv t4,a5 # If Y offset = 14
+        li t5,1 # If Y offset = 14
+        beq t1, t3 CONTINUE_CHECK_Y_DOWN # If player's Y offset = 14, continue checking
+        
         j END_VERTICAL_COLLISION         # otherwise, end procedure
     
         CONTINUE_CHECK_Y_DOWN: 
@@ -194,6 +200,9 @@ CHECK_VERTICAL_COLLISION:
             slli t0,a5,1     # t0 = 2 x Matrix width
             add a1,a1,t0     # Updates Y 2 tiles down (+2 matrix Y) 
             addi a7,a7,2     # Increments current Y on matrix (+2 Y)
+
+            add a1,a1,t4     # If Y offset = 14, update Y another tile down (+1 matrix Y)
+            add a7,a7,t5    # If Y offset = 14, increment current Y on matrix once more (+1 Y)
             # Checking player's X for checking collision
             lbu t3, 6(t2)    # t3 = Player's X offset
             beqz t3 CHECK_Y_DOWN_BOTH_DOORS # If X offset = 0, just check one tile bellow, and consider both doors
@@ -307,8 +316,7 @@ li a0,1  # Sets a0 to 1 (can move)
                     bgtu t3,t4, NEXT_IN_COLLISION_DOOR_FRAME_LOOP # If current Y is above the door frame's uppermost Y or bellow it's downmost Y, skip it                       
                     # If the correct door tile is the one being checked, continue as follows   
                         mv a0,t1       # Moves current door frame's address to a0
-                        addi sp,sp,32  # Freeing stack since it won't return to Physics
-                        j CONTINUE_CHECK_MAP_COLLISION_3                            
+                        j SWITCH_MAP_PREP                            
                     NEXT_IN_COLLISION_DOOR_FRAME_LOOP:                                  
                         addi t1,t1,6 # Going to the next door's address                                  
                         addi t0,t0,1 # Iterating counter by 1                                   
