@@ -218,24 +218,26 @@ RENDER_COLOR:
 		bgt a4,t2,PRINT_LINE_COLOR_WORD	# if height > line counter, repeat
 		ret
 		
-##########################    RENDER PLAYER    ##########################
-#              Renders player based on its PLAYER_STATUS                #
-#     -----------           argument registers           -----------    #
-#       a0 = 0 - render player sprite; 1 - render player's trail        #	
-#     -----------          temporary registers           -----------    #
-#       t0 =  PLYR STATUS                                               #
-#       t1 =  HORIZONTAL DIRECTION                                      #
-#       t2 =  MOVEX                                                     #
-#       t3 =  MOVEY                                                     # 
-#		t4 =  VERTICAL DIRECTION                                        #
-#		t5 =  ATTACKING STATUS                                          #
-#                                                                       #
-# 	 ----------------------- description --------------------------
-# 		this procedure is similar to a finite state machine, where samus 
-# 		can be render according to her PLYR_STATUS
-#########################################################################	
+##########################      RENDER PLAYER      ###########################
+#                Renders player based on its PLAYER_STATUS                   #
+#     -----------             argument registers             -----------     #
+#       a0 = 0 - render player sprite; 1 - render player's trail             #	
+#       a1 = 0 - render full image                                           #
+#            1 - get 16 pixels to the left; 2 - get 16 tiles to the right    #
+#                                                                            #
+#     -----------            temporary registers             -----------     #
+#       tp =  stores a1                                                      #
+#       t0 =  PLYR STATUS                                                    #
+#       t1 =  HORIZONTAL DIRECTION                                           #
+#       t2 =  MOVEX                                                          #
+#       t3 =  MOVEY                                                          # 
+#		t4 =  VERTICAL DIRECTION                                             #
+#		t5 =  ATTACKING STATUS                                               #
+#                                                                            #
+##############################################################################	
 
 RENDER_PLAYER:
+	mv tp,a1  # tp gets value from a1
 	la t0, PLYR_STATUS # Loads PLAYER_STATUS address
 	la t2,PLYR_POS	# Loads PLYR_POS address
 	# Loading informations for Rendering Sprite
@@ -438,10 +440,20 @@ RENDER_PLAYER:
 			# j START_RENDER_PLAYER
 
 		START_RENDER_PLAYER:
-			mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
-			call RENDER	# Calls RENDER procedure
-			mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
-			ret			# End of procedure
+			beqz tp, RENDER_PLAYER_SKIP_CROP # If tp is 0, don't crop image
+				li t0,1    # To compare with tp (16 pixels to the left)
+				beq t0,tp, RENDER_PLAYER_CROP_LEFT
+				# RENDER_PLAYER_CROP_RIGHT:
+				# Renders 16 pixels to the right
+
+				RENDER_PLAYER_CROP_LEFT:
+				# Renders 16 pixels to the left
+					
+			RENDER_PLAYER_SKIP_CROP:
+				mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
+				call RENDER	# Calls RENDER procedure
+				mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
+				ret			# End of procedure
 		
 	RENDER_PLAYER_TRAIL:
 		xori a5,s0,1	# Gets oposite frame
@@ -606,6 +618,8 @@ RENDER_MAP:
 	li t0, m_screen_width
 	blt a6,t0, RENDER_MAP_GetCurrentY   # If width of rendering area is smaller than the screen's width, ignore
 	blt zero,tp, RENDER_MAP_GetCurrentY # If map is dislocated, ignore the next step
+	add t1,a1,a6    # t1 = Starting X + Width in tiles
+	beq t1,s1, RENDER_MAP_GetCurrentY   # If map is on furthest X to the right, don't increase width
 	addi s3,t0,1	# if rendering a full screen (20 wide) with offset, will need to render 21 tiles
 		
 	RENDER_MAP_GetCurrentY:

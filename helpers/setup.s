@@ -558,13 +558,10 @@ SETUP:
         CONTINUE_MAP7_SETUP:
         li a5, 0		# Frame = 0
         li a6, m_screen_width	# Screen Width = 20
-addi a6,a6,-10
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
         li tp, 0        # Map won't be dislocated
-li tp, 1        # Map won't be dislocated
-addi a3,a3,8
         call RENDER_MAP
 
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
@@ -574,13 +571,10 @@ addi a3,a3,8
         lbu a4, 9(t0)   # Loads current Y offset on Map	
         li a5, 1		# Frame = 1
         li a6, m_screen_width	# Screen Width = 20
-addi a6,a6,-10
         li a7, m_screen_height	# Screen Height = 15
         li t3, 0		# Starting X for rendering (top left, related to Matrix)
         li t2, 0		# Starting Y for rendering (top left, related to Matrix)
         li tp, 0        # Map won't be dislocated
-li tp, 1        # Map won't be dislocated
-addi a3,a3,8
         call RENDER_MAP
 
         j END_SETUP

@@ -39,12 +39,14 @@ GAME_LOOP:
 	call UPDATE_STATUS
 
 	li a0, 0
+	li a1, 0
 	call RENDER_PLAYER				
 									
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
 
 	li a0, 1
+	li a1, 0
 	call RENDER_PLAYER
 	call RENDER_LIFE
 
