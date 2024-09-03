@@ -27,7 +27,7 @@ GAME_LOOP:
     li t0, frame_rate	# Loads frame rate (time (in ms) per frame)
     bltu a0,t0, GAME_LOOP  # While a0 < minimum time for a frame, keep looping 
 
-### Game operations  
+### Game operations
     xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
 
 	call INPUT_CHECK	# Checa input do jogador
@@ -48,7 +48,10 @@ GAME_LOOP:
 	call RENDER_PLAYER
 	call RENDER_LIFE
 
-
+	#la a0, MAP_INFO
+	#call BEAM_OPERATIONS
+	
+	#call ENEMY_OPERATIONS
 
 	csrr s1,3073    # new time is stored in s1, in order to be compared later		
 

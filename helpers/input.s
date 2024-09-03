@@ -152,8 +152,8 @@ INPUT_CHECK:
         j END_INPUT_CHECK
         K.SHOOT:    li t1, 1     # Loads attacking status (1 = attacking)
         sb t1, 5(a0) # Stores new attack status on PLYR_STATUS
-        j END_INPUT_CHECK
-        #j BEAM_OPERATIONS
+        #j END_INPUT_CHECK
+        j BEAM_OPERATIONS
     
     INPUT.1: # Change to map 1
         la t0 MAP_INFO
@@ -277,68 +277,41 @@ INPUT_CHECK:
 	END_INPUT_CHECK:
 		ret	
 
-#BEAM_OPERATIONS: 
-#    la t1, BEAMS # loads plyrs_status attacking
-#    li t4, BEAMS_NUMBER # max counter of number beams
-#    li t3, 0
+BEAM_OPERATIONS: 
+    la t1, BEAMS # loads plyrs_status attacking
+    li t4, BEAMS_NUMBER # max counter of number beams
+    li t3,0
 
-#    CHECK_BEAM_LOOP:
-#        lb t2, 0(t1) #loads if beam_1 is active
-#        bnez t2, BEAM_LOOP # if b2 is active then reset
-#        li t2, 1 # loads 1
-#        sb t2, 0(t1) #activate the beam
-#        j SET_BEAM_POSITION
+    CHECK_BEAM_ACTIVE:
+        lb t2, 0(t1) #loads if beam is already active
+        bnez t2, CHECK_BEAM_ACTIVE_LOOP # beam active? proceed into loop
+        j ACTIVATE_BEAM #activate the beam
 
-#        BEAM_LOOP:
-#           addi t3, t3, 1
-#           addi t1, t1, 16
-#           beq t3,t4, END_BEAM_LOOP 
-#           j CHECK_BEAM_LOOP
-#
-#        END_BEAM_LOOP:
-#           j END_BEAM_OPERATIONS
-#
-#    SET_BEAM_POSITION:
-#        lb t2, 1(a0) # Loads PLYRS horizontal direction
-#        beqz t2, SET_BEAM_LEFT
-#        li t5, 1
-#        beq t2, t5, SET_BEAM_RIGHT
-#        lb t2, 2(a0) # Loads PLYRS vertical direction
-#        beq t2, t5, SET_BEAM_UP
-#         
-#
-#    SET_BEAM_LEFT:
-#       la t0, PLYR_POS
-#       lh t2, 0(t0) # loads player current x direction        
-#       sh t2, 2(t1) # stores player direction in beams initial position
-#       lb t2, 4(t0) # loads player current y direction  
-#       sb t2, 8(t1) # stores player direction in beams initial position
-#       li t2, 0 # left
-#       sb t2, 1(t1) # store beam's direction
-#       j END_BEAM_OPERATIONS
+        CHECK_BEAM_ACTIVE_LOOP:
+            bne t3,t4,BEAM_CONTINUE #beam number == counter ? continue : end
+            j END_INPUT_CHECK
+            
+            BEAM_CONTINUE:
+                addi t3,t3,1 #inc counter
+                addi t1,t1,9 #proceed into beam(i+1)
+                j CHECK_BEAM_ACTIVE #check if beam is active
+        
+        ACTIVATE_BEAM:
+            li t2,1 # fills with 1 the beam info 
+            sb t2,0(t1) # stores in beam array
+            lb t2, 2(a0) # loads if player is facing up
+            bnez t2, ACTIVATE_Y_AXIS_BEAM
+            lb t2, 1(a0) # loads player x direction
+            bnez t2,ACTIVATE_LEFT_AXIS_BEAM # direction != 0 ? left : right
+            li t2,1 #loads right direction
+            sb t2,1(t1) #stores in beam direction
+            j END_INPUT_CHECK
 
-#    SET_BEAM_RIGHT:
-#       la t0, PLYR_POS
-#       lh t2, 0(t0) # loads player current x direction        
-#       sh t2, 2(t1) # stores player direction in beams initial position
-#       lb t2, 4(t0) # loads player current y direction  
-#       sb t2, 8(t1) # stores player direction in beams initial position
-#       li t2, 1 # right
-#       sb t2, 1(t1) # store beam's direction
-#       j END_BEAM_OPERATIONS
+            ACTIVATE_LEFT_AXIS_BEAM:
+                li t2,2 #loads left direction
+                sb t2,1(t1) #stores in beam direction
+                j END_INPUT_CHECK
 
-#    SET_BEAM_UP:
-#       la t0, PLYR_POS
-#       lh t2, 0(t0) # loads player current x direction        
-#       sh t2, 2(t1) # stores player direction in beams initial position
-#       lb t2, 4(t0) # loads player current y direction   
-#       sb t2, 8(t1) # stores player direction in beams initial position
-#       li t2, 2 # up
-#       sb t2, 1(t1) # store beam's direction
-#
-#    END_BEAM_OPERATIONS:
-#       ret
-#
-#
-#
-#
+            ACTIVATE_Y_AXIS_BEAM:
+                sb zero, 1(t1)
+                j END_INPUT_CHECK

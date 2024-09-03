@@ -180,12 +180,12 @@ CONTINUE_SWITCH_MAP_PREP:
 	addi t0,t0,-5    # Gets screen's matrix top left Y
 	sb t0,7(t1)      # Stores Y on NEXT_MAP
 
-	li t0,8          # X Offset for map
-	sb t0,8(t5)      # storing X offset for map
 	sb zero,5(t1)    # Number of iterations
 	lbu t3,0(a0)     # Loads door frame's current X position
 	beqz t3, SWITCH_TOWARDS_LEFT  # If door frame is on the left (t3 = 0), next map is on the left
 	# Otherwise, next map is on the right
+		li t0,4           # X Offset for map
+		sb t0,8(t5)       # storing X offset for map
 		sb zero,10(t5)    # Stores 0 in the X dislocation for current map
 		sb zero,11(t5)    # Stores switch direction (next map is on the right)
 		sb zero,6(t1)     # Stores furthest X to the left of next map (0) on NEXT_MAP
@@ -193,10 +193,14 @@ CONTINUE_SWITCH_MAP_PREP:
 		sb t0,8(t1)           # and stores it in X dislocation for the next map 
 		j SWITCH_MAP
 	SWITCH_TOWARDS_LEFT:
+		li t0,12       # X Offset for map
+		sb t0,8(t5)    # storing X offset for map
 		li t0 1        # Direction is loaded by t0
 		sb t0,11(t5)   # and stored (next map is on the left)
 		sb t0,10(t5)   # Stores 1 in the X dislocation for current map
-		sb t4,6(t1)    # and stores it on NEXT_MAP
+		li t0,m_screen_width # Gets the width of screen,
+		sub t4,t4,t0   # subtracts map's width by it
+		sb t4,6(t1)    # and stores the result as the X on NEXT_MAP
 		sb zero,8(t1)  # Stores 0 in the X dislocation for next map 
 
 	    # j SWITCH_MAP  # Commented because SWITCH_MAP is right bellow
@@ -224,81 +228,120 @@ SWITCH_MAP:
 	# Loop for switching map
 	csrr a0,3073
     sub a0, a0, s1 #  # a0 = current time - last frame's time
-    li t0, frame_rate_switch	# Loads frame rate (time (in ms) per frame)
+    li t0, frame_rate       # Loads frame rate (time (in ms) per frame)
+li t0, 500       # Loads frame rate (time (in ms) per frame)
     bltu a0,t0, SWITCH_MAP  # While a0 < minimum time for a frame, keep looping 
 	
-	la t1, NEXT_MAP         # Gets NEXT_MAP address
-	lbu t1,5(t1)            # Gets number of iterations so far
-	li a6, m_screen_width 	# Screen Width = 20     # width (Related to Matrix) of rendering area
-	bge t1,a6,END_OF_SWITCH_MAP
-
+	# After waiting for loop
 	xori s0,s0,1			# inverts frame value
-	# Rendering Current Map
-	           
-	la t0, CURRENT_MAP      # Gets CURRENT_MAP address
-	lw a0,0(t0)	            # Loads Current Map's address
-	lbu a1, 6(t0)           # Loads current X on Map (starting X on Matrix (top left))
-	add a1,a1,t1            # Changes X
-	lbu a2, 7(t0)           # Loads current Y on Map (starting Y on Matrix (top left))	
-	lbu a3, 8(t0)           # Loads current X offset on Map
-	li a4,0                 # Y offset will always be 0 during transition
-	mv a5,s0	            # Current frame
-	addi t1,t1,1            # For altering width
-	#sub a6,a6,t1            # Rendering width = screen width - number of iterations - 1
-	li a7, m_screen_height	# Screen Height = 15    # height (Related to Matrix) of rendering area
-	li t3, 0	            # Starting X for rendering (top left, related to Matrix)
-	li t2, 0	            # Starting Y for rendering (top left, related to Matrix)
-	lbu tp,10(t0)           # X dislocation related to CURRENT_MAP
 
-	call RENDER_MAP
-
-	# Rendering Next Map
-	la t0, CURRENT_MAP      # Gets CURRENT_MAP address
-	la t1, NEXT_MAP         # Gets NEXT_MAP address
-	lbu t4,5(t1)            # Gets number of iterations so far
+	# SWITCH_MAP_CURRENT:   # Rendering Current Map  
+		# Checking if loop should continue, while loading some info for rendering current map
+		la t1, NEXT_MAP         # Gets NEXT_MAP address
+		lbu t1,5(t1)            # Gets number of iterations so far
+		li a6, m_screen_width 	# Screen Width = 20     # width (Related to Matrix) of rendering area
+		bge t1,a6,END_OF_SWITCH_MAP
+		# Loading info for rendering
+		la t0, CURRENT_MAP      # Gets CURRENT_MAP address
+		lw a0,0(t0)	            # Loads Current Map's address
+		lbu a2, 7(t0)           # Loads current Y on Map (starting Y on Matrix (top left))	
+		lbu a3, 8(t0)           # Loads current X offset on Map
+		li a4,0                 # Y offset will always be 0 during transition
+		mv a5,s0	            # Current frame
+		li a7, m_screen_height	# Screen Height = 15    # height (Related to Matrix) of rendering area
+		li t3, 0	            # Starting X for rendering (top left, related to Matrix)
+		li t2, 0	            # Starting Y for rendering (top left, related to Matrix)
+		# Checking direction of switch
+		lbu a1, 6(t0)           # Loads current X on Map (starting X on Matrix (top left))
+		lbu tp,10(t0)           # X dislocation related to CURRENT_MAP
+		lbu t4,11(t0)           # Loads switch direction
+		beqz t4, SWITCH_MAP_CURRENT_ON_LEFT  # If next map is on the right, current map is on the left
+		# Otherwise, current map is on the right
+			li t4,3             # Loads 3 for holding comparision
+			slt t4,t4,a3        # Sets t4 to 1 if X offset isn't 0 (in this case, if X offset < 4, X offset = 0)
+			sub a6,a6,t1       # Screen Width = Number of iterations (X offset = 0) or Number of iterations + 1 (X offset != 0)
+			add tp,tp,t1        # Gets dislocation by adding the number of iterations from it
+			call RENDER_MAP
+			j SWITCH_MAP_NEXT
+		SWITCH_MAP_CURRENT_ON_LEFT:
+			add a1,a1,t1            # Changes X
+			addi t1,t1,1            # For altering width
+			#sub a6,a6,t1           # Rendering width = screen width - number of iterations - 1
+			# tp will be 0 on this case
+			call RENDER_MAP
+			# j SWITCH_MAP_NEXT
 	
-	lw a0,0(t1)	            # Loads Next Map's address
-	lbu a1, 6(t1)           # Loads current X on Map (starting X on Matrix (top left))
-	lbu a2, 7(t1)           # Loads current Y on Map (starting Y on Matrix (top left))	
-	lbu a3, 8(t0)           # Loads current X offset on Map
-	li a4,0                 # Y offset will always be 0 during transition
-	mv a5,s0	            # Current frame
-	li t2,7
-	slt t2,t2,a3
-	add a6,t4,t2            # Screen Width = 20    (Number of iterations + 1)
-	li a7, m_screen_height	# Screen Height = 15    # height (Related to Matrix) of rendering area
-	li t3, 0	            # Starting X for rendering (top left, related to Matrix)
-	li t2, 0	            # Starting Y for rendering (top left, related to Matrix)
-	lbu tp,8(t1)           # X dislocation related to CURRENT_MAP
-	sub tp,tp,t4
+	SWITCH_MAP_NEXT:        # Rendering Next Map
+		la t0, CURRENT_MAP      # Gets CURRENT_MAP address
+		la t1, NEXT_MAP         # Gets NEXT_MAP address
+		lw a0,0(t1)	            # Loads Next Map's address
+		lbu a2, 7(t1)           # Loads current Y on Map (starting Y on Matrix (top left))	
+		lbu a3, 8(t0)           # Loads current X offset on Map
+		li a4,0                 # Y offset will always be 0 during transition
+		mv a5,s0	            # Current frame
+		li a7, m_screen_height	# Screen Height = 15    # height (Related to Matrix) of rendering area
+		li t3, 0	            # Starting X for rendering (top left, related to Matrix)
+		li t2, 0	            # Starting Y for rendering (top left, related to Matrix)
 
-	call RENDER_MAP
+		# Checking direction of switch
+		lbu a1, 6(t1)           # Loads current X on Map (starting X on Matrix (top left))
+		lbu tp,8(t1)            # X dislocation related to CURRENT_MAP
+		lbu t4,11(t0)           # Loads switch direction
+		lbu t5,5(t1)            # Gets number of iterations so far		
+		beqz t4, SWITCH_MAP_NEXT_ON_RIGHT  # If next map is on the right
+		# Otherwise, next map is on the left
+			add a1,a1,t5            # Changes X
+			#addi t5,t5,1            # For altering width
+			li t4,3             # Loads 3 for holding comparision
+			slt t4,t4,a3        # Sets t4 to 1 if X offset isn't 0 (in this case, if X offset < 4, X offset = 0)
+			add a6,t5,t4        # Screen Width = Number of iterations (X offset = 0) or Number of iterations + 1 (X offset != 0)
+			#mv a6,t5
+			# tp will be 0 on this case
+			call RENDER_MAP
+			j SWITCH_MAP_CONTINUE
+		SWITCH_MAP_NEXT_ON_RIGHT:
+			li t4,3             # Loads 3 for holding comparision
+			slt t4,t4,a3        # Sets t4 to 1 if X offset isn't 0 (in this case, if X offset < 4, X offset = 0)
+			add a6,t5,t4        # Screen Width = Number of iterations (X offset = 0) or Number of iterations + 1 (X offset != 0)
+			lbu tp,8(t1)        # X dislocation related to CURRENT_MAP
+			sub tp,tp,t5        # Gets dislocation by subtracting the number of iterations from it
+			call RENDER_MAP
+			# j SWITCH_MAP_CONTINUE
 
+	SWITCH_MAP_CONTINUE:
 	# Finishing Loop Operations
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
 
 	la t0, CURRENT_MAP      # Gets CURRENT_MAP address	
 	la t1, NEXT_MAP         # Gets NEXT_MAP address
+	lbu t3,11(t0)           # Loads switch direction
 	lbu t2, 8(t0)           # Loads current X offset 
-	beqz t2, SWITCH_MAP_CHANGE_OFFSET_TO_8
-		li t2,0         # Otherwise, offset was set to 8 and it switches back to 0, completing an iteration
-		sb t2, 8(t0)    # Stores new X offset 
-		lbu t2,5(t1)    # Gets number of iterations so far
-		addi t2,t2,1    # t2++
-		sb t2,5(t1)     # Stores new iteration
 
-		csrr s1,3073    # new time is stored in s1, in order to be compared later		
-		j SWITCH_MAP
-	SWITCH_MAP_CHANGE_OFFSET_TO_8:	
-		li t2,8         # Sets X offset to
+	beqz t3, SWITCH_MAP_OFFSET_RIGHT # If next map is on the right
+	# Otherwise, if next map is on the left
+		addi t2,t2,-4   # decrease offset by 4 
+		# If offset isn't less than zero, end offset operations
+		bge t2, zero, SWITCH_MAP_AFTER_OFFSET_OPERATION
+		# Otherwise, complete iteration
+			addi t2,t2,tile_size # Corrects negative offset by adding 16
+			j SWITCH_MAP_ITERATE # iterates procedure 
+	SWITCH_MAP_OFFSET_RIGHT: 	
+		addi t2,t2,4      # increase offset by 4 
+		li t3,tile_size   # loads 16 for operations
+		# If offset isn't greater than 16, end offset operations
+		blt t2, t3, SWITCH_MAP_AFTER_OFFSET_OPERATION 
+		# Otherwise, complete iteration
+			sub t2,t2,t3           # Corrects offset by subtracting 16
+			#j SWITCH_MAP_ITERATE  # iterates procedure 
+	SWITCH_MAP_ITERATE:
+		lbu t3,5(t1)    # Gets number of iterations so far
+		addi t3,t3,1    # t2++
+		sb t3,5(t1)     # Stores new iteration
+	SWITCH_MAP_AFTER_OFFSET_OPERATION:
 		sb t2, 8(t0)    # Stores new X offset
-
-		csrr s1,3073    # new time is stored in s1, in order to be compared later		
+		csrr s1,3073    # new time is stored in s1, in order to be compared later
 		j SWITCH_MAP
-
-
-	j SWITCH_MAP
 
 END_OF_SWITCH_MAP:
 	la t0,CURRENT_MAP
@@ -314,23 +357,33 @@ END_OF_SWITCH_MAP:
 	sb zero,8(t0)      # Sets CURRENT_MAP's X offset to 0
 	sb zero,9(t0)      # Sets CURRENT_MAP's Y offset to 0
 
-	la t0, PLYR_POS
-            li t1, resetmap7plyrXscreen
-            sh t1, 0(t0)   # Stores new player's X related to the screen
-            li t1, resetmap7plyrYscreen
-            sb t1, 4(t0)   # Stores new player's Y related to the screen
+	la t2, PLYR_POS
+	lbu t4,7(t0)                # Loads map's Y
+	addi t3,t4,door_Y_distance  # adds 6 to it to get Player's new Y related to matrix
+	sb t3, 10(t2)               # and stores it
+	sub t3,t3,t4                # Gets player's matrix Y related to map's matrix Y 
+	slli t3,t3,tile_size_shift  # Multiplies t3 by 16 to get Player's new Y related to screen
+	sb t3, 4(t2)                # and stores it
 
-            li t1, resetmap7plyrXoff    
-            sb t1, 6(t0)   # Stores new player's X offset
-            li t1, resetmap7plyrYoff
-            sb t1, 7(t0)   # Stores new player's Y offset
+	lbu t3,11(t0)  # Loads switch direction
+	beqz t3,END_OF_SWITCH_MAP_PLAYER_LEFT_DOOR # If next map was on the right, player will be on the left door
+	# Otherwise, player will be on the right side of the map
+		lw t3,0(t0)    # Gets current map's address
+		lbu t3,1(t3)   # and takes its width
+		addi t3,t3,-1  # Subtracts 2 from width to get Player's new X related to matrix
+		j END_OF_SWITCH_MAP_PLAYER_POS
+	END_OF_SWITCH_MAP_PLAYER_LEFT_DOOR:
+		li t3,1        # Player's new X related to matrix
+	END_OF_SWITCH_MAP_PLAYER_POS:
+	sb t3, 8(t2)                # Stores new player's X related to the matrix
+	lbu t4,6(t0)                # Loads map's X
+	sub t3,t3,t4                # Gets player's matrix X related to map's matrix X 
+	slli t3,t3,tile_size_shift  # Multiplies t3 by 16 to get Player's new X related to screen
+	sh t3, 0(t2)   # Stores new player's X related to the screen
 
-            li t1, resetmap7plyrX
-            sb t1, 8(t0)   # Stores new player's X related to the matrix
-            li t1, resetmap7plyrY
-            sb t1, 10(t0)  # Stores new player's Y related to the matrix
-
-
+	li t3, 0       # For player's offset
+	sb t3, 6(t2)   # Stores new player's X offset
+	sb t3, 7(t2)   # Stores new player's Y offset
 
 	j SETUP
 

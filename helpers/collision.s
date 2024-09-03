@@ -60,7 +60,7 @@ CHECK_HORIZONTAL_COLLISION:
             UPWARDS_THIRD_CHECK: # If MOVE_Y = -1 (up)
                 la t1, PLYR_POS # Loads PLYR_POS address
                 lb t1, 7(t1)    # Loads Y offset
-                li t5, 8        # Represents the desired offset
+                li t5, 2        # Represents the desired offset
                 bge t5, t1 CONTINUE_CHECK_X_DIRECTION # If Y offset is zero, there's no need to check 3 tiles
                     addi a2,a2, 1  # Checks 3 tiles horizontally (or 2 if on morph ball)
 
@@ -184,12 +184,12 @@ CHECK_VERTICAL_COLLISION:
                 j CHECK_MAP_COLLISION           
     
     CHECK_Y_DOWN:
-        li t4,0 # If Y offset != 14
-        li t5,0 # If Y offset != 14
+        li t4,0   # If Y offset != 14
+        li t5,0   # If Y offset != 14
         beqz t3 CONTINUE_CHECK_Y_DOWN    # If player's Y offset = 0, continue checking
-        li t1,14    # Loads number 14 for comparing with Y offset 
-        mv t4,a5 # If Y offset = 14
-        li t5,1 # If Y offset = 14
+        li t1,14  # Loads number 14 for comparing with Y offset 
+        mv t4,a5  # If Y offset = 14
+        li t5,1   # If Y offset = 14
         beq t1, t3 CONTINUE_CHECK_Y_DOWN # If player's Y offset = 14, continue checking
         
         j END_VERTICAL_COLLISION         # otherwise, end procedure

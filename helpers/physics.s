@@ -210,10 +210,11 @@ CHECK_MOVE_Y:
         lw ra,0(sp)
         addi sp,sp,20
 
-        beqz t0, HAS_GROUND # a0 != 0 ? HAS_GROUND :  MOVE_PLAYER_Y
-        li t0, 1 # DOWN
-        la a0, MOVE_Y	       # Loads address of MOVE_Y
-        sb t0, 0(a0)	
+        beqz t0, HAS_GROUND    # If t0 (holds result of collision check) != 0 go to HAS_GROUND
+        # Otherwise, continue (down)
+        la a0, MOVE_Y	   # Loads address of MOVE_Y
+        li t0, 1           # Gets number correspondent to DOWN (1)
+        sb t0, 0(a0)	   # and stores it
         j MOVE_PLAYER_Y
     
     HAS_GROUND:  
@@ -338,8 +339,23 @@ CHECK_MOVE_Y:
                     # Otherwise, 
                        # addi a7,a7,1 # Player's Y on matrix += 1 (goes another tile down)
                         sb a7, 10(a3)   # Stores new Y coordinate on matrix
-                        addi t2,t2,2  # add player's Y with the Y offset
-                        mv t5,t2      # and stores PLYRS_current Y in t5
+                        addi t2,t2,2    # add player's Y with the Y offset
+                        mv t5,t2        # and stores PLYRS_current Y in t5
+                        lbu t0, 0(a2)   # Loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
+                        li t3, 2        # Loads 2 and 
+                        bne t3, t0, SKIP_ADJUST_Y # compares with the result
+                        # If map is vertical, correct its offset and coordinates
+                            sb zero, 9(a1)   # Sets map's Y offset to 0
+                            lbu t4, 2(a2)    # Loads Map matrix height
+                            li t3, m_screen_height # Loads Map screen height related to matrix
+                            sub t3,t4,t3     # t4 = Map Matrix Height - Screen Matrix Height (t4 = Map's Y when it's on lowermost part of the map)
+                            lbu t4, 7(a1)    # Loads Map Y postition on Matrix
+                            bge t4,t3,SKIP_ADJUST_Y  # If on lowermost Y, don't update map's Y it
+                            beqz t4,SKIP_ADJUST_Y    # If on topmost Y, don't update map's Y it
+                            addi t4,t4,1     # adds 1 to it
+                            sb t4, 7(a1)     # and stores it
+                            li t3, 2         # t3 = 2 (map will be rendered again)
+                            sb t3, 5(a1)     # Stores t3 on CURRENT_MAP's rendering byte
                     SKIP_ADJUST_Y:
                     sb zero, 7(a3) # Sets player's Y offset to 0
                     sb zero, 0(a0) # MOVE_Y = 0
@@ -362,7 +378,7 @@ CHECK_MOVE_Y:
           add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
           
           lbu t0, 0(a2)   # loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
-          li t3, 2        # Loads 1 and 
+          li t3, 2        # Loads 2 and 
           bne t3, t0, Fixed_Y_Map # compares with the result
           j Vertical_Map
         
@@ -385,7 +401,7 @@ CHECK_MOVE_Y:
             lbu t0, 7(a1)    # Loads Map's Y postition on Matrix
             lbu t1, 9(a1)    # Loads Map's Y offset
                         
-            li t3, top_ver_border      # loads left_border = 120 
+            li t3, top_ver_border      # loads top vertical border = 94 
             blt t3, t5, NOT_TOP_BORDER_PASS  # if new player position on screen doesn't pass the upper border, go to NOT_LEFT_BORDER_PASS
             # Otherwise, if new player position on screen passes left border, check if it is on uppermost part of the map
             add t4,t0,t1     # Will be 0 if Map's X offset and X position are 0
@@ -393,10 +409,10 @@ CHECK_MOVE_Y:
             j MOVE_SCREEN_Y     # otherwise, move the map left
 
         NOT_TOP_BORDER_PASS:   # Checking if passed the Right Horizontal Border
-            li t3, bottom_ver_border #loads right_border = 180 
+            li t3, bottom_ver_border #loads bottom vertical border = 96 
             bge t3,t5,Fixed_Y_Map   # if new player position on screen doesn't pass the lower border, go to Fixed_X_Map
             lbu t1, 2(a2)    # Loads Map matrix height
-            li t3, m_screen_height # Loads Map screen width related to matrix
+            li t3, m_screen_height # Loads Map screen height related to matrix
             sub t1,t1,t3    # t1 = Map Matrix Height - Screen Matrix Height (t1 = Map's Y when it's on lowermost part of the map)
             beq t0,t1, Fixed_Y_Map  # If on lowermost part of the map, map won't move
             # otherwise, move the map downs
@@ -430,6 +446,15 @@ CHECK_MOVE_Y:
                 li t1,1
                 sub a6,a6,t0 # Corrects values that surpass 16 by subtracting 16 from them
 
+                lbu t4, 2(a2)    # Loads Map matrix height
+                li t3, m_screen_height # Loads Map screen height related to matrix
+                sub t4,t4,t3     # t4 = Map Matrix Height - Screen Matrix Height (t1 = Map's Y when it's on lowermost part of the map)
+                addi t5,t2,1     # Maximum Y on map
+
+                bne t5,t4,NO_Y_OFFSET_CORRECTION    # If t5 != maximum Y on map, skip this next correction
+                # Otherwise, if t5 = maximum Y on map
+                li a6,0    # set offset to 0               
+                
             NO_Y_OFFSET_CORRECTION:
                 sb a6, 9(a1)   # Stores Map new Y offset that is equal to player's Y offset
                 add t2,t2,t1  # adds to the Y -1, 0 or 1 (moves map horizontally)

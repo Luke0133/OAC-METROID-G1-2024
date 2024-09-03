@@ -11,14 +11,13 @@ MUSIC.NOTES: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60
 MUSIC.STATUS: .word 0,0
 
 
-.eqv KDMMIO_ADDRESS 0xFF200000
+.eqv KDMMIO_ADDRESS 0xFF210000
 ####### Informations related to frame rate  ####### 
 .eqv frame_rate 50 # T ms por frame 
-.eqv  frame_rate_switch 100
 ####### .eqv related to tiles  ####### 
 .eqv tile_size 16	# Tile size (use powers of 2 in order to use tile_size_shift)
 .eqv tile_size_shift 4  # Power value that gives tile size (2^tile_size_shift = tile_size)
-
+.eqv door_Y_distance 6  # Distance between map's top Y and Player's top Y after comming out of a door
 ####### .eqv related to screen  ####### 
 .eqv m_screen_width 20            # Width of screen in 16x16 tiles
 .eqv m_screen_height 15           # Height of screen in 16x16 tiles
@@ -45,9 +44,9 @@ NEXT_MAP_INFO: .byte 0, 0 # Next Map's Number, Number of iterations on switch
 
 ####### Player informations #########
 PLYR_INFO: .byte 100, 2 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
-PLYR_POS: .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
-		  .byte 160, 0  # Stores Player's current and old top left Y respectively, both related to the screen 
-		        0, 0    # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+PLYR_POS:  .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
+		   .byte 160, 0  # Stores Player's current and old top left Y respectively, both related to the screen 
+		         0, 0    # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 
 PLYR_MATRIX: .byte 33, 0, 10, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
@@ -73,23 +72,16 @@ PLYR_HEALTH: .byte 100, 0, 0, 0
 
 ## BEAM_ARRAY ##
 BEAMS:
-BEAM_1_INFO: .byte 0, 0, 0 ,0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=left,1=right,2=up), Number of times that has been rendered
-BEAM_1_POS: .half 240, 0 # Stores beam's current and old top left X respectively, both related to the screen  
-		    .byte 96, 0 # Stores beam's current and old top left Y respectively, both related to the screen 
-	     		  0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+BEAM_1_INFO: .byte 0, 0, 0  # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,2=left), Number of times that has been rendered
+BEAM_1_POS:  .byte 0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 BEAM_1_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
 
-BEAM_2_INFO: .byte 0, 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=left,1=right,2=up),Number of times that has been rendered
-BEAM_2_POS: .half 240, 0 # Stores beam's current and old top left X respectively, both related to the screen  
-		    .byte 96, 0 # Stores beam's current and old top left Y respectively, both related to the screen 
-	     		  0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+BEAM_2_INFO: .byte 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,2=left),Number of times that has been rendered
+BEAM_2_POS: .byte 0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 BEAM_2_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
 
-
-BEAM_3_INFO: .byte 0, 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=left,1=right,2=up),Number of times that has been rendered
-BEAM_3_POS: .half 240, 0 # Stores beam's current and old top left X respectively, both related to the screen  
-		    .byte 96, 0 # Stores beam's current and old top left Y respectively, both related to the screen 
-	     		  0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+BEAM_3_INFO: .byte 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,2=left),Number of times that has been rendered
+BEAM_3_POS: .byte 0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 BEAM_3_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
 
 .eqv BEAMS_NUMBER 3
@@ -104,7 +96,7 @@ ZOOMER_POS: .half 240, 0 # Stores Zoomer's current and old top left X respective
 	     		  0, 0 # Stores Zoomer's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 ZOOMER_MATRIX: .byte 0, 0, 0, 0 # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
 ZOOMER_STATUS: .byte 0,0 # Sprite's Number, Movement Direction (Clockwise: 0 - Right/Top, 1 - Down/Right, 2 - Left/Bottom, 3 - Up/Left and
-			 #                                      Counter-Clockwise: 4 - Left/Top, 5 - Down/Left, 6 - Right/Bottom, 7 - Up/Right)
+#                                      Counter-Clockwise: 4 - Left/Top, 5 - Down/Left, 6 - Right/Bottom, 7 - Up/Right)
 .eqv ZOOMER_HEALTH 50
 
 ## RIPPER ##
@@ -133,30 +125,30 @@ Doors: .word 0 # Holds the current "DoorsA" label based on the current map
 # Obs.: the state can be: 0 - closed, 1 - opening, 2 - open (background color)
 # Obs2.: the direction of a door is: left (if X = 1) or right (if X != 1)
 Doors1:  1
-Door1_0: 58,5,0
+Door1_0: 58,5,2
 
 Doors2: 3
-Door2_0: 1,5,0
-Door2_1: 18,5,0
-Door2_2: 1,35,0
+Door2_0: 1,5,2
+Door2_1: 18,5,2
+Door2_2: 1,35,2
 
 Doors3: 2
-Door3_0: 58,5,0
-Door3_1: 1,5,0
+Door3_0: 58,5,2
+Door3_1: 1,5,2
 
 Doors4: 2
-Door4_0: 1,35,0
-Door4_1: 1,5,0
+Door4_0: 1,35,2
+Door4_1: 1,5,2
 
 Doors5: 2
-Door5_0: 38,5,0
-Door5_1: 1,5,0
+Door5_0: 38,5,2
+Door5_1: 1,5,2
 
 Doors6: 1
-Door6_0: 18,5,0
+Door6_0: 18,5,2
 
 Doors7: 1
-Door7_0: 18,5,0
+Door7_0: 18,5,2
 
 ##############           Door Frames            ##############
 Frames: .word 0 # Holds the current "FrameA" label based on the current map
