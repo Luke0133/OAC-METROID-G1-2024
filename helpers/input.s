@@ -6,14 +6,19 @@ INPUT_CHECK:
     andi t0, t0, 0x0001	  # Masks the least significant bit
 
     la a0, PLYR_STATUS      # Loads Player Status
+    la a2, PLYR_POS # Loads Player Pos
     bnez t0, CONTINUE_CHECK # if an input is detected, continue checking
     j NO_INPUT 		    # otherwise no input was detected 
     
     CONTINUE_CHECK:
     lb t3, 4(a0) # loads ball mode
-    la t0, PLYR_INPUT
-    li t2, 1   # There is input
-    sb t2, 0(t0) 
+  
+    la t0, PLYR_INPUT # Loads PLYR_INPUT address
+    lbu t2,0(t0)      # gets its value
+    bnez t2, DONT_UPDATE_PLYR_INPUT  # If it isn't 0, don't update it
+        li t2, 1      # Otherwise, there's input
+        sb t2, 0(t0)  # store it
+    DONT_UPDATE_PLYR_INPUT:
 
     lw t0, 4(t1)   # Reads key value
 
@@ -139,7 +144,7 @@ INPUT_CHECK:
             beqz t1, CAN_JUMP
             j END_INPUT_CHECK
             CAN_JUMP:
-                li t1, 1     # Loads vertical direction (1 = freefall)
+                li t1, 1     # Loads ground position (1 = freefall)
                 sb t1, 3(a0) # Stores new direction on PLYR_STATUS
         
                 li t1, -1      # Loads direction for MOVE_Y (-1 = up)
@@ -261,7 +266,6 @@ INPUT_CHECK:
         la a0, MOVE_Y
         la a1, CURRENT_MAP
         lw a1, 0(a1)
-        la a2, PLYR_POS
 
         # MOVE_Y will return to 0 afterwards
         mv s11, ra # storing return address in s11
@@ -297,14 +301,38 @@ BEAM_OPERATIONS:
                 j CHECK_BEAM_ACTIVE #check if beam is active
         
         ACTIVATE_BEAM:
+            ################ STORE OFSETS ######################
+              
+            #a2 = player pos
+            lb t2, 6(a2) #loads player x offset
+            sb t2, 5(t1) #x new for beam
+            sb t2, 7(t1) #x old for beam
+
+            lb t2, 7(a2) #loads player y offset
+            sb t2, 6(t1) #y new for beam
+            sb t2, 8(t1) #y old for beam
+
+            #########################################
+
+
             li t2,1 # fills with 1 the beam info 
             sb t2,0(t1) # stores in beam array
             lb t2, 2(a0) # loads if player is facing up
             bnez t2, ACTIVATE_Y_AXIS_BEAM
+       
+            #cima     = sub 1 tile no y,x eq jogador,offset x e y do jogador 
+            #direita  = sum 1 tile x,y eq jogador,offset x e y do jogador 
+            #esquerda = sub 1 tile x,y eq jogador, offset x e y do jogador 
+        
             lb t2, 1(a0) # loads player x direction
             bnez t2,ACTIVATE_LEFT_AXIS_BEAM # direction != 0 ? left : right
+                 
+            #right direction
+
             li t2,1 #loads right direction
             sb t2,1(t1) #stores in beam direction
+
+
             j END_INPUT_CHECK
 
             ACTIVATE_LEFT_AXIS_BEAM:

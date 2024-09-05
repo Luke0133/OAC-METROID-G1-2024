@@ -2,10 +2,12 @@
 # ----> Summary: render.s stores rendering related procedures
 # 1 - General Data (Information related to game)
 # 2 - Doors
-# 3 - Map Parameters
-# 4 - Tiles (Game's Tileset)
-# 5 - Matrixes (Map Matrixes)
-# 6 - Samus (Player's sprites)
+# 3 - Door Frames
+# 4 - Map Parameters
+# 5 - Tiles (Game's Tileset)
+# 6 - Matrixes (Map Matrixes)
+# 7 - Samus (Player's sprites)
+# 8 - Beam (Samus' projectiles)
 
 MUSIC.NOTES: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60,397,62,3573,62,397,60,397,62,397,64,2382,59,1191,59,397,64,397,65,397,67,4764,65,2382,64,2382,65,3573,69,397,67,397,65,397,67,2382,64,1191,64,397,67,397,71,397,73,9528
 MUSIC.STATUS: .word 0,0
@@ -55,8 +57,8 @@ PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1
 MOVE_X: .byte 0 # -1 left, 1 right, 0 not moving on X axis
 MOVE_Y: .byte 0 # -1 up, 1 down, 0 not moving on Y axis
 JUMP: .byte 0 # counter of current height
-PLYR_INPUT: .byte 0
-PLYR_HEALTH: .byte 100, 0, 0, 0
+PLYR_INPUT: .byte 0  # 0 If no input, 1 if input, 2 if input but can't move horizontally
+
 
 .eqv max_jump 80
 .eqv slow_jump 76
@@ -71,16 +73,17 @@ PLYR_HEALTH: .byte 100, 0, 0, 0
 .eqv SAM_BALL 16 
 
 ## BEAM_ARRAY ##
+##MUDAR OS BEQS PARA DIR LEFT => 2 -> -1
 BEAMS:
-BEAM_1_INFO: .byte 0, 0, 0  # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,2=left), Number of times that has been rendered
+BEAM_1_INFO: .byte 0, 0, 0  # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,-1=left), Number of times that has been rendered
 BEAM_1_POS:  .byte 0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 BEAM_1_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
 
-BEAM_2_INFO: .byte 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,2=left),Number of times that has been rendered
+BEAM_2_INFO: .byte 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,-1=left),Number of times that has been rendered
 BEAM_2_POS: .byte 0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 BEAM_2_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
 
-BEAM_3_INFO: .byte 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,2=left),Number of times that has been rendered
+BEAM_3_INFO: .byte 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,-1=left),Number of times that has been rendered
 BEAM_3_POS: .byte 0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 BEAM_3_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
 
@@ -3147,19 +3150,44 @@ Morph_Ball: # 16 x 64, Height per sprite: 16
 199,199,199,199,199,199,14,14,14,14,199,199,199,199,199,199,
 
 ################################################        Beam        ################################################
+# Stores all sprites used for Samus' projectiles in the game
 # 
-# 
-#
-#
+# --> Total ammount of data: 64 bytes
 #
 ######################################################################################################################
 
-Beam: # 8 x 8, Height per sprite: 16
-.byte 199,199,199,199,199,199,199,199,
-199,199,199,32,14,199,199,199,
-199,199,103,14,103,14,199,199,
-199,199,14,14,14,32,199,199,
-199,199,103,14,103,14,199,199,
-199,199,199,32,14,199,199,199,199,
-199,199,199,199,199,199,199,199,
-199,199,199,199,199,199,199,199,
+Beam_Horizontal: # 16 x 16
+.byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,32,14,199,199,199,199,199,199,199,
+199,199,199,199,199,199,103,14,103,14,199,199,199,199,199,199,
+199,199,199,199,199,199,14,14,14,32,199,199,199,199,199,199,
+199,199,199,199,199,199,103,14,103,14,199,199,199,199,199,199,
+199,199,199,199,199,199,199,32,14,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+
+Beam_Vertical: # 16 x 16
+.byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,32,14,199,199,199,199,199,199,199,
+199,199,199,199,199,199,103,14,103,14,199,199,199,199,199,199,
+199,199,199,199,199,199,14,14,14,32,199,199,199,199,199,199,
+199,199,199,199,199,199,103,14,103,14,199,199,199,199,199,199,
+199,199,199,199,199,199,199,32,14,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,

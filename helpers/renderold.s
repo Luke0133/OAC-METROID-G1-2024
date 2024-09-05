@@ -40,7 +40,6 @@ beqz a7,NORMAL
 		mul t4,t4,a3	# Sprite Line offset (skips the first %width lines)
 # not used #	addi a0,a0,8	# Skip image size info
 		add a0,a0,t4	# Adds offset to image address
-
 	#Propper rendering
 
 	li t0,0x0FF0	#t0 = 0x0FF0

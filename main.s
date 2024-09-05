@@ -10,6 +10,7 @@ DEBUG11: .string "pasou\n"
 		
 .text
 li s1, 0  # Reseting time
+li s2, 0  # Game loop state 
 main:
 	j SETUP
 
@@ -18,6 +19,10 @@ main:
 #     ------------         saved registers         ------------     #
 #       s0 = current frame                                          #
 #       s1 = last frame time                                        #
+#       s2 = game loop state: 0 - Normal Game Loop,                 #
+#                             1 - Entering Door Loop, -- on map_op.s              #
+#                             2 - Switching Map Loop, -- on map_op.s            #
+#                             3 - Exiting Door Loop,  -- on map_op.s              #
 #####################################################################
 
 GAME_LOOP:
@@ -28,29 +33,31 @@ GAME_LOOP:
     bltu a0,t0, GAME_LOOP  # While a0 < minimum time for a frame, keep looping 
 
 ### Game operations
-    xori s0,s0,1			# inverte o valor frame atual (somente o registrador)
+    xori s0,s0,1		    # Switches frame value (register)
+ 
+	call INPUT_CHECK	    # Checks player's input
+	call PHYSICS            # Physics operations
 
-	call INPUT_CHECK	# Checa input do jogador
-
-	call PHYSICS
-
-	call MAP_MOVE_RENDER
+	call MAP_MOVE_RENDER    # Renders map when necessary
 	
-	call UPDATE_STATUS
+	call UPDATE_STATUS      # Updates player's sprite status
 
-	li a0, 0
-	li a1, 0
-	call RENDER_PLAYER				
-									
-	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
-	sw s0,0(t0)
+	li a0, 0     # Rendering player operation
+	li a1, 0     # Rendering full player
+	call RENDER_PLAYER	
 
-	li a0, 1
-	li a1, 0
+	# Switching Frame on Bitmap Display											
+	li t0,0xFF200604	# Loads Bitmap Display address
+	sw s0,0(t0)         # Stores new frame value (from s0) on Bitmap Display
+
+	li a0, 1     # Rendering player's trail operation
+	li a1, 0     # Rendering full player (a1 doesn't really matter when a0 = 1)
 	call RENDER_PLAYER
+
+
 	call RENDER_LIFE
 
-	#la a0, MAP_INFO
+	#la a0, Beam
 	#call BEAM_OPERATIONS
 	
 	#call ENEMY_OPERATIONS
@@ -60,6 +67,9 @@ GAME_LOOP:
 	#call MUSIC.PLAY
 	
 	j GAME_LOOP	# Volta para ENGINE_LOOP
+
+
+
 
 
 .include "helpers/helpers.s"

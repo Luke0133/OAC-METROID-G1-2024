@@ -50,7 +50,7 @@ PHYSICS:
             add a6,a6,a4	# Adds the X Movement to the Player's Offset
             
             lbu a7, 8(a3)	# Loads Player's X on Matrix
-            sb a7, 9(a3)	# Stores Plater's X on Matrix on the Old X
+            sb a7, 9(a3)	# Stores Player's X on Matrix on the Old X
             
             bge a6,zero,SKIP_LEFT_X
             
@@ -95,15 +95,20 @@ PHYSICS:
             addi sp,sp,32
 
             # After checking collision
-            lh t2, 0(a3)        # Loads Player's Current X
-            bnez t0, CAN_MOVE_X # a0 != 0 ? CAN_MOVE_X : Fixed_X_Map 
-            mv t5,t2            # storing PLYRS_current X in t5
-            #  la a0, MOVE_X	
-            #  sb zero, 0(a0) # MOVE_X = 0
-            j Fixed_X_Map
+            lh t2, 0(a3)          # Loads Player's Current X
+            bnez t0, CAN_MOVE_X   # If a0 != 0, player can move (go to CAN_MOVE_X)
+            # Otherwise, player can't move, so
+                mv t5,t2              # store player's current X (t2) in t5
+                la t0,PLYR_INPUT      # Loads PLYR_INPUT on t0
+                li t1, 2              # Sets t1 to 2 (there's player input, but can't move)
+                sb t1, 0(t0)          # and stores it in PLYR_INPUT
+                j Fixed_X_Map
         
-        CAN_MOVE_X:       
-        
+        CAN_MOVE_X: 
+        la t0,PLYR_INPUT      # Loads PLYR_INPUT on t0
+        li t1, 1              # Sets t1 to 1 (there's player input, and can move)
+        sb t1, 0(t0)          # and stores it in PLYR_INPUT
+
         sb a6, 6(a3)    # Stores new X offset
         sb a7, 8(a3)    # Stores new X coordinate on matrix
 
@@ -215,6 +220,8 @@ CHECK_MOVE_Y:
         la a0, MOVE_Y	   # Loads address of MOVE_Y
         li t0, 1           # Gets number correspondent to DOWN (1)
         sb t0, 0(a0)	   # and stores it
+        # li t0, 1           # Loads ground position (1 = freefall)
+        # sb t0,15(a3)     # and stores it
         j MOVE_PLAYER_Y
     
     HAS_GROUND:  
@@ -255,6 +262,10 @@ CHECK_MOVE_Y:
                         j CONTINUE_MOVE_PLAYER_Y
                     
             SWITCH_DOWN:
+                la t0,PLYR_INPUT      # Loads PLYR_INPUT on t0
+                li t1, 1              # Sets t1 to 1 (there's player input, and can move)
+                sb t1, 0(t0)          # and stores it in PLYR_INPUT 
+                
                 sb zero, 1(a0) # reset jump information
                 li t1, 1
                 sb t1,0(a0) # Switches MOVE_Y to 1 (Down)            
@@ -330,6 +341,7 @@ CHECK_MOVE_Y:
             bnez t0, CAN_MOVE_Y # t0 != 0 ? CAN_MOVE_Y : Fixed_Y_Map
                 mv t5,t2 # storing PLYRS_current Y in t5
                 #  la a0, MOVE_Y
+                #  sb zero,15(a3)  # Sets player status to be on ground
                 lb t0, 0(a0) # Gets MOVE_Y info
                 blt t0,zero, STOP_JUMP # If t1 <= -1 (aka, player would start jumping), reset
                     # If t0 = 0 (not jumping) or t1 = 1 (freefall), reset MOVE_Y and JUMP
@@ -371,16 +383,20 @@ CHECK_MOVE_Y:
                     sb zero,1(a0) # reseting jump byte
                     j Fixed_Y_Map
         
-        CAN_MOVE_Y:    
-          sb a6, 7(a3)    # Stores new Y offset
-          sb a7, 10(a3)   # Stores new Y coordinate on matrix
+        CAN_MOVE_Y:  
+            la t0,PLYR_INPUT      # Loads PLYR_INPUT on t0
+            li t1, 1              # Sets t1 to 1 (there's player input, and can move)
+            sb t1, 0(t0)          # and stores it in PLYR_INPUT 
+            
+            sb a6, 7(a3)    # Stores new Y offset
+            sb a7, 10(a3)   # Stores new Y coordinate on matrix
 
-          add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
-          
-          lbu t0, 0(a2)   # loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
-          li t3, 2        # Loads 2 and 
-          bne t3, t0, Fixed_Y_Map # compares with the result
-          j Vertical_Map
+            add t5, a4, t2  # t5 = Player's current X + Movement of Player on X axis
+            
+            lbu t0, 0(a2)   # loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
+            li t3, 2        # Loads 2 and 
+            bne t3, t0, Fixed_Y_Map # compares with the result
+            j Vertical_Map
         
         Fixed_Y_Map:
             # If the map has a fixed Y on matrix, that is, the screen won't follow the player, the player will move related to the screen

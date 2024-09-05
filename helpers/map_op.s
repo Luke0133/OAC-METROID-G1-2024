@@ -205,6 +205,21 @@ CONTINUE_SWITCH_MAP_PREP:
 	    # j SWITCH_MAP  # Commented because SWITCH_MAP is right bellow
 
 
+########################    SWITCH MAP ENTER DOOR   #########################
+#         Preparatiosn for switching map with player animation entering door           #
+#                                                                     #
+#    --------------       argument registers        --------------    #
+#      a0 = FrameA_B address                                          #	
+#                                                                     #
+#    --------------         registers used          --------------    #
+#      t0 = temporary operations                                      #  
+#      t1 = NEXT_MAP address                                          # 
+#      t2 = next door's number                                        # 
+#                                                                     #
+#######################################################################
+
+
+
 ##########################    SWITCH MAP    ###########################
 #         Loop that will take player from one map to another          #
 #                                                                     #

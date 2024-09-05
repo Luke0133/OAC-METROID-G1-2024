@@ -30,19 +30,20 @@
 #       t4 = temporary operations                                       #
 #########################################################################
 RENDER:
+mul t4,a6,a4	# t4 = sprite status x height of rendering area (for files that have more than one sprite)
 beqz a7,NORMAL
-	CROP_MODE:	# When rendering cropped sprite 	
+	CROP_MODE:	# When rendering cropped sprite 				
 		add a0,a0,s1	# Image address + X on sprite 
-		mul t3,s3,s2	# t4 = sprite width * Y on sprite
+		mul t3,s3,s2	# t3 = sprite width * Y on sprite
 		add a0,a0,t3	# a0 = Image address + X on sprite + sprite widht * Y on sprite
-	NORMAL:		# Executed even if on crop mode
-		mul t4,a6,a4	# Sprite offset (for files that have more than one sprite)
-		mul t4,t4,a3	# Sprite Line offset (skips the first %width lines)
-# not used #	addi a0,a0,8	# Skip image size info
-		add a0,a0,t4	# Adds offset to image address
-
+		mul t4,t4,s3	# t4 = sprite status x height of rendering area x sprite's width
+		j START_RENDER
+	NORMAL:
+		mul t4,t4,a3	# t4 = sprite status x height of rendering area x width of rendering area (on NORMAL_RENDER: a3 = sprite's width)
+	
+	START_RENDER:
+		add a0,a0,t4	# Adds the dislocation calculated on t4 to the sprite's address
 	#Propper rendering
-
 	li t0,0x0FF0	#t0 = 0x0FF0
 	add t0,t0,a5	# Rendering Address corresponds to 0x0FF0 + frame
 	slli t0,t0,20	# Shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
@@ -71,6 +72,7 @@ beqz a7,NORMAL
 		CROP_RENDER:
 			add a0,a0,s3	# a0 += sprite width	
 			sub a0,a0,a3	# a0 -= rendering width
+
 		NORMAL_RENDER: 
 			mv t3,zero		# t3 = 0 (Resets column counter)
 			addi t2,t2,1		# increments line counter
@@ -100,19 +102,20 @@ beqz a7,NORMAL
 #       t4 = temporary operations                                       #
 #########################################################################
 RENDER_WORD:
+mul t4,a6,a4	# Sprite offset (for files that have more than one sprite)
 beqz a7,NORMAL_WORD
-	CROP_MODE_WORD:	# When rendering cropped sprite 	
+	CROP_MODE_WORD:	# When rendering cropped sprite	
 		add a0,a0,s1	# Image address + X on sprite 
-		mul t3,s3,s2	# t4 = sprite width * Y on sprite
+		mul t3,s3,s2	# t3 = sprite width * Y on sprite
 		add a0,a0,t3	# a0 = Image address + X on sprite + sprite widht * Y on sprite
+		mul t4,t4,s3	# t4 = sprite status x height of rendering area x sprite's width
+		j START_RENDER_WORD
 	NORMAL_WORD:		# Executed even if on crop mode
-		mul t4,a6,a4	# Sprite offset (for files that have more than one sprite)
-		mul t4,t4,a3	# Sprite Line offset (skips the first %width lines)
-# not used #	addi a0,a0,8	# Skip image size info
-		add a0,a0,t4	# Adds offset to image address
+		mul t4,t4,a3	# t4 = sprite status x height of rendering area x width of rendering area (on NORMAL_RENDER: a3 = sprite's width)
 
+	START_RENDER_WORD:
+		add a0,a0,t4	# Adds the dislocation calculated on t4 to the sprite's address
 	#Propper rendering
-
 	li t0,0x0FF0	#t0 = 0x0FF0
 	add t0,t0,a5	# Rendering Address corresponds to 0x0FF0 + frame
 	slli t0,t0,20	# Shifts 20 bits, making printing adress correct (0xFF00 0000 or 0xFF10 0000)
@@ -123,6 +126,7 @@ beqz a7,NORMAL_WORD
 	
 	mv t2,zero	# t2 = 0 (Resets line counter)
 	mv t3,zero	# t3 = 0 (Resets column counter)
+	
 	
 	PRINT_LINE_WORD:	
 		lb t4,0(a0)	# loads word(4 pixels) on t4
@@ -141,6 +145,7 @@ beqz a7,NORMAL_WORD
 		CROP_RENDER_WORD:
 			add a0,a0,s3	# a0 += sprite width	
 			sub a0,a0,a3	# a0 -= rendering width
+
 		NORMAL_RENDER_WORD: 
 			mv t3,zero		# t3 = 0 (Resets column counter)
 			addi t2,t2,1		# increments line counter
@@ -251,6 +256,14 @@ RENDER_PLAYER:
 	beqz a0, RENDER_PLAYER_NORMAL # If a0 = 0,  then player will be rendered normally
 	j RENDER_PLAYER_TRAIL         # Otherwise (a0 = 1) render player's trail
 	RENDER_PLAYER_NORMAL:
+		# Storing Registers on Stack
+		addi sp,sp,-16
+		sw s1,0(sp)
+		sw s2,4(sp)
+		sw s3,8(sp)
+		sw ra,12(sp)
+		# End of Stack Operations
+
 		# Loading informations for Checking Sprite
 		lbu t1, 1(t0)	# Loads Player's horizontal direction (0 = Right, 1 = Left)
 		lbu t2, 4(t0)   # Loads Player's morph ball status
@@ -270,7 +283,11 @@ RENDER_PLAYER:
 		RENDER_PLYR_RIGHT:
 			add t1, t2, t3  # t1 will be 0 if t2 (MOVE_X) = 0 and t3 (MOVE_Y) = 0
 			beqz t1,RENDER_IDLE_RIGHT # If t1 = 0, player isn't moving (go to RENDER_IDLE_RIGHT)
-			j NOT_IDLE_RIGHT	      # Otherwise, go to NOT_IDLE_RIGHT
+				la t1,PLYR_INPUT # Otherwise, load PLYR_INPUT address
+				lbu t1,0(t1)     # and get its value
+				addi t1,t1,-2    # subtracts 2 from it
+				beqz t1, RENDER_IDLE_RIGHT # if the result is 0 (t1 would've been 2, so player couldn't move) go to idle
+					j NOT_IDLE_RIGHT	   # Otherwise, go to NOT_IDLE_RIGHT
 
 			RENDER_IDLE_RIGHT:
 				li a3, 20   # Sprite's Widht
@@ -352,6 +369,10 @@ RENDER_PLAYER:
 			addi a1,a1, -4 # Offseting sprite's X so that it renders in propper place
 			add t1, t2, t3  # t1 will only be 0 if player isn't moving 
 			beqz t1,RENDER_IDLE_LEFT # Checks if player is mooving or not
+				la t1,PLYR_INPUT # Otherwise, load PLYR_INPUT address
+				lbu t1,0(t1)     # and get its value
+				addi t1,t1,-2    # subtracts 2 from it
+				beqz t1, RENDER_IDLE_LEFT # if the result is 0 (t1 would've been 2, so player couldn't move) go to idle
 			j NOT_IDLE_LEFT	  # If player is moving or not
 
 			RENDER_IDLE_LEFT:
@@ -445,15 +466,30 @@ RENDER_PLAYER:
 				beq t0,tp, RENDER_PLAYER_CROP_LEFT
 				# RENDER_PLAYER_CROP_RIGHT:
 				# Renders 16 pixels to the right
-
+					mv s3,a3         # Moves sprite's width to s3
+					li a3,tile_size  # New width of rendering area
+					li a7,1          # Sets to crop mode
+					sub s1,s3,a3     # Sets starting X to be 16 pixels before width of sprite's width
+					li s2,0          # Sets starting Y on sprite to 0
+					add a1,a1,s1     # Corrects player's starting X to be dislocated to the cropped X
+					j RENDER_PLAYER_SKIP_CROP
 				RENDER_PLAYER_CROP_LEFT:
 				# Renders 16 pixels to the left
-					
+					mv s3,a3         # Moves sprite's width to s3
+					li a3,tile_size  # New width of rendering area
+					li a7,1          # Sets to crop mode
+					li s1,0          # Sets starting X on sprite to 0 
+					li s2,0          # Sets starting Y on sprite to 0	
 			RENDER_PLAYER_SKIP_CROP:
-				mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
 				call RENDER	# Calls RENDER procedure
-				mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
-				ret			# End of procedure
+				# Procedure finished: Loading Registers from Stack
+				lw s1,0(sp)
+				lw s2,4(sp)
+				lw s3,8(sp)
+				lw ra,12(sp)
+				addi sp,sp,16
+				# End of Stack Operations
+				ret	   # End of procedure
 		
 	RENDER_PLAYER_TRAIL:
 		xori a5,s0,1	# Gets oposite frame

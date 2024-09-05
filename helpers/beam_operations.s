@@ -5,6 +5,7 @@ BEAM_OPERATIONS:
     la t0,BEAMS
     la t1, BEAMS_NUMBER
     li t3,0
+    la t5, MAP_INFO
     
     BEAM_LOOP:
         lb t2,0(t0) #loads if beam is active
@@ -23,9 +24,7 @@ BEAM_OPERATIONS:
                 j DELETE_BEAM 
 
             PRINT_BEAM:
-                #image
-                la a0, Beam
-                
+                #image                
                 #load x 
                 #load x do mapa
                 #load x - load x do mapa
@@ -34,24 +33,49 @@ BEAM_OPERATIONS:
                 #sub offset x map
                 #same for y
 
-                #coordinates
-                a1 
-                a2
+                #coordinates -> x = a1, y = a2
+                
+                lb t2, 5(t0) #loads new x of matrix
+                lb t3, 2(t5) #loads map x of matrix
+                sub t2,t2,t3 # load x - load x map
+                slli t2, tile_size_shift
+                
+                lb t3, 3(t0) #loads offset of beam
+                add t2,t2,t3 #sum with offset x beam 
+                lb t3, 4(t5) #loads offset x map
+
+                #x direction
+                sub a1,t2,t3 #subtract offset x map
+
+
+                lb t2, 6(t0) #loads new y of matrix
+                lb t3, 3(t5) #loads map y of matrix
+                sub t2,t2,t3 # load y - load y map
+                slli t2, tile_size_shift
+                
+                lb t3, 4(t0) #loads offset of beam
+                add t2,t2,t3 #sum with offset y beam 
+                lb t3, 5(t5) #loads offset y map
+
+                #y direction
+                sub a2,t2,t3 #subtract offset y map
                 
                 #size
-                li a3, 8
-                li a4, 8
+                li a3, 16
+                li a4, 16
                 
                 #frame and sprite status
                 li a5, 0
                 li a6, 0
                 li a7, 0
 
-                addi sp,sp,-12
+                addi sp,sp,-16
                 sw ra,0(sp)
                 sw t0,4(sp)
                 sw t1,8(sp)
+                sw a0,12(sp)
                 call RENDER
+                lw a0,12(sp)
                 lw t1,8(sp)
                 lw t0,4(sp)
                 lw ra,0(sp)
