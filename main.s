@@ -38,6 +38,7 @@ GAME_LOOP:
 	call INPUT_CHECK	    # Checks player's input
 	call PHYSICS            # Physics operations
 
+	call UPDATE_DOORS       # Updates doors
 	call MAP_MOVE_RENDER    # Renders map when necessary
 	
 	call UPDATE_STATUS      # Updates player's sprite status
@@ -45,6 +46,9 @@ GAME_LOOP:
 	li a0, 0     # Rendering player operation
 	li a1, 0     # Rendering full player
 	call RENDER_PLAYER	
+
+#	call RENDER_DOOR_UPDATE         - probably not using :D
+	call RENDER_DOOR_FRAMES
 
 	# Switching Frame on Bitmap Display											
 	li t0,0xFF200604	# Loads Bitmap Display address

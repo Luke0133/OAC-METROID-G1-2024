@@ -1,12 +1,27 @@
 .text
 
-########################## SETUP ##########################
+# ----> Summary: setup.s has setup related procedures
+# 1 - SETUP (Sets up game by rendering maps and attributing default values)
+# 2 - UPDATE DOORS (Updates status of doors when necessary)
 
-#########################################################################
+
+#####################          SETUP          ######################
+#   Sets up game by rendering maps and attributing default values  #
+#                                                                  #		
+#  ----------------        registers used        ----------------  #
+#    t1 -- t5,tp = Temporary Registers                             #
+#    a0 -- a7 => used as arguments                                 #
+#                                                                  #
+####################################################################
 
 SETUP:
     call MUSIC.SETUP
 
+    # Setting Render Next Map Door to zero
+    la t0, NEXT_MAP   # Loads NEXT_MAP address
+    sb zero,10(t1)    # Stores 0 on Render Next Map Door (in order to render current map's doors properly)
+
+    # Getting informations about Current Map
     la t0, MAP_INFO # Loads Map Info address
     lbu t1, 0 (t0)  # Loads byte related to map number
     lbu t2, 1 (t0)  # Loads rendering byte (0 - don't render, 1 - render once, 2 - render twice, 
@@ -579,6 +594,154 @@ SETUP:
 
         j END_SETUP
 
-END_SETUP:
-
+END_SETUP:    
+    la t0, CURRENT_MAP   # Loads CURRENT_MAP address
+    lbu t1,5(t0)         # Loads rendering byte     
+    li t2, 3             # Loads 3 (switch map through door) to be compared with
+    bne t1,t2, END_SETUP_NORMAL # If rendering byte != 3, return to game loop
+        j LEAVE_DOOR_ANIMATION_PREP # Otherwise, finish map switch
+    END_SETUP_NORMAL:
     j GAME_LOOP
+
+
+
+###############          UPDATE DOORS          ###############
+#           Updates status of doors when necessary           #
+#                  (when their counter != 0)                 #		
+#   ------------        registers used        ------------   #
+#    a0 = Curent map's door address                          #
+#    a1 = 0 - no major updates, 1 - change of state: render  #
+#    tp = CURRENT_MAP address (located on main.s)		     #
+#    t0 = Number of doors on current map                     #
+#    t1 = Loop counter                                       #
+#    t2 -- t6 = Temporary Registers                          #
+#    a0 -- a7 => used as arguments                           #
+#                                                            #
+##############################################################
+
+UPDATE_DOORS:
+    la t0, Doors # Loads Doors address
+	la tp, CURRENT_MAP # Loads CURRENT_MAP address
+	lw a0,0(t0)   # Gets current map's doors address
+	lbu t0,0(a0)  # Loads number of doors in this map
+	addi a0,a0,1  # Goes to next byte (where doors from current map start)
+	li t1,0       # Counter for doors
+    li a1,0       # Default: won't render doors unless there's a change of state
+    # Loop that will do from door to door and update them
+    UPDATE_DOORS_LOOP:
+        lb t2,3(a0)  # Loads C (counter) parameter
+        blt t2,zero,UPDATE_DOORS_LOOP_COUNT_UP    # If counter is negative, iterate up
+        bgt t2,zero,UPDATE_DOORS_LOOP_COUNT_DOWN  # If counter is positive, iterate down
+            j NEXT_IN_UPDATE_DOORS_LOOP # Otherwise, counter is 0 and should stay this way
+        UPDATE_DOORS_LOOP_COUNT_UP:  
+        # Only case: door is on "opening" state (initial C = -2) and should go to "open" state when C = 0 
+            addi t2,t2,1  # C++
+            sb t2,3(a0)   # and stores updated C on door's counter byte
+            bnez t2,NEXT_IN_UPDATE_DOORS_LOOP # If C != 0, go update next door
+            # Otherwise, before updating next door, this door should go to "open" state
+                li t2,2         # Loads 2 (open)
+                sb t2,2(a0)     # and stores it on door's state byte
+                li t2,open_door # Gets new counter (related to open door)
+                sb t2,3(a0)     # and stores it on door's counter byte
+                li a1,1         # Since status was updated, should render doors  
+                j NEXT_IN_UPDATE_DOORS_LOOP  
+        UPDATE_DOORS_LOOP_COUNT_DOWN:   
+        # Two case: door is on "opening" state (initial C = 2) and should go to "closed" state when C = 0 
+        #           door is on "open" state (initial C = 20) and should go to "closed" state when C = 0  
+            addi t2,t2,-1  # C--
+            sb t2,3(a0)    # and stores updated C on door's counter byte
+            bnez t2,NEXT_IN_UPDATE_DOORS_LOOP # If C != 0, go update next door
+            # Otherwise, before updating next door, check state of current door
+                lbu t2,2(a0)  # Loads door's state byte
+                addi t2,t2,-1 # If state is 2 -> 1; if state is 1 -> 0
+                beqz t2, UPDATE_DOORS_LOOP_CHANGE_OPENING  # If t2 = 0, state was 1 (opening)
+                # UPDATE_DOORS_LOOP_CHANGE_OPEN:
+                # If state was open, it should go to opening state in order to close afterwards
+                    li t2,1             # Loads 1 (opening)
+                    sb t2,2(a0)         # and stores it on door's state byte
+                    li t2,closing_door  # Gets new counter (related to opening door -- positive, in order to close)
+                    sb t2,3(a0)         # and stores it on door's counter byte
+                    li a1,1             # Since status was updated, should render doors  
+                    j NEXT_IN_UPDATE_DOORS_LOOP 
+                UPDATE_DOORS_LOOP_CHANGE_OPENING:
+                # If state was opening, it should go to closed state
+                    li t2,0         # Loads 0 (closed)
+                    sb t2,2(a0)     # and stores it on door's state byte
+                    # In order to be here, C parameter was set to 0 and is already stored, don't change that
+                    li a1,1         # Since status was updated, should render doors  
+                    # j NEXT_IN_UPDATE_DOORS_LOOP 
+        
+        NEXT_IN_UPDATE_DOORS_LOOP:                    
+            addi a0,a0,4 # Going to the next door's address                                  
+            addi t1,t1,1 # Iterating counter by 1                                   
+            bge t1,t0, END_UPDATE_DOORS_LOOP # If all of the map's doors were checked, end loop                                  
+            j UPDATE_DOORS_LOOP # otherwise, go back to the loop's begining                     
+    
+    END_UPDATE_DOORS_LOOP:    
+    # End of loop
+        beqz a1,END_UPDATE_DOORS # If a1 is 0, doors shouldn't be rendered again
+        li t0, 3        # To be compared with rendering byte (3 - switch map through doors)
+        lbu t1, 5(tp)   # Loads CURRENT_MAP's rendering byte on t1
+        beq t0,t1,END_UPDATE_DOORS # If rendering byte is 3, don't change it
+        # Otherwise, set it to 2
+        li t2, 2       # t2 = 2 (map will be rendered again)
+        sb t2, 5(tp)   # Stores t3 on CURRENT_MAP's rendering byte
+            
+    END_UPDATE_DOORS: 
+    # End of procedure, return        
+        ret 
+
+
+#############         CHANGE DOORS STATE           ###########
+#           Opens or closes all door on current map          #
+#   Takes two arguments, which will determine whether doors  #
+#      should open or close (a0) and, should they close,     #
+#  whether doors should have a fast or normal closing cycle  #   
+#                                                            #	
+#   ------------      argument registers      ------------   #
+#    a0 = 0 to open all doors, 1 to close all doors          #
+#    a1 = 0 - normal closing time, 1 - fast closing time     #	
+#                                                            #	
+#   ------------        registers used        ------------   #
+#    a2 = Curent map's door address                          #
+#    tp = CURRENT_MAP address (located on main.s)		     #
+#    t0 = Number of doors on current map                     #
+#    t1 = Loop counter                                       #
+#    t2 = Temporary Registers                                #
+#                                                            #
+##############################################################
+
+CHANGE_DOORS_STATE:
+    la t0, Doors # Loads Doors address
+	la tp, CURRENT_MAP # Loads CURRENT_MAP address
+	lw a2,0(t0)   # Gets current map's doors address
+	lbu t0,0(a2)  # Loads number of doors in this map
+	addi a2,a2,1  # Goes to next byte (where doors from current map start)
+    slli a1,a1,1  # Multiplies a1 by 2 
+
+    li t1,0       # Counter for doors     
+    # Loop that will open every door on map
+    CHANGE_DOORS_STATE_LOOP:
+        li t2,1       # Loads 1 (opening/closing)
+        sb t2,2(a2)   # and stores it on door's state byte    
+        beqz a0, CHANGE_DOORS_STATE_LOOP_OPEN_DOORS # If a0 = 0, open doors
+        # Otherwise, close doors
+            li t2,closing_door  # Gets new counter (related to closing door -- positive, in order to close)
+            sub t2,t2,a1        # t2 = 4 if a1 is 0, otherwise, t2 = 2
+            sb t2,3(a2)         # Stores C on door's counter byte
+            j NEXT_IN_CHANGE_DOORS_STATE_LOOP 
+
+        CHANGE_DOORS_STATE_LOOP_OPEN_DOORS:
+            li t2,opening_door  # Gets new counter (related to opening door -- negative, in order to open)
+            sb t2,3(a2)         # and stores it on door's counter byte
+            # j NEXT_IN_CHANGE_DOORS_STATE_LOOP    
+        NEXT_IN_CHANGE_DOORS_STATE_LOOP:                                  
+        addi a2,a2,4 # Going to the next door's address                                  
+        addi t1,t1,1 # Iterating counter by 1                                   
+        bge t1,t0, END_CHANGE_DOORS_STATE_LOOP # If all of the map's doors were checked, end loop                                  
+        j CHANGE_DOORS_STATE_LOOP # otherwise, go back to the loop's begining                     
+    
+    END_CHANGE_DOORS_STATE_LOOP: 
+        li t2, 2       # t2 = 2 (map will be rendered again)
+        sb t2, 5(tp)   # Stores t3 on CURRENT_MAP's rendering byte
+        ret  # End of procedure, return    

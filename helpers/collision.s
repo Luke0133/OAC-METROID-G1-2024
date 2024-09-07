@@ -316,11 +316,11 @@ li a0,1  # Sets a0 to 1 (can move)
                     bgtu t3,t4, NEXT_IN_COLLISION_DOOR_FRAME_LOOP # If current Y is above the door frame's uppermost Y or bellow it's downmost Y, skip it                       
                     # If the correct door tile is the one being checked, continue as follows   
                         mv a0,t1       # Moves current door frame's address to a0
-                        j SWITCH_MAP_PREP                            
+                        j CHANGE_MAP                            
                     NEXT_IN_COLLISION_DOOR_FRAME_LOOP:                                  
-                        addi t1,t1,6 # Going to the next door's address                                  
+                        addi t1,t1,6 # Going to the next door frame's address                                  
                         addi t0,t0,1 # Iterating counter by 1                                   
-                        bge t0,t2, END_COLLISION_DOOR_FRAME_LOOP # If all of the map's doors were checked, end loop                                  
+                        bge t0,t2, END_COLLISION_DOOR_FRAME_LOOP # If all of the map's door frames were checked, end loop                                  
                         j COLLISION_DOOR_FRAME_LOOP # otherwise, go back to the loop's begining                     
                 END_COLLISION_DOOR_FRAME_LOOP:                     
                 # This is only reached if no door frame was found (error) 
@@ -367,7 +367,7 @@ li a0,1  # Sets a0 to 1 (can move)
                             li a0, 0 # Otherwise, door is closed and player can't move                     
                             j CONTINUE_CHECK_MAP_COLLISION_3                            
                     NEXT_IN_COLLISION_DOOR_LOOP:                                  
-                        addi t1,t1,3 # Going to the next door's address                                  
+                        addi t1,t1,4 # Going to the next door's address                                  
                         addi t0,t0,1 # Iterating counter by 1                                   
                         bge t0,t2, END_COLLISION_DOOR_LOOP # If all of the map's doors were checked, end loop                                  
                         j COLLISION_DOOR_LOOP # otherwise, go back to the loop's begining                     

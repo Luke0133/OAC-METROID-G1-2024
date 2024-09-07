@@ -16,6 +16,9 @@ MUSIC.STATUS: .word 0,0
 .eqv KDMMIO_ADDRESS 0xFF210000
 ####### Informations related to frame rate  ####### 
 .eqv frame_rate 50 # T ms por frame 
+.eqv closing_door 4   # default number of iterations before opening door goes to closed state
+.eqv opening_door -2  # default number of iterations before opening door goes to open state
+.eqv open_door   60   # default number of iterations before open door starts to close 
 ####### .eqv related to tiles  ####### 
 .eqv tile_size 16	# Tile size (use powers of 2 in order to use tile_size_shift)
 .eqv tile_size_shift 4  # Power value that gives tile size (2^tile_size_shift = tile_size)
@@ -23,17 +26,19 @@ MUSIC.STATUS: .word 0,0
 ####### .eqv related to screen  ####### 
 .eqv m_screen_width 20            # Width of screen in 16x16 tiles
 .eqv m_screen_height 15           # Height of screen in 16x16 tiles
+.eqv screen_width 320             # Width of screen in pixels
+.eqv screen_height 240            # Height of screen in pixels
 .eqv left_hor_border 119          # X on screen (in pixels) from where screen will move left instead of player
 .eqv right_hor_border 184         # X on screen (in pixels) from where screen will move right instead of player
 .eqv top_ver_border 94            # Y on screen (in pixels) from where screen will move up instead of player
-.eqv bottom_ver_border 96        # Y on screen (in pixels) from where screen will move down instead of player
+.eqv bottom_ver_border 96         # Y on screen (in pixels) from where screen will move down instead of player
 .eqv m_door_right_X_distance 18   # Distance between a door on right side of screen to the left side of screen in 16x16 tiles
                                   # It won't be needed for doors on the left, but the distance is 1
 								   
 ####### Map informations ####### 
 CURRENT_MAP: .word 0  # Stores the address of current map
 MAP_INFO: .byte 1, 0, # Current Map's Number, render byte (0 - don't render, 1 - render once, 2 - render twice, 3 - switch map (through door), 4 - switch map (through cheat input))
-                23, 0 # x of matrix, y of matrix
+                23, 0 # x on matrix, y on matrix
                 8, 0  # X, and Y Tile Offset (0, 4, 8 or 12)
                 0, 0  # X dislocation, direction of map switch (0 - next map on the right, 1 - next map on the left) 
 
@@ -42,6 +47,7 @@ NEXT_MAP: .word 0    # Stores the address of next map
 NEXT_MAP_INFO: .byte 0, 0 # Next Map's Number, Number of iterations on switch
                      0, 0 # x of matrix, y of matrix
                      0, 0 # X dislocation, next door number
+					 0, 0 # Render Next Map Door, Player's MOVE_X for switch
 
 
 ####### Player informations #########
@@ -121,37 +127,45 @@ RIDLEY_STATUS: .byte 0,0 # Sprite's Number, Ground Position (0 - On Ground, 1 - 
 
 ##############           Doors            ##############
 Doors: .word 0 # Holds the current "DoorsA" label based on the current map
+Doors_Next: .word 0 # Holds the "DoorsA" label based on the next map   
+#                     +-->   only changed when switching maps
+#                     +-->   used in RENDER_MAP if Render Next Map Door == 1
 .byte
 # Bellow here all labels will follow the rules:
 # DoorsA: N --> holds the number (N) of doors on map A
-# DoorA_B: X, Y, S --> holds the door's X and uppermost Y (on matrix), and its state (S)
+# DoorA_B: X, Y, S, T --> holds the door's X and uppermost Y (on matrix), its state (S), 
+#                         and counter (C) set to go down when positive, or go up when negative
 # Obs.: the state can be: 0 - closed, 1 - opening, 2 - open (background color)
 # Obs2.: the direction of a door is: left (if X = 1) or right (if X != 1)
+# Obs3.: the C parameter will be positive when door needs to close and negative when door needs to open, staying on 0 when finished.
+#        When positive, it can be the number of iterations for a door that is on the "open" state to go to the "opening" state, 
+#        or on the "opening" state to a closed state. When negative, it is the number of iterations for a door that is 
+#        on the "opening" state to an open state.
 Doors1:  1
-Door1_0: 58,5,2
+Door1_0: 58,5,0,0
 
 Doors2: 3
-Door2_0: 1,5,2
-Door2_1: 18,5,2
-Door2_2: 1,35,2
+Door2_0: 1,5,0,0
+Door2_1: 18,5,0,0
+Door2_2: 1,35,0,0
 
 Doors3: 2
-Door3_0: 58,5,2
-Door3_1: 1,5,2
+Door3_0: 1,5,0,0 
+Door3_1: 58,5,0,0
 
 Doors4: 2
-Door4_0: 1,35,2
-Door4_1: 1,5,2
+Door4_0: 1,35,0,0
+Door4_1: 1,5,0,0
 
 Doors5: 2
-Door5_0: 38,5,2
-Door5_1: 1,5,2
+Door5_0: 38,5,0,0
+Door5_1: 1,5,0,0
 
 Doors6: 1
-Door6_0: 18,5,2
+Door6_0: 18,5,0,0
 
 Doors7: 1
-Door7_0: 18,5,2
+Door7_0: 18,5,0,0
 
 ##############           Door Frames            ##############
 Frames: .word 0 # Holds the current "FrameA" label based on the current map

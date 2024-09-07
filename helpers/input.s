@@ -51,6 +51,7 @@ INPUT_CHECK:
     bne t0,t1, CHECK_INPUT.1
     j INPUT.K # If 'k' key was pressed
 
+    # CHEAT INPUTS:
     CHECK_INPUT.1:
     li t1, '1'
     bne t0,t1, CHECK_INPUT.2
@@ -83,8 +84,13 @@ INPUT_CHECK:
 
     CHECK_INPUT.7:
     li t1, '7'
-    bne t0,t1, CHECK_INPUT.DEL
+    bne t0,t1, CHECK_INPUT.O
     j INPUT.7
+
+    CHECK_INPUT.O:
+    li t1, 'o'
+    bne t0,t1, CHECK_INPUT.DEL
+    j INPUT.O
 
     CHECK_INPUT.DEL:
     li t1, 127	# Loads ascii value of del key
@@ -243,6 +249,12 @@ INPUT_CHECK:
         sb t1,1(a0)
 
         j SETUP
+
+    INPUT.O:
+        li a0, 0    # open doors
+        # li a1, 0  # won't be needed, since a0 = 0
+        j CHANGE_DOORS_STATE
+
 
     INPUT.DEL: # Kills Player
         #call KILL_PLYR

@@ -4,7 +4,11 @@
 # 2 - RENDER WORD (Renders image when address is given. It renders word by word )
 # 3 - RENDER COLOR (Renders a given color on a given space)
 # 4 - RENDER PLAYER (Renders player based on its PLAYER_STATUS)
-# LAST ONE (5?) - RENDER MAP (Takes a given map matrix and renders tiles acoording to the value stored on it)
+
+# N-2 - RENDER DOOR UPDATE (will render door after update is requested)
+# N-1 - RENDER DOOR FRAMES (will render door frames over player)
+# N - RENDER MAP (Takes a given map matrix and renders tiles acoording to the value stored on it)
+
 
 
 #############################     RENDER     ############################
@@ -481,7 +485,7 @@ RENDER_PLAYER:
 					li s1,0          # Sets starting X on sprite to 0 
 					li s2,0          # Sets starting Y on sprite to 0	
 			RENDER_PLAYER_SKIP_CROP:
-				call RENDER	# Calls RENDER procedure
+				call RENDER_WORD	# Calls RENDER_WORD procedure
 				# Procedure finished: Loading Registers from Stack
 				lw s1,0(sp)
 				lw s2,4(sp)
@@ -515,7 +519,6 @@ RENDER_PLAYER:
 		# otherwise, move the trail area by 1 tile left and check if player isn't on rightmost side of map
 		# in order to change the trail rendering width as needed 
 			addi t3,t3,-1     # Moves X left by 1 tile
-			
 			la t1 CURRENT_MAP # Loads CURRENT_MAP address
 			lw t1,0(t1)       # Gets current map's address
 			lbu t1,1(t1)      # Gets current map's width
@@ -588,6 +591,248 @@ RENDER_LIFE_POINTS:
 
 	ret
 
+###############          RENDER DOOR UPDATE          ###############
+#   Will render only the doors after a door needs to be updated    #
+#                                                                  #		
+#  ----------------        registers used        ----------------  #
+#    a0 = Curent map's door address                                #
+#    tp = CURRENT_MAP address (located on main.s)		           #
+#    t0 = Number of doors on current map                           #
+#    t1 = Loop counter                                             #
+#    t2 -- t6 = Temporary Registers                                #
+#    a0 -- a7 => used as arguments                                 #
+#                                                                  #
+####################################################################
+
+RENDER_DOOR_UPDATE:
+# Storing Registers on Stack
+	addi sp,sp,-4
+	sw ra,0(sp)
+# End of Stack Operations
+	la t0, Doors # Loads Doors address
+	la tp, CURRENT_MAP # Loads CURRENT_MAP address
+	lw a0,0(t0)   # Gets current map's doors address
+	lbu t0,0(a0)  # Loads number of doors in this map
+	addi a0,a0,1  # Goes to next byte (where doors from current map start)
+	li t1,0       # Counter for doors
+	
+	# Loop that will search for doors in the screen and render them
+	RENDER_DOOR_UPDATE_LOOP: 
+		# RENDER_DOOR_UPDATE_LOOP_X_CHECK:
+		lbu t3, 0(a0)        # Loads door's X on matrix
+		lbu a1, 6(tp)        # Loads map's current X on matrix
+		sub t4,t3,a1         # t4 = Door's X - Map's current X
+		li t5,m_screen_width # Loads 20 (screen's width related to matrix)
+		bgtu t5,t4,RENDER_DOOR_UPDATE_LOOP_Y_CHECK # If the result is between 0 and 19 (inclusive), continue on loop
+		# Otherwise, check if t4 = 20 and X offset != 0
+			bne t5,t4,GO_TO_NEXT_IN_RENDER_DOOR_UPDATE_LOOP   # If t4 != 20, iterate to next door
+				lbu t4, 8(tp)                           # Loads map's X offset
+				bnez t4,RENDER_DOOR_UPDATE_LOOP_Y_CHECK # If X offset != 0, continue on this loop
+				GO_TO_NEXT_IN_RENDER_DOOR_UPDATE_LOOP:  # Otherwise,
+				# As label says, iterate to next door
+					j NEXT_IN_RENDER_DOOR_UPDATE_LOOP
+		RENDER_DOOR_UPDATE_LOOP_Y_CHECK:
+			lbu t2, 1(a0)    # Loads door's Y on matrix
+			lbu a2, 7(tp)    # Loads map's current Y on matrix
+			sub t4,t2,a2     # t4 = Door's top Y - Map's current Y
+			li t5,-2               # Loads -2 (lower threshold)
+			slt t6,t4,t5           # t6 will be 0 if t4 >= -2
+			li t5,m_screen_height  # Loads 15 (screen's height related to matrix)
+			slt t5,t5,t4           # t5 will be 0 if t4 <= 15
+			add t5,t5,t6           # t5 = 0 only if -2 <= t4 <= 15 
+			beqz t5, RENDER_DOOR_UPDATE_LOOP_Y_CHECK_2 # If -2 <= t4 <= 15, continue loop
+			# Otherwise, iterate to next door
+				j NEXT_IN_RENDER_DOOR_UPDATE_LOOP
+
+			RENDER_DOOR_UPDATE_LOOP_Y_CHECK_2:
+				bge t4,zero,RENDER_DOOR_UPDATE_LOOP_MIDDLE_TOP  # If t4 >= 0, go to RENDER_DOOR_UPDATE_LOOP_MIDDLE_TOP
+				# Otherwise, t4 is less than 0 (t4 = -1 or -2), so 
+					li t2,0        # starting Y will be set to 0
+					addi a7,t4,3   # and height will be 1 (if t4 = -2) or 2 (if t4 = -1)
+					j START_RENDER_DOOR_UPDATE
+
+				RENDER_DOOR_UPDATE_LOOP_MIDDLE_TOP:
+				# If t4 >= 0, check whether it's less than 13
+					li t5, 13                                 
+					bge t4,t5, RENDER_DOOR_UPDATE_LOOP_TOP_1
+					# If t4 < 13, door should be rendered completely
+						# t2 is already set (Y from map matrix where rendering will start from)
+						li a7, 3    # Height of rendering area will be 3 in order to render it fully
+						j START_RENDER_DOOR_UPDATE
+
+					RENDER_DOOR_UPDATE_LOOP_TOP_1:
+					# Otherwise, t4 >= 13, so check offset
+						lbu a4, 9(tp)   # Loads current Y offset on Map	
+						li t5,m_screen_height  # Loads 15 (screen's height related to matrix)
+						sub a7,t5,t4    # a7 = Screen's Height (15) - (Door's Y - Map's current Y)    
+						slt t5,zero,a4  # a4 > 0 ? t5 = 1 : t5 = 0 (only if a4 == 0)
+						add a7,a7,t5    # a7 (height of rendering area) will be increased by 1 if the map's Y offset isn't 0
+						bnez a7,START_RENDER_DOOR_UPDATE # If the result isn't equal to 0, continue to rendering this door
+						# Otherwise, iterate to next door (can't render something with height = 0 :D )
+							j NEXT_IN_RENDER_DOOR_UPDATE_LOOP		                        
+					
+		START_RENDER_DOOR_UPDATE:
+		# Storing Registers on Stack
+			addi sp,sp,-16
+			sw t1,12(sp)
+			sw t0,8(sp)
+			sw tp,4(sp)
+			sw a0,0(sp)
+		# End of Stack Operations
+			lw a0,0(tp)
+			# a1 is already set (X in map matrix that corresponds to 0x0 on the screen matrix)
+			# a2 is already set (Y in map matrix that corresponds to 0x0 on the screen matrix)
+			lbu a3, 8(tp)   # Loads current X offset on Map
+			lbu a4, 9(tp)   # Loads current Y offset on Map	
+			mv a5, s0		# Frame = s0
+			li a6, 1        # Width of rendering area will always be 1
+			# a7 is already set (height of rendering area)
+			# t3 is already set (X from map matrix where rendering will start from)
+			# t2 is already set (Y from map matrix where rendering will start from)
+			li tp, 0        # Map won't be dislocated		
+			call RENDER_MAP
+		# Procedure finished: Loading Registers from Stack
+			lw t1,12(sp)
+			lw t0,8(sp)
+			lw tp,4(sp)
+			lw a0,0(sp)
+			addi sp,sp,16
+		# End of Stack Operations
+		NEXT_IN_RENDER_DOOR_UPDATE_LOOP:                                  
+			addi a0,a0,4 # Going to the next door's address                                  
+			addi t1,t1,1 # Iterating counter by 1                                   
+			bge t1,t0, END_RENDER_DOOR_UPDATE # If all of the map's doors were checked, end loop                                  
+			j RENDER_DOOR_UPDATE_LOOP # otherwise, go back to the loop's begining                     
+    
+	END_RENDER_DOOR_UPDATE: 
+		# Procedure finished: Loading Registers from Stack
+			lw ra,0(sp)
+			addi sp,sp,4
+		# End of Stack Operations
+			ret
+
+###############          RENDER DOOR FRAMES          ###############
+#       Will render only the door frames (used for rendering       #
+#        on top of player's sprite). It takes no arguments         #	
+#                                                                  #		
+#  ----------------        registers used        ----------------  #
+#    a0 = Curent map's frame address                               #
+#    tp = CURRENT_MAP address (located on main.s)		           #
+#    t0 = Number of door frames on current map                     #
+#    t1 = Loop counter                                             #
+#    t2 -- t6 = Temporary Registers                                #
+#    a0 -- a7 => used as arguments                                 #
+#                                                                  #
+####################################################################
+
+RENDER_DOOR_FRAMES:
+# Storing Registers on Stack
+	addi sp,sp,-4
+	sw ra,0(sp)
+# End of Stack Operations
+	la t0, Frames # Loads Frames address
+	la tp, CURRENT_MAP # Loads CURRENT_MAP address
+	lw a0,0(t0)   # Gets current map's frames address
+	lbu t0,0(a0)  # Loads number of door frames in this map
+	addi a0,a0,1  # Goes to next byte (where door frames from current map start)
+	li t1,0       # Counter for door frames
+	
+	# Loop that will search for door frames in the screen and render them
+	RENDER_DOOR_FRAMES_LOOP: 
+		# RENDER_DOOR_FRAMES_LOOP_X_CHECK:
+		lbu t3, 0(a0)        # Loads door frame's X on matrix
+		lbu a1, 6(tp)        # Loads map's current X on matrix
+		sub t4,t3,a1         # t4 = Door frame's X - Map's current X
+		li t5,m_screen_width # Loads 20 (screen's width related to matrix)
+		bgtu t5,t4,RENDER_DOOR_FRAMES_LOOP_Y_CHECK # If the result is between 0 and 19 (inclusive), continue on loop
+		# Otherwise, check if t4 = 20 and X offset != 0
+			bne t5,t4,GO_TO_NEXT_IN_RENDER_DOOR_FRAMES_LOOP   # If t4 != 20, iterate to next door
+				lbu t4, 8(tp)                           # Loads map's X offset
+				bnez t4,RENDER_DOOR_FRAMES_LOOP_Y_CHECK # If X offset != 0, continue on this loop
+				GO_TO_NEXT_IN_RENDER_DOOR_FRAMES_LOOP:  # Otherwise,
+				# As label says, iterate to next door frame
+					j NEXT_IN_RENDER_DOOR_FRAMES_LOOP
+		RENDER_DOOR_FRAMES_LOOP_Y_CHECK:
+			lbu t2, 1(a0)    # Loads door frame's Y on matrix
+			lbu a2, 7(tp)    # Loads map's current Y on matrix
+			sub t4,t2,a2     # t4 = Door frame's top Y - Map's current Y
+			li t5,-2               # Loads -2 (lower threshold)
+			slt t6,t4,t5           # t6 will be 0 if t4 >= -2
+			li t5,m_screen_height  # Loads 15 (screen's height related to matrix)
+			slt t5,t5,t4           # t5 will be 0 if t4 <= 15
+			add t5,t5,t6           # t5 = 0 only if -2 <= t4 <= 15 
+			beqz t5, RENDER_DOOR_FRAMES_LOOP_Y_CHECK_2 # If -2 <= t4 <= 15, continue loop
+			# Otherwise, iterate to next door frame
+				j NEXT_IN_RENDER_DOOR_FRAMES_LOOP
+
+			RENDER_DOOR_FRAMES_LOOP_Y_CHECK_2:
+				bge t4,zero,RENDER_DOOR_FRAMES_LOOP_MIDDLE_TOP  # If t4 >= 0, go to RENDER_DOOR_FRAMES_LOOP_MIDDLE_TOP
+				# Otherwise, t4 is less than 0 (t4 = -1 or -2), so 
+					li t2,0        # starting Y will be set to 0
+					addi a7,t4,3   # and height will be 1 (if t4 = -2) or 2 (if t4 = -1)
+					j START_RENDER_DOOR_FRAMES
+
+				RENDER_DOOR_FRAMES_LOOP_MIDDLE_TOP:
+				# If t4 >= 0, check whether it's less than 13
+					li t5, 13                                 
+					bge t4,t5, RENDER_DOOR_FRAMES_LOOP_TOP_1
+					# If t4 < 13, door frame should be rendered completely
+						# t2 is already set (Y from map matrix where rendering will start from)
+						li a7, 3    # Height of rendering area will be 3 in order to render it fully
+						j START_RENDER_DOOR_FRAMES
+
+					RENDER_DOOR_FRAMES_LOOP_TOP_1:
+					# Otherwise, t4 >= 13, so check offset
+						lbu a4, 9(tp)   # Loads current Y offset on Map	
+						li t5,m_screen_height  # Loads 15 (screen's height related to matrix)
+						sub a7,t5,t4    # a7 = Screen's Height (15) - (Door frame's Y - Map's current Y)    
+						slt t5,zero,a4  # a4 > 0 ? t5 = 1 : t5 = 0 (only if a4 == 0)
+						add a7,a7,t5    # a7 (height of rendering area) will be increased by 1 if the map's Y offset isn't 0
+						bnez a7,START_RENDER_DOOR_FRAMES # If the result isn't equal to 0, continue to rendering this door frame
+						# Otherwise, iterate to next door frame (can't render something with height = 0 :D )
+							j NEXT_IN_RENDER_DOOR_FRAMES_LOOP		                        
+					
+		START_RENDER_DOOR_FRAMES:
+		# Storing Registers on Stack
+			addi sp,sp,-16
+			sw t1,12(sp)
+			sw t0,8(sp)
+			sw tp,4(sp)
+			sw a0,0(sp)
+		# End of Stack Operations
+			lw a0,0(tp)
+			# a1 is already set (X in map matrix that corresponds to 0x0 on the screen matrix)
+			# a2 is already set (Y in map matrix that corresponds to 0x0 on the screen matrix)
+			lbu a3, 8(tp)   # Loads current X offset on Map
+			lbu a4, 9(tp)   # Loads current Y offset on Map	
+			mv a5, s0		# Frame = s0
+			li a6, 1        # Width of rendering area will always be 1
+			# a7 is already set (height of rendering area)
+			# t3 is already set (X from map matrix where rendering will start from)
+			# t2 is already set (Y from map matrix where rendering will start from)
+			li tp, 0        # Map won't be dislocated		
+			call RENDER_MAP
+		# Procedure finished: Loading Registers from Stack
+			lw t1,12(sp)
+			lw t0,8(sp)
+			lw tp,4(sp)
+			lw a0,0(sp)
+			addi sp,sp,16
+		# End of Stack Operations
+		NEXT_IN_RENDER_DOOR_FRAMES_LOOP:                                  
+			addi a0,a0,6 # Going to the next door frame's address                                  
+			addi t1,t1,1 # Iterating counter by 1                                   
+			bge t1,t0, END_RENDER_DOOR_FRAMES # If all of the map's doors were checked, end loop                                  
+			j RENDER_DOOR_FRAMES_LOOP # otherwise, go back to the loop's begining                     
+    
+	END_RENDER_DOOR_FRAMES: 
+		# Procedure finished: Loading Registers from Stack
+			lw ra,0(sp)
+			addi sp,sp,4
+		# End of Stack Operations
+			ret
+
+
 ###############################          RENDER MAP          ##############################
 #    Takes a given map matrix and renders tiles acoording to the value stored on it.      #
 #   -- t2 and t3 are recieved as arguments:                                               #
@@ -625,7 +870,6 @@ RENDER_LIFE_POINTS:
 #                                                                                         #
 ###########################################################################################
 RENDER_MAP:
-
 # Storing Registers on Stack
 	addi sp,sp,-20
 	sw ra,16(sp)
@@ -692,11 +936,24 @@ RENDER_MAP_LOOP:
 		addi sp,sp,-4
 		sw tp,0(sp)
 	# End of stack operations, begin:
-		mv t6,zero   # Resets counter
-		la t4, Doors # Loads Doors address
-		lw t4,0(t4)	 # Gets the current map's door address
-		lbu t5,0(t4) # Gets the number of doors in this map
-		addi t4,t4,1 # Starting address of the map's first door
+		# Preparations for loop 
+		mv t6,zero     # Resets counter
+		la t4,NEXT_MAP # Loads NEXT_MAP address
+		lbu t5,10(t4)  # Gets the Render Next Map Door byte	
+		beqz t5, RENDER_DOOR_CURRENT   # If Render Next Map Door == 0, render current map's door
+		# Otherwise, Render Next Map Door == 1, so render next map's door
+			la t4, Doors_Next # Loads Doors_Next address
+			lw t4,0(t4)	      # Gets the next map's door address
+			lbu t5,0(t4)      # Gets the number of doors in this map
+			addi t4,t4,1      # Starting address of the map's first door
+			j RENDER_DOOR_LOOP
+		RENDER_DOOR_CURRENT:
+		# Renders current map's door
+			la t4, Doors # Loads Doors address
+			lw t4,0(t4)	 # Gets the current map's door address
+			lbu t5,0(t4) # Gets the number of doors in this map
+			addi t4,t4,1 # Starting address of the map's first door
+			# j RENDER_DOOR_LOOP
 		RENDER_DOOR_LOOP:
 			# Checking if current door will be rendered
 			lbu tp, 0(t4) # Loads door's X on matrix
@@ -718,7 +975,7 @@ RENDER_MAP_LOOP:
 				add t0,t0,t1   # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles) 
 				j END_RENDER_DOOR_LOOP_GLOBAL
 			NEXT_IN_DOOR_LOOP:
-				addi t4,t4,3 # Going to the next door's address
+				addi t4,t4,4 # Going to the next door's address
 				addi t6,t6,1 # Iterating counter by 1
 				bge t6,t5, END_RENDER_DOOR_LOOP # If all of the map's doors were checked, end loop
 				j RENDER_DOOR_LOOP # otherwise, go back to the loop's begining
@@ -747,8 +1004,8 @@ RENDER_MAP_LOOP:
 	sw t2,8(sp)
 	sw t3,4(sp)
 	sw tp,0(sp)
-	
 	# End of Stack Operations
+
 	mv a0, t0 # Moves t0 (storing tile address) to a0
 	# Defining rendering coordinates
 	li t0, tile_size 	# Tile size = 16
@@ -893,19 +1150,19 @@ RENDER_MAP_LOOP:
 	addi s0,s0,1	# Goes to next byte
 	bge t3,s3,CONTINUE_LINE	# if column counter >= width, repeat
 	j RENDER_MAP_LOOP	# if column counter < width, repeat
+	
 	CONTINUE_LINE:
-
 		add s0,s0,s1	# s0 = Current Address on Matrix + Matrix Width
 		li t0, m_screen_width
-		bge s3,t0, MINUS_WIDTH
+		bge a6,t0, MINUS_WIDTH # If width = 20, probably not on remove trail mode
 		sub s0,s0,a6	# s0 = New Current Address on Matrix 
 		sub t3,t3,a6	# t3 = 0 (resets column counter)
 		j CONTINUE_LINE2
 		MINUS_WIDTH:
 		sub s0,s0,s3
 		mv t3,zero	# t3 = 0 (resets column counter)
-		CONTINUE_LINE2:
 		
+		CONTINUE_LINE2:
 		addi t2,t2,1	# Increments line counter (current Y on Matrix)
 		bge t2,s2,CONTINUE_COLUMN # If height > line counter, repeat
 		j RENDER_MAP_LOOP	  # Return to beggining of loop
@@ -919,5 +1176,3 @@ RENDER_MAP_LOOP:
 		addi sp,sp,20
 	# End of Stack Operations: Return to caller		
 		ret
-
-
