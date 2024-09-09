@@ -61,6 +61,16 @@ beqz a7,NORMAL
 	
 	PRINT_LINE:	
 		lb t4,0(a0)	# loads byte(1 pixel) on t4
+		
+		# Comparing if samus is on missile mode
+		li t5,green # Loads 32 (value of green pixel in samus)
+		bne t5,t4,SKIP_SWITCH
+			la t5, PLYR_INFO_2    # Loads address to PLYR_INFO_2
+			lbu t5,0(t5)          # Loads missile enable byte
+			beqz t5,SKIP_SWITCH   # If player isn't in missile mode
+				li t4 cyan        # Otherwise render cyan instead of green
+		SKIP_SWITCH:
+		
 		sb t4,0(t0)	# prints 1 pixel from t4
 		
 		addi t0,t0,1	# increments bitmap address
@@ -484,16 +494,25 @@ RENDER_PLAYER:
 					li a7,1          # Sets to crop mode
 					li s1,0          # Sets starting X on sprite to 0 
 					li s2,0          # Sets starting Y on sprite to 0	
+			
 			RENDER_PLAYER_SKIP_CROP:
-				call RENDER_WORD	# Calls RENDER_WORD procedure
-				# Procedure finished: Loading Registers from Stack
-				lw s1,0(sp)
-				lw s2,4(sp)
-				lw s3,8(sp)
-				lw ra,12(sp)
-				addi sp,sp,16
-				# End of Stack Operations
-				ret	   # End of procedure
+				# Comparing if samus is on missile mode
+				la t5, PLYR_INFO_2    # Loads address to PLYR_INFO_2
+				lbu t5,0(t5)          # Loads missile enable byte
+				beqz t5,RENDER_PLAYER_SKIP_MISSILE   # If player isn't in missile mode
+					call RENDER    # Otherwise, render sprite byte by byte (to change color)
+					j END_RENDER_PLAYER
+				RENDER_PLAYER_SKIP_MISSILE:
+					call RENDER_WORD	# Calls RENDER_WORD procedure
+				END_RENDER_PLAYER:
+					# Procedure finished: Loading Registers from Stack
+					lw s1,0(sp)
+					lw s2,4(sp)
+					lw s3,8(sp)
+					lw ra,12(sp)
+					addi sp,sp,16
+					# End of Stack Operations
+					ret	   # End of procedure
 		
 	RENDER_PLAYER_TRAIL:
 		xori a5,s0,1	# Gets oposite frame
@@ -924,13 +943,35 @@ RENDER_MAP_LOOP:
 	j CONTINUE_RENDER_MAP
 
 	NotBackground:
-		li t0, 40 # Value where doors start
+########### CHECK THIS OUT #######################################
+		li t0, 251     # Value where special tiles start 
+		bge t1, t0, RENDER_SPECIAL # If it's a special tile
+#####################################################################
+
+		li t0, 40      # Value where doors start
 		bge t1, t0, RENDER_DOOR # If it's a door
 		la t0, Tileset # Loads Tileset address to t0
 		addi t1,t1,-1  # t1 = Tile Number - 1 (so that if t1 = 1, 0 tiles will be skipped)
 		slli t1,t1,8   # t1 = (Tile Number - 1) x 256
-		add t0,t0,t1  # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles) 
+		add t0,t0,t1  # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles)
+		mv t4,zero    # t4 will hold the tile's sprite status (which will be zero)
 		j CONTINUE_RENDER_MAP
+	
+	RENDER_SPECIAL:
+		li t0,255
+		bne t0,t1,NOT_MARU_MARI
+			la t1,MARU_MARI_INFO # Loads Maru Mari's info address
+			lbu t0, 0(t1)        # Loads enable byte
+			beqz t0,RENDER_BACKGROUND # If disabled, skip
+			# Otherwise, render MaruMari
+				la t0,MaruMari  # Loads MaruMari tile address
+				lbu t4, 1(t1)   # Loads status sprite
+				j CONTINUE_RENDER_MAP
+		NOT_MARU_MARI:
+		RENDER_BACKGROUND:
+			# This is only reached if there was an error or tile is disabled
+			mv t1,zero # so background color will be rendered
+			j CONTINUE_RENDER_MAP
 	RENDER_DOOR: 
 	# Storing tp on stack cuz we don't really have any registers to use anymore :/
 		addi sp,sp,-4
@@ -984,6 +1025,7 @@ RENDER_MAP_LOOP:
 		mv t1,zero
 	END_RENDER_DOOR_LOOP_GLOBAL: # After any case of the loop, go here
 	# Restoring tp from stack
+		mv t4,zero    # t4 will hold the tile's sprite status (which will be zero)
 		lw tp,0(sp)
 		addi sp,sp,4
 	# End of stack operations, begin:
@@ -1007,6 +1049,8 @@ RENDER_MAP_LOOP:
 	# End of Stack Operations
 
 	mv a0, t0 # Moves t0 (storing tile address) to a0
+	mv a6,t4  # Moves tmv t4 (tile's sprite status) to a6
+	          # +--> a6 will be always set to zero when in color mode afterwards 
 	# Defining rendering coordinates
 	li t0, tile_size 	# Tile size = 16
 	add t6,tp,t3        # t6 gets t3 (current X) + tp (X dislocation)
@@ -1089,7 +1133,7 @@ RENDER_MAP_LOOP:
 		# a0 has the tile address
 		mv a1, t4		# Top Left X where tile will start rendering
 		mv a2, t5		# Top Left Y where tile will start rendering			
-		mv a6,zero		# Tiles only have one image, thus their status is allways 0
+		# a6 was already set (Tiles usually have one image, thus their status is allways 0  -- there are exceptions)
 		# If no offset is taken into account, will skip unecessary parameters  
 		bnez t6, Continue_Crop 
 		j Skip_Offset

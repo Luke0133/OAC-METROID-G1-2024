@@ -2,6 +2,7 @@
 .include "helpers/data.s"
 #.include "helpers/dataold.s"
 
+# 34 --> 240 
 .data
 DEBUG: .string "\n"
 DEBUG2: .string " x "
@@ -40,6 +41,7 @@ GAME_LOOP:
 
 	call UPDATE_DOORS       # Updates doors
 	call MAP_MOVE_RENDER    # Renders map when necessary
+	call UPDATE_MARU_MARI   # Updates Maru Mari's sprite (in sprite op)
 	
 	call UPDATE_STATUS      # Updates player's sprite status
 

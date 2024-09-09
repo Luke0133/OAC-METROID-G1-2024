@@ -48,8 +48,13 @@ INPUT_CHECK:
 
     CHECK_INPUT.K:
     li t1, 'k'	  # Loads ascii value of 'k' key
-    bne t0,t1, CHECK_INPUT.1
+    bne t0,t1, CHECK_INPUT.J
     j INPUT.K # If 'k' key was pressed
+ 
+    CHECK_INPUT.J:
+    li t1, 'j'	  # Loads ascii value of 'j' key
+    bne t0,t1, CHECK_INPUT.1
+    j INPUT.J # If 'j' key was pressed
 
     # CHEAT INPUTS:
     CHECK_INPUT.1:
@@ -165,6 +170,18 @@ INPUT_CHECK:
         sb t1, 5(a0) # Stores new attack status on PLYR_STATUS
         #j END_INPUT_CHECK
         j BEAM_OPERATIONS
+
+    INPUT.J:   # Switches to missile mode (if available)
+        la t0, PLYR_INFO_2    # Loads address to PLYR_INFO_2
+        lbu t2,1(t0)          # Loads missile cooldown
+        bnez t2,SKIP_ENABLE_MISSILE  # If cooldown != 0, don't enable byte
+            lbu t1,0(t0)          # Loads missile enable byte
+            xori t1,t1,1          # Switches its value
+            sb t1,0(t0)           # and stores it back
+        SKIP_ENABLE_MISSILE:
+            xori t2,t2,1      # Switches cooldown value
+            sb t2,1(t0)       # and stores it back
+        j END_INPUT_CHECK 
     
     INPUT.1: # Change to map 1
         la t0 MAP_INFO

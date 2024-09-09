@@ -274,6 +274,10 @@ li a0,1  # Sets a0 to 1 (can move)
 
         CONTINUE_CHECK_MAP_COLLISION_2:
             lbu t1, 0(a1) # Loads tile from current map
+########### CHECK THIS OUT #######################################
+		    li t0, 251     # Value where special tiles start 
+		    bge t1, t0, COLLISION_SPECIAL_1 # If it's a special tile
+#####################################################################
             beqz a4, SKIP_DOOR_CHECK_MAP_COLLISION  # If a4 = 0 (don't consider door), skip door check 
                 li t0,40   # Tile where doors start
                 blt t1,t0, NOT_DOOR_CHECK_MAP_COLLISION # If current tile isn't a door   
@@ -288,7 +292,40 @@ li a0,1  # Sets a0 to 1 (can move)
                 # If tile is breakable or part of background (0 <= t1 <= 3), a0 should still be 1, otherwise procedure would've ended before
                     beq a0,t1, COLLISION_BREAKABLE   # If tile is breakable, there needs to be a check if it was broken
                     j CONTINUE_CHECK_MAP_COLLISION_3 # Otherwise, continue checking collision
-        
+
+            COLLISION_SPECIAL_1:
+                bnez a3,CONTINUE_COLLISION_SPECIAL_1 # If on vertical check, continue
+                # Otherwise, only if on last iteration of horizontal check should you continue
+                addi t2,a2,-1
+                beqz t2,CONTINUE_COLLISION_SPECIAL_1
+                    j CONTINUE_CHECK_MAP_COLLISION_3
+                CONTINUE_COLLISION_SPECIAL_1:    
+                    li t0,255
+                    bne t0,t1,COLLISION_SPECIAL_1_NOT_MARU_MARI
+                        la t1,MARU_MARI_INFO # Loads Maru Mari's info address
+                        lbu t0, 0(t1)        # Loads enable byte
+                        beqz t0,COLLISION_SPECIAL_1_BACKGROUND # If disabled, skip
+                        # Otherwise, pick up MaruMari
+                            sb zero, 0(t1)   # disables Maru Mari
+                            li t0,1          # Loads 1 (1- ball)
+                            la t1,PLYR_INFO  # Loads Maru Mari's info address
+                            sb t0,1(t1)      # New ability
+                            j COLLISION_SPECIAL_1_GET
+                    
+                    COLLISION_SPECIAL_1_GET:  # Will go to a loop and play a tune
+                        csrr t1,3073                       # Gets current time for loop
+                        COLLISION_SPECIAL_1_GET_LOOP:
+                            csrr t0,3073                              # Gets current time
+                            sub t0, t0, t1                            # t0 = current time - last frame's time
+                            li t2, power_up_delay                     # Loads power_up_delay
+                            bltu t0,t2, COLLISION_SPECIAL_1_GET_LOOP  # While t0 < minimum time for a frame, keep looping
+                            j CONTINUE_CHECK_MAP_COLLISION_3
+                    COLLISION_SPECIAL_1_NOT_MARU_MARI:
+                    COLLISION_SPECIAL_1_BACKGROUND:
+                        # This is only reached if there was an error or tile is disabled
+                        # a0 should still be 1, otherwise procedure would've ended before
+                        j CONTINUE_CHECK_MAP_COLLISION_3
+
             COLLISION_BREAKABLE:
             # ---> make breakable block work :)
                 # li a0, 0 # Player can't move  
@@ -297,7 +334,7 @@ li a0,1  # Sets a0 to 1 (can move)
             COLLISION_NOT_BACKGROUND:
                 beq t0,t1,COLLISION_DOOR_FRAME  # If t1 = 4, it's a door frame
                 li t0,36   # Tile from which collision behaves differently
-                bge t1,t0, COLLISION_SPECIAL  # If current tile is a door or a damaging tile (t1 >= 36)
+                bge t1,t0, COLLISION_SPECIAL_2  # If current tile is a door or a damaging tile (t1 >= 36)
                     j COLLISION_BLOCKED # If tile isn't special (3 < t1 < 36)
             
             COLLISION_DOOR_FRAME:
@@ -327,12 +364,12 @@ li a0,1  # Sets a0 to 1 (can move)
                     j CONTINUE_CHECK_MAP_COLLISION_3     
 
 
-            COLLISION_SPECIAL:
+            COLLISION_SPECIAL_2:
                 li t0,40   # Tile from which door tiles begin
-                blt t1,t0, CONTINUE_COLLISION_SCPECIAL   # If tile is a door (t1 >= 40)
+                blt t1,t0, CONTINUE_COLLISION_SCPECIAL_2   # If tile is a door (t1 >= 40)
                     j CONTINUE_CHECK_MAP_COLLISION_3     # Otherwise, finish this iteration's checks
             
-                CONTINUE_COLLISION_SCPECIAL:
+                CONTINUE_COLLISION_SCPECIAL_2:
             # ---> make damage work :)
                     j COLLISION_BLOCKED # For now >:[
             

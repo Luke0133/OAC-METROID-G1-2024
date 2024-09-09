@@ -78,7 +78,51 @@ ASC_RIGHT_SPRITE:
         
 RESET_SPRITE:
     sb zero, 0(t0) # returns to sprite 0
-  
+
 END_UPDATE_STATUS:
     ret
     
+
+UPDATE_MARU_MARI:
+    la t0,CURRENT_MAP # Loads CURRENT_MAP address
+    lbu t1, 4(t0)     # Loads Current Map byte
+    li t2,1           # Number of map that maru mari appears
+    bne t2,t1,END_UPDATE_MARU_MARI # If not on correct map, ignore
+    # Otherwise, update sprite status and check if should be rendered
+        # Updating sprite
+        la t1,MARU_MARI_INFO # Loads Maru Mari's info address
+        lbu t2, 1(t1)        # Loads status sprite
+        li t3, 3             # t3 = max_sprite
+        beq t2,t3,RESET_MARU_MARI # If status == 3, reset it
+            addi t2,t2,1     # Increments status 
+            sb t2, 1(t1)     # Stores status sprite
+            j UPDATE_MARU_MARI_TRY_RENDER
+        RESET_MARU_MARI:
+            sb zero, 1(t1)   # Stores status sprite
+            # j UPDATE_MARU_MARI_TRY_RENDER
+        UPDATE_MARU_MARI_TRY_RENDER:
+        # Checking if should be rendered
+        lbu a1, 6(t0)     # Loads Current Map's X
+        li t2,maru_mari_x # Loads Maru_Mari's X
+        sub t1,t2,a1      # t1 = Maru_Mari's X - Current Map's X
+        bge t1,zero,UPDATE_MARU_MARI_RENDER # If t1 >= 0, render maru mari
+        # Otherwise, finish procedure
+            j END_UPDATE_MARU_MARI
+        UPDATE_MARU_MARI_RENDER:
+            lw a0,0(t0)
+            # a1 is already set (X in map matrix that corresponds to 0x0 on the screen matrix)
+            lbu a2, 7(t0)     # Loads Current Map's Y
+            lbu a3, 8(t0)   # Loads current X offset on Map
+            lbu a4, 9(t0)   # Loads current Y offset on Map	
+            mv a5, s0		# Frame = s0
+            li a6, 1        # Width of rendering area will always be 1
+            li a7, 1        # Height of rendering area will always be 1
+            li t3, maru_mari_x  # X from map matrix where rendering will start from
+            li t2, maru_mari_y  # Y from map matrix where rendering will start from
+            li tp, 0        # Map won't be dislocated		
+            mv s11,ra
+            call RENDER_MAP		
+            mv ra,s11
+    
+    END_UPDATE_MARU_MARI:
+        ret
