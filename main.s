@@ -51,12 +51,14 @@ GAME_LOOP:
 
 	call UPDATE_DOORS       # Updates doors
 	call MAP_MOVE_RENDER    # Renders map when necessary
+	
+	li a0,0
+	call ENEMY_OPERATIONS
+
 	call UPDATE_MARU_MARI   # Updates Maru Mari's sprite (in sprite op)
 	
 	call UPDATE_STATUS      # Updates player's sprite status
 
-	call ENEMY_OPERATIONS
-	
 	li a0, 0     # Rendering player operation
 	li a1, 0     # Rendering full player
 	call RENDER_PLAYER	
@@ -71,6 +73,9 @@ GAME_LOOP:
 	li t0,0xFF200604	# Loads Bitmap Display address
 	sw s0,0(t0)         # Stores new frame value (from s0) on Bitmap Display
 
+	li a0,1
+	call ENEMY_OPERATIONS
+	
 	li a0, 1     # Rendering player's trail operation
 	li a1, 0     # Rendering full player (a1 doesn't really matter when a0 = 1)
 	call RENDER_PLAYER

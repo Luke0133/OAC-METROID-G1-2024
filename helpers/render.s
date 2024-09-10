@@ -621,8 +621,10 @@ RENDER_LIFE_POINTS:
 
 ##################            RENDER ENTITY             ##################
 #                Renders entity, cropping if necessary                   #	
+#        Note that, if a0 = 1, it will render the entities trail         #
+#               and will take another set of arguments                   #
 #                                                                        #		
-#  ----------------         argument registers         ----------------  #
+#  ------------     argument registers (Normal Render)    -------------  #
 #    a0 = Image Address                                                  #
 #    a1 = X coordinate where rendering will start (top left)  -- screen  #
 #    a2 = Y coordinate where rendering will start (top left)  -- screen  #
@@ -630,17 +632,26 @@ RENDER_LIFE_POINTS:
 #    a4 = height of rendering area (usually the size of the sprite)      #
 #    a5 = frame (0 or 1)                                                 #
 #    a6 = status of sprite (usually 0 for sprites that are alone)        #
-#                                                                        #	
+#    a7 = 0 - normal render or 1 - render trail                          #
+#                                                                        #
+#  -------------     argument registers (Render Trail)    -------------  #
+#    a1 = old X coordinate related to matrix (top left)                  #
+#    a2 = old X coordinate related to matrix (top left)                  #
+#    a3 = width (Related to Matrix) of rendering area                    #
+#    a4 = height (Related to Matrix) of rendering area                   #
+#    a7 = 0 - normal render or 1 - render trail                          #
+#                                                                        #		
 #  ----------------           registers used           ----------------  #
 #    a7 = operation (0 if normal printing, 1 cropped print)              #
 #    s1 = X coordinate relative to sprite (top left)                     #
 #    s2 = Y coordinate relative to sprite (top left)                     #
 #    s3 = sprite width                                                   #
-#    t0,t1 --> temporary registers
+#    t0,t1 --> temporary registers                                       #
 #                                                                        #
 ##########################################################################
 
 RENDER_ENTITY:
+bnez a7,RENDER_ENTITY_TRAIL # If a0 != 0, render trail
 	li a7,0     # at the beginning, sprite doesn't need to be cropped
 	li s1,0     # Setting s1 to 0, in case needs to crop but skips horizontal crop
 	li s2,0     # Setting s2 to 0, in case needs to crop but skips vertical crop
@@ -718,8 +729,105 @@ RENDER_ENTITY:
 			lw ra,0(sp)
 			addi sp,sp,4
 		# End of Stack Operations
-	END_RENDER_ENTITY:	
-		ret
+			j END_RENDER_ENTITY
+
+RENDER_ENTITY_TRAIL:
+	li a0,0         # So that it renders map's trail
+	xori a5,s0,1	# Gets oposite frame
+	
+	# Moving arguments
+	mv t3,a1   # column where rendering will begin (X related to Matrix)
+	mv t2,a2   # line where rendering will begin (Y related to Matrix)
+	mv a6,a3   # width (Related to Matrix) of rendering area
+	mv a7,a4   # height (Related to Matrix) of rendering area
+
+	la tp,CURRENT_MAP # Loads CURRENT_MAP's address
+	# Checking horizontal arguments (a1 - X and a3 - width)
+	lbu t0,6(tp)   # loads map's current X  
+	add t1,a1,a3   # t1 (rightmost X + 1) = top left X related to matrix + rendering area width 
+	bge t0,t1, END_RENDER_ENTITY # If t1 <= map's current X, area is outside of screen (don't try to render >:[ )
+	addi t4,t0,m_screen_width    # t1 = map's current X + 20
+	blt a1,t4, END_RENDER_ENTITY # If a1 > map's current X + 20, area is outside of screen (don't try to render >:[ )
+	#	slt t4,a1,t4    # X < current map's X ? t4 = 1 : t4 = 0
+	#	lbu t5,8(tp)    # loads map's X offset 
+	#	slt t5,zero,t5  # 0 < x offset ? t5 = 1 : t5 = 0
+	#	xori t5,t5,1    # 0 < x offset ? t5 = 0 : t5 = 1 
+	#	add t5,t5,t4    # t5 will only be 0 if both t4 and t5 were 0
+	#bnez t5,END_RENDER_ENTITY # if not, finish procedure
+	## Otherwise, continue rendering
+	#	# t3 is already defined
+	#	li a6,1  # since tile is at its limit, render only one horizontally
+	#	j RENDER_ENTITY_TRAIL_CHECK_VERTICAL  # Check vertically
+	
+	#CONTINUE_RENDER_ENTITY_TRAIL:
+	# Old X is inside screen, but there are two more X cases that need to be checked
+		# 1 - is the left X outside of left range?
+		blt a1,t0,CORRECT_X_LEFT_TRAIL # If so, reduce width
+		# 2 - is the right X outside of right range?
+		blt t4,t1,CORRECT_X_RIGHT_TRAIL # If so, reduce width
+		j RENDER_ENTITY_TRAIL_CHECK_VERTICAL # Otherwise, the a1 and a3 arguments are already defined correctly, go check vertical		
+		
+		CORRECT_X_LEFT_TRAIL:
+			sub t4,t0,a1    # t4 will have map's current X - Old X
+			sub a6,a6,t4    # Reduce width
+			mv t3,t0        # t3 will recieve map's current X  
+			j RENDER_ENTITY_TRAIL_CHECK_VERTICAL  # Go check vertical arguments		
+		
+		CORRECT_X_RIGHT_TRAIL:
+			# t3 is inside the range, so it doesn't change
+			sub t4,t4,t1    # t4 = map's current X + 20 - (top left X related to matrix + rendering area width) 
+			sub a6,a6,t4    # Reduce width
+			lbu t4,8(tp)    # loads map's X offset 
+			slt t4,zero,t4  # 0 < x offset ? t4 = 1 : t4 = 0
+			add a6,a6,t4    # add 1 to width if offset != 0
+			beqz a6, END_RENDER_ENTITY # if width is 0, end procedure
+			# j RENDER_ENTITY_TRAIL_CHECK_VERTICAL # Go check vertical arguments
+
+	RENDER_ENTITY_TRAIL_CHECK_VERTICAL:
+		# Checking vertical arguments (a2 - Y and a4 - height)
+		lbu t0,7(tp)   # loads map's current Y  
+		add t1,a2,a4   # t1 (rightmost Y + 1) = top left Y related to matrix + rendering area width 
+		bge t0,t1, END_RENDER_ENTITY # If t1 <= map's current Y, area is outside of screen (don't try to render >:[ )
+		addi t4,t0,m_screen_height   # t1 = map's current Y + 15
+		blt a2,t4, END_RENDER_ENTITY # If a2 > map's current Y + 15, area is outside of screen (don't try to render >:[ )
+		# Old Y is inside screen, but there are two more Y cases that need to be checked
+			# 1 - is the left Y outside of left range?
+			blt a2,t0,CORRECT_Y_TOP_TRAIL # If so, reduce width
+			# 2 - is the right Y outside of right range?
+			blt t4,t1,CORRECT_Y_BOTTOM_TRAIL # If so, reduce width
+			j RENDER_ENTITY_TRAIL_CHECK_VERTICAL # Otherwise, the a2 and a4 arguments are already defined correctly, go check vertical		
+			
+			CORRECT_Y_TOP_TRAIL:
+				sub t4,t0,a1    # t4 will have map's current Y - Old Y
+				sub a7,a7,t4    # Reduce height
+				mv t2,t0        # t2 will recieve map's current Y  
+				j RENDER_ENTITY_TRAIL_START  # Render trail
+			
+			CORRECT_Y_BOTTOM_TRAIL:
+				# t2 is inside the range, so it doesn't change
+				sub t4,t4,t1    # t4 = map's current Y + 20 - (top left Y related to matrix + rendering area width) 
+				sub a7,a7,t4    # Reduce width
+				lbu t4,9(tp)    # loads map's Y offset 
+				slt t4,zero,t4  # 0 < Y offset ? t4 = 1 : t4 = 0
+				add a7,a7,t4    # add 1 to width if offset != 0
+				beqz a7, END_RENDER_ENTITY # if width is 0, end procedure
+				# j RENDER_ENTITY_TRAIL_START # Render trail
+		
+		RENDER_ENTITY_TRAIL_START:
+		# Storing Registers on Stack
+			addi sp,sp,-4
+			sw ra,0(sp)
+		# End of Stack Operations
+			call SCENE_RENDER	# Calls SCENE_RENDER procedure
+		# Procedure finished: Loading Registers from Stack
+			lw ra,0(sp)
+			addi sp,sp,4
+		# End of Stack Operations
+
+END_RENDER_ENTITY:	
+	ret
+
+
 
 
 ###############          RENDER DOOR UPDATE          ###############

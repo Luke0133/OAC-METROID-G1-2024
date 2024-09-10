@@ -1,4 +1,13 @@
 .text
+# ----> Summary: collisions.s stores collision related procedures, including the movement of enemies and projectiles
+# 1 - CHECK HORIZONTAL COLLISION (Checks player's horizontal collision)
+# 2 - CHECK VERTICAL COLLISION (Checks player's vertical collision)
+# 3 - MOVE_ZOOMER
+# 4 - MOVE_RIPPER
+
+
+# N - CHECK MAP COLLISION (The one in charge of checking the map's tiles)
+
 #######################     CHECK HORIZONTAL COLLISION     ######################
 #   This procedure checks the tiles in front of the player depending on which   #
 #  direction they're facing. Based on the player's MOVE_Y (movement on Y axis), #
@@ -240,6 +249,121 @@ CHECK_VERTICAL_COLLISION:
     # If no check is to be made, return a0 = 1 (player can move)
         li a0,1  
         ret 
+
+
+########################        MOVE RIPPER        ########################
+#       This procedure checks the tiles in front of Ripper when its       #
+#         X offset is 0. If there's something blocking its path,          #
+#                           it'll turn arround.                           #
+#                                                                         #
+#  ---------------           argument registers          ---------------  #
+#    a0 = Ripper's address                                                      #
+#	 a1 = Current map's address                                                 #
+#                                                                               #
+#  ------------------             registers used            ------------------  #
+#    a2,a3, a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK            #      
+#                                                                               #
+#  ------------------          temporary registers          ------------------  #
+#    t0, t1 --> temporary registers                                             #
+#    t2 = PLYR_POS address (stores from a2 to let it be modified)               #
+#    t3 = Player's X/Y offset                                                   #
+#    tp = offset modifier (stores from a3 to let it be modified)                #
+#                                                                               #    
+#################################################################################  
+
+MOVE_RIPPER:
+    # Storing current X and Y to old X and Y
+    lbu t1,3(a0)  # Loads Ripper's X
+    sb t1,4(a0)   # And stores it in Ripper's old 
+    lbu t1,5(a0)  # Loads Ripper's Y
+    sb t1,6(a0)   # And stores it in Ripper's old Y
+
+    # Preparations for check
+    li t0,1       # In case no collision check is made
+    lbu t1,2(a0)  # Loads Ripper's X offset
+
+    bnez t1,SKIP_RIPPER_COLLISION   # If offset isn't 0, just move ripper
+    # Otherwise, check collision
+        lbu a5,1(a1)  # Loads map's matrix width
+        lbu a6,3(a0)  # Loads Ripper's current X
+        lbu a7,5(a0)  # Loads Ripper's current Y
+
+        mul t0,a5,a7  # t0 = width * Y
+        addi a1,a1,3  # skip first 3 information bytes
+        add a1,a1,t0  # gets starting address on map matrix 
+    
+        lbu t0,1(a0)  # Loads Ripper's direction
+        beqz t0,RIPPER_COLLISION_RIGHT   # If moving right
+        # Otherwise, check on the left
+            addi a6,a6,-1 # Checking tile to the left
+            addi a1,a1,-1 # Updates starting address on map matrix
+            j START_RIPPER_COLLISION
+        
+        RIPPER_COLLISION_RIGHT: 
+            addi a6,a6,1 # Checking tile to the right
+            addi a1,a1,1 # Updates starting address on map matrix
+            #j START_RIPPER_COLLISION
+
+    START_RIPPER_COLLISION:
+    # Storing Registers on Stack
+        addi sp,sp,-12
+        sw a0,0(sp)
+        sw a1,4(sp)
+        sw ra,8(sp)
+    # End of Stack Operations
+
+        li a0,2  # Doesn't matter, since no doors will be checked
+        # a1 is already defined
+        li a2,1  # Only check one tile
+        li a3,0  # Horizontal check
+        li a4,0  # Don't consider doors (since it never spawns there)
+        # a5 is already defined
+        # a6 is already defined
+        # a7 is already defined
+
+        call CHECK_MAP_COLLISION
+
+    # Procedure finished: Loading Registers from Stack
+        lw a0,0(sp)
+        lw a1,4(sp)
+        lw ra,8(sp)
+        addi sp,sp,12
+    # End of Stack Operations
+    
+    SKIP_RIPPER_COLLISION:
+    # In case no collision check was made, t0 = 1
+        lbu t1,1(a0)  # Loads Ripper's direction
+        bnez t0, CONTINUE_MOVE_RIPPER  # If returning anything but 0, continue moving ripper
+        # Otherwise, turn it arround
+            xori t1,t1,1  # Inverts direction
+            sb t1,1(a0)   # and stores it back
+            ret # and finish procedure
+
+        CONTINUE_MOVE_RIPPER:
+            # Y never updates
+            lbu t0,3(a0)  # Loads Ripper's X
+            lbu t2,2(a0)  # Loads Ripper's X offset
+            beqz t1,MOVE_RIPPER_RIGHT  # If direction is to the right
+            # Otherwise, update to the left
+                addi t2,t2,-4   # Movement for ripper to the left
+                bge t2,zero,MOVE_RIPPER_LEFT_SKIP_CORRECTION
+                    addi t2,t2,tile_size # adds 16 to offset
+                    addi t0,t0,-1        # subtracts 1 from X
+                MOVE_RIPPER_LEFT_SKIP_CORRECTION:
+                    sb t0,3(a0)    # Stores Ripper's new X
+                    sb t2,2(a0)    # Stores Ripper's new X offset
+                    ret # and finish procedure
+
+            MOVE_RIPPER_RIGHT:
+                addi t2,t2,4      # Movement for ripper to the right
+                li t1,tile_size   # loads 16
+                bge t2,zero,MOVE_RIPPER_LEFT_SKIP_CORRECTION
+                    sub t2,t2,t1  # subtracts 16 from offset
+                    addi t0,t0,1  # subtracts 1 from X
+                MOVE_RIPPER_LEFT_SKIP_CORRECTION:
+                    sb t0,3(a0)   # Stores Ripper's new X
+                    sb t2,2(a0)   # Stores Ripper's new X offset
+                    ret # and finish procedure
 
 ######################      CHECK MAP COLLISION      ######################    
 #   Checks the tile on the address given by a1, and returns whether the   #
