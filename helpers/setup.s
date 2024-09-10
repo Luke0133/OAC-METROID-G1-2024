@@ -95,6 +95,8 @@ SETUP:
         sw t0,0(t4)     # Stores Doors1 address on Doors address
         la t0, Frames1  # Frames address
         sw t0,0(t5)     # Stores Frames1 address on Doors address
+        la t0,Rippers   # Rippers address
+        sw zero,0(t0)   # Stores 0 to it (no rippers)
         la a0, Map1 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
@@ -168,6 +170,9 @@ SETUP:
         sw t0,0(t4)     # Stores Doors2 address on Doors address
         la t0, Frames2  # Frames address
         sw t0,0(t5)     # Stores Frames2 address on Doors address
+        la t0,Rippers   # Rippers address
+        la t1,Rippers2  # Loads RippersA address for Map 2
+        sw t1,0(t0)     # and stores it
         la a0, Map2 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map2 address on CURRENT_MAP
@@ -240,6 +245,8 @@ SETUP:
         sw t0,0(t4)     # Stores Doors3 address on Doors address
         la t0, Frames3  # Frames address
         sw t0,0(t5)     # Stores Frames3 address on Doors address
+        la t0,Rippers   # Rippers address
+        sw zero,0(t0)   # Stores 0 to it (no rippers)
         la a0, Map3 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map3 address on CURRENT_MAP
@@ -313,6 +320,9 @@ SETUP:
         sw t0,0(t4)     # Stores Doors4 address on Doors address
         la t0, Frames4  # Frames address
         sw t0,0(t5)     # Stores Frames4 address on Doors address
+        la t0,Rippers   # Rippers address
+        la t1,Rippers4  # Loads RippersA address for Map 4
+        sw t1,0(t0)     # and stores it
         la a0, Map4 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map4 address on CURRENT_MAP
@@ -385,6 +395,8 @@ SETUP:
         sw t0,0(t4)     # Stores Doors5 address on Doors address
         la t0, Frames5  # Frames address
         sw t0,0(t5)     # Stores Frames5 address on Doors address
+        la t0,Rippers   # Rippers address
+        sw zero,0(t0)   # Stores 0 to it (no rippers)
         la a0, Map5 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map5 address on CURRENT_MAP
@@ -457,6 +469,8 @@ SETUP:
         sw t0,0(t4)     # Stores Doors6 address on Doors address
         la t0, Frames6  # Frames address
         sw t0,0(t5)     # Stores Frames6 address on Doors address
+        la t0,Rippers   # Rippers address
+        sw zero,0(t0)   # Stores 0 to it (no rippers)
         la a0, Map6 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map6 address on CURRENT_MAP
@@ -528,6 +542,8 @@ SETUP:
         sw t0,0(t4)     # Stores Doors7 address on Doors address
         la t0, Frames7  # Frames address
         sw t0,0(t5)     # Stores Frames7 address on Doors address
+        la t0,Rippers   # Rippers address
+        sw zero,0(t0)   # Stores 0 to it (no rippers)
         la a0, Map7 	# Map Address
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map7 address on CURRENT_MAP
@@ -675,7 +691,7 @@ UPDATE_DOORS:
             addi a0,a0,4 # Going to the next door's address                                  
             addi t1,t1,1 # Iterating counter by 1                                   
             bge t1,t0, END_UPDATE_DOORS_LOOP # If all of the map's doors were checked, end loop                                  
-            j UPDATE_DOORS_LOOP # otherwise, go back to the loop's begining                     
+            j UPDATE_DOORS_LOOP # otherwise, go back to the loop's beginning                     
     
     END_UPDATE_DOORS_LOOP:    
     # End of loop
@@ -739,7 +755,7 @@ CHANGE_DOORS_STATE:
         addi a2,a2,4 # Going to the next door's address                                  
         addi t1,t1,1 # Iterating counter by 1                                   
         bge t1,t0, END_CHANGE_DOORS_STATE_LOOP # If all of the map's doors were checked, end loop                                  
-        j CHANGE_DOORS_STATE_LOOP # otherwise, go back to the loop's begining                     
+        j CHANGE_DOORS_STATE_LOOP # otherwise, go back to the loop's beginning                     
     
     END_CHANGE_DOORS_STATE_LOOP: 
         li t2, 2       # t2 = 2 (map will be rendered again)

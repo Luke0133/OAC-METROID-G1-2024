@@ -5,7 +5,7 @@
 .include "render.s"		
 #.include "renderold.s"	
 #.include "beam_operations.s"
-#.include "enemies.s"							
+.include "enemies.s"							
 .include "SYSTEMv24.s"
 .include "map_op.s"
 .include "sprite_op.s"

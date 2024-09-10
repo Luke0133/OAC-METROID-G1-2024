@@ -160,7 +160,9 @@ INPUT_CHECK:
         
                 li t1, -1      # Loads direction for MOVE_Y (-1 = up)
                 sb t1, 7(a0)  # Stores new direction on MOVE_Y
-
+                
+                # USES FLOATING POINT OPERATIONS
+                fmv.s fs2,fs1  # Sets fs2 (player's Y speed) to -9 
 	            j END_INPUT_CHECK
 	
     INPUT.K: # Shoots

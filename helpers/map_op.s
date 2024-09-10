@@ -288,7 +288,7 @@ ENTER_DOOR_ANIMATION:
 	li a1, 0     # Rendering full player (a1 doesn't really matter when a0 = 1)
 	call RENDER_PLAYER
 
-	call RENDER_LIFE
+	call RENDER_UI
 	#call MUSIC.PLAY
 
 	# 2nd vertical movement check 
@@ -322,7 +322,7 @@ ENTER_DOOR_ANIMATION:
 	CONTINUE_ENTER_DOOR_ANIMATION_2:
 		csrr s1,3073    # new time is stored in s1, in order to be compared later		
 
-		j ENTER_DOOR_ANIMATION	# Returns to begining of loop
+		j ENTER_DOOR_ANIMATION	# Returns to beginning of loop
 
 ##########################    SWITCH MAP    ###########################
 #         Loop that will take player from one map to another          #
@@ -437,7 +437,7 @@ SWITCH_MAP:
 	li t0,0xFF200604		# carrega em t0 o endereco de troca de frame
 	sw s0,0(t0)
 
-	call RENDER_LIFE
+	call RENDER_UI
 
 	#call MUSIC.PLAY
 
@@ -622,7 +622,7 @@ LEAVE_DOOR_ANIMATION:
 	li a1, 0     # Rendering full player (a1 doesn't really matter when a0 = 1)
 	call RENDER_PLAYER
 
-	call RENDER_LIFE
+	call RENDER_UI
 
 	#call MUSIC.PLAY
 
@@ -665,7 +665,7 @@ LEAVE_DOOR_ANIMATION:
 	
 	CONTINUE_LEAVE_DOOR_ANIMATION_2:
 		csrr s1,3073    # new time is stored in s1, in order to be compared later		
-		j LEAVE_DOOR_ANIMATION	# Returns to begining of loop
+		j LEAVE_DOOR_ANIMATION	# Returns to beginning of loop
 
 	END_LEAVE_DOOR_ANIMATION:
 		# Closing door

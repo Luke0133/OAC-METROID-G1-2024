@@ -228,9 +228,9 @@ CHECK_MOVE_Y:
       j END_PHYSICS
 
     MOVE_PLAYER_Y:
-        lbu t2, 1(a0)   # Loads JUMP information
+        lb t2, 1(a0)   # Loads JUMP information
         blt t0,zero, MOVE_PLAYER_UP
-        j MOVE_PLAYER_DOWN
+        j ITERATE_JUMP
         
         MOVE_PLAYER_UP:
             li t1, min_jump # minimum height of jump required for the movement 
@@ -240,57 +240,42 @@ CHECK_MOVE_Y:
             j SWITCH_DOWN
             
             SKIP_INPUT_CHECK:
+                fcvt.w.s t1,fs2 
+                bge t1,zero, SWITCH_DOWN
                 li t1, max_jump # minimum height of jump required for the movement 
                 blt t2, t1, ITERATE_JUMP   # 
-                j SWITCH_DOWN
-                
-                ITERATE_JUMP:
-                li t1, slow_jump # threshold of max height to slow down
-                blt t2, t1, JUMP_4_PIXELS
-                li t1, 1 # Will increment only 2 pixels up
-                addi t2,t2,2
-                j CONTINUE_MOVE_PLAYER_Y
-                JUMP_4_PIXELS:
-                    li t1 medium_jump
-                    blt t2,t1, JUMP_8_PIXELS
-                        li t1, 2 # Will increment 4 pixels up
-                        addi t2,t2,4
-                        j CONTINUE_MOVE_PLAYER_Y
-                    JUMP_8_PIXELS:
-                        li t1, 3 # Will increment 4 pixels up
-                        addi t2,t2,8
-                        j CONTINUE_MOVE_PLAYER_Y
-                    
-            SWITCH_DOWN:
+                        
+            SWITCH_DOWN: 
                 la t0,PLYR_INPUT      # Loads PLYR_INPUT on t0
                 li t1, 1              # Sets t1 to 1 (there's player input, and can move)
                 sb t1, 0(t0)          # and stores it in PLYR_INPUT 
                 
-                sb zero, 1(a0) # reset jump information
-                li t1, 1
-                sb t1,0(a0) # Switches MOVE_Y to 1 (Down)            
+                sb t1, 1(a0)        # reset jump information
+                sb t1,0(a0)           # Switches MOVE_Y to 1 (Down)    
+
+                li t1, 2
+                fcvt.s.w fs2,t1     # Sets speed to zero       
                 j END_PHYSICS
-        MOVE_PLAYER_DOWN:
-            li t1, min_jump
-            lbu t2, 1(a0)   # Loads JUMP information
-            blt t2, t1, FALL_2_PIXELS
-            li t1, 2 # Will increment 4 pixels down
-            addi t2,t2,4
-            j CONTINUE_MOVE_PLAYER_Y
             
-            FALL_2_PIXELS:
-                li t1, 1 # Will increment only 2 pixels down
-                addi t2,t2,2
-                j CONTINUE_MOVE_PLAYER_Y
-        
-        CONTINUE_MOVE_PLAYER_Y:
-        # t1 will hold the value to multiply with t0 (MOVE_Y)
-        sb t2, 1(a0)
-        sll a4, t0, t1  # Multiplies the value stored on MOVE_Y by 4. a0 will store the movement of the player (+/- 4 pixels)
+        ITERATE_JUMP:
+            fadd.s fs2,fs2,fs0    # fs2 = Player's current Y speed + gravity factor       
+            fcvt.w.s a4,fs2       # Sets a4 = floor(fs2)
 
-        lbu t2, 1(a0)   # Loads JUMP information
+            li t0,max_speed             # Loads max speed (8, when falling)
+            blt a4,t0, SKIP_MAX_SPEED   # If a4 < 8, skip this part
+            # Otherwise, set offset modifier to 8
+                li a4,max_speed
+                # speed doesn't need to be changed (will be 0 when on the ground and 8 while in freefall)
+            SKIP_MAX_SPEED: 
+            # Iterating JUMP factor with absolute value of a4
+                mv t0,a4                # moves a4 to t0
+                bge t0,zero, SKIP_ABS   # if t0 >= 0, skip this
+                    sub t0,zero,t0      # otherwise, t0 will be its opposite 
+                SKIP_ABS:
+                    add t2,t2,t0        # t0 to t2 (JUMP factor)
+                    sb t2, 1(a0)        # and stores it
+
         lbu a6, 7(a3)	# Loads Player's Y offset
-
         add a6,a6,a4	# Adds the X Movement to the Player's Offset
         
         lbu a7, 10(a3)	# Loads Player's Y on Matrix
@@ -322,6 +307,7 @@ CHECK_MOVE_Y:
 
             mv a1,a2 # Moves current map's address to a1 
             mv a2,a3 # Moves PLYR_POS to a2
+            mv a3,a4 # Moves offset modifier to a3 
             call CHECK_VERTICAL_COLLISION # Checking collision
             mv t0,a0     # Moves result of collision check to t0 
 
@@ -340,40 +326,37 @@ CHECK_MOVE_Y:
             lbu t2, 4(a3)    # Loads Player's Current Y
             bnez t0, CAN_MOVE_Y # t0 != 0 ? CAN_MOVE_Y : Fixed_Y_Map
                 mv t5,t2 # storing PLYRS_current Y in t5
-                #  la a0, MOVE_Y
-                #  sb zero,15(a3)  # Sets player status to be on ground
+                fcvt.s.w fs2,zero # Resets player's jump speed
+                
                 lb t0, 0(a0) # Gets MOVE_Y info
                 blt t0,zero, STOP_JUMP # If t1 <= -1 (aka, player would start jumping), reset
                     # If t0 = 0 (not jumping) or t1 = 1 (freefall), reset MOVE_Y and JUMP
                     lbu t0, 7(a3)  # Loads player's Y offset
-                    li t1, 14
-                    bne t1,t0,SKIP_ADJUST_Y # If player is on ground and Y offset = 0, don't reajust position
+                    beqz t0,SKIP_ADJUST_Y_DOWN # If player is on ground and Y offset = 0, don't reajust position
                     # Otherwise, 
-                       # addi a7,a7,1 # Player's Y on matrix += 1 (goes another tile down)
                         sb a7, 10(a3)   # Stores new Y coordinate on matrix
-                        addi t2,t2,2    # add player's Y with the Y offset
-                        mv t5,t2        # and stores PLYRS_current Y in t5
                         lbu t0, 0(a2)   # Loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
                         li t3, 2        # Loads 2 and 
-                        bne t3, t0, SKIP_ADJUST_Y # compares with the result
+                        bne t3, t0, SKIP_ADJUST_Y_DOWN # compares with the result
                         # If map is vertical, correct its offset and coordinates
                             sb zero, 9(a1)   # Sets map's Y offset to 0
                             lbu t4, 2(a2)    # Loads Map matrix height
                             li t3, m_screen_height # Loads Map screen height related to matrix
                             sub t3,t4,t3     # t4 = Map Matrix Height - Screen Matrix Height (t4 = Map's Y when it's on lowermost part of the map)
                             lbu t4, 7(a1)    # Loads Map Y postition on Matrix
-                            bge t4,t3,SKIP_ADJUST_Y  # If on lowermost Y, don't update map's Y it
-                            beqz t4,SKIP_ADJUST_Y    # If on topmost Y, don't update map's Y it
+                            bge t4,t3,SKIP_ADJUST_Y_DOWN  # If on lowermost Y, don't update map's Y it
+                            beqz t4,SKIP_ADJUST_Y_DOWN    # If on topmost Y, don't update map's Y it
                             addi t4,t4,1     # adds 1 to it
                             sb t4, 7(a1)     # and stores it
                             li t3, 2         # t3 = 2 (map will be rendered again)
                             sb t3, 5(a1)     # Stores t3 on CURRENT_MAP's rendering byte
-                    SKIP_ADJUST_Y:
+                    SKIP_ADJUST_Y_DOWN:
                     sb zero, 7(a3) # Sets player's Y offset to 0
                     sb zero, 0(a0) # MOVE_Y = 0
                     li t1,-1
                     sb t1, 1(a0) # JUMP = 0
                     j Fixed_Y_Map
+                
                 STOP_JUMP:
                     # if t0 = -1 (jumping) check if player is already jumping or not
                     li t0,8
@@ -381,7 +364,27 @@ CHECK_MOVE_Y:
                     slt t0,t0,t1 # t1 > 8 ? t0 = 1 : t0 = 0
                     sb t0, 0(a0) # MOVE_Y = t0 
                     sb zero,1(a0) # reseting jump byte
-                    j Fixed_Y_Map
+                    
+                    lbu t0, 7(a3)  # Loads player's Y offset
+                    beqz t0,SKIP_ADJUST_Y_UP # If player has Y offset = 0, don't reajust position
+                        # Otherwise, 
+                        sb zero, 7(a3) # Sets player's Y offset to 0
+                        lbu t0, 0(a2)   # Loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
+                        li t3, 2        # Loads 2 and 
+                        bne t3, t0, SKIP_ADJUST_Y_UP # compares with the result
+                        # If map is vertical, correct its offset and coordinates
+                            sb zero, 9(a1)   # Sets map's Y offset to 0
+                            lbu t4, 2(a2)    # Loads Map matrix height
+                            li t3, m_screen_height # Loads Map screen height related to matrix
+                            sub t3,t4,t3     # t4 = Map Matrix Height - Screen Matrix Height (t4 = Map's Y when it's on lowermost part of the map)
+                            lbu t4, 7(a1)    # Loads Map Y postition on Matrix
+                            bge t4,t3,SKIP_ADJUST_Y_UP  # If on lowermost Y, don't update map's Y it
+                            beqz t4,SKIP_ADJUST_Y_UP    # If on topmost Y, don't update map's Y it
+                            sb t4, 7(a1)     # and stores it
+                            li t3, 2         # t3 = 2 (map will be rendered again)
+                            sb t3, 5(a1)     # Stores t3 on CURRENT_MAP's rendering byte
+                    SKIP_ADJUST_Y_UP:
+                        j Fixed_Y_Map
         
         CAN_MOVE_Y:  
             la t0,PLYR_INPUT      # Loads PLYR_INPUT on t0

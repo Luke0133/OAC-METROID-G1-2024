@@ -34,9 +34,12 @@ MUSIC.STATUS: .word 0,0
 .eqv bottom_ver_border 96         # Y on screen (in pixels) from where screen will move down instead of player
 .eqv m_door_right_X_distance 18   # Distance between a door on right side of screen to the left side of screen in 16x16 tiles
                                   # It won't be needed for doors on the left, but the distance is 1
+.eqv m_render_distance 4          # Distance in tiles where procedures such as moving entities should happen
 
+####### .eqv for player's sprite #######
 .eqv green 32
-.eqv cyan 240								   
+.eqv cyan 240	
+					   
 ####### Map informations ####### 
 CURRENT_MAP: .word 0  # Stores the address of current map
 MAP_INFO: .byte 1, 0, # Current Map's Number, render byte (0 - don't render, 1 - render once, 2 - render twice, 3 - switch map (through door), 4 - switch map (through cheat input))
@@ -67,28 +70,19 @@ MOVE_Y: .byte 0 # -1 up, 1 down, 0 not moving on Y axis
 JUMP: .byte 0 # counter of current height
 PLYR_INPUT: .byte 0  # 0 If no input, 1 if input, 2 if input but can't move horizontally
 
+.eqv max_jump 80      # Maximum dislocation in jump
+.eqv min_jump 32      # Minimum dislocation for a jump
+.eqv max_speed 8      # Maximum downwards speed
+GRAVITY_FACTOR: .float 0.4   # Calculated beforhand: gravity x delta time -> (gravity = 8; delta time = 0.05s = frame_rate)  
+JUMP_SPEED: .float -9
+
 PLYR_INFO_2: .byte 0,0,0,0  # Missile mode (0 - disabled, 1 - enabled), cooldown to switch, number of missiles 
-
-
-.eqv max_jump 80
-.eqv slow_jump 76
-.eqv medium_jump 40
-.eqv min_jump 32
-.eqv gravity 1
-
-.eqv standing_front_hitbox 8 # offset from the front of Samus' standing sprite 
-.eqv standing_back_hitbox 4  # offset from the back of Samus' standing sprite 
-.eqv SAM_WALK 20
-.eqv SAM_SHOOT 28
-.eqv SAM_BALL 16 
 
 ####### Power-Ups Info #########
 .eqv power_up_delay 2000
 .eqv maru_mari_x 15
 .eqv maru_mari_y 9
 MARU_MARI_INFO: 1,0 # Whether power up is enabled or not, sprite status (0 -> 1 -> 2 -> 3 -> 0)
-
-
 
 ## BEAM_ARRAY ##
 ##MUDAR OS BEQS PARA DIR LEFT => 2 -> -1
@@ -120,14 +114,38 @@ ZOOMER_STATUS: .byte 0,0 # Sprite's Number, Movement Direction (Clockwise: 0 - R
 #                                      Counter-Clockwise: 4 - Left/Top, 5 - Down/Left, 6 - Right/Bottom, 7 - Up/Right)
 .eqv ZOOMER_HEALTH 50
 
-## RIPPER ##
-RIPPER_INFO: .byte 0, 0 # Stores Ripper's health points, Rendering (0 - Disabled, 1 - Enabled)
-RIPPER_POS: .half 80, 0 # Stores Ripper's current and old top left X respectively, both related to the screen  
-	  		.byte 180, 0 # Stores Ripper's current and old top left Y respectively, both related to the screen 
-	   		  	  0, 0 # Stores Ripper's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-RIPPER_MATRIX: .byte 0, 0, 0, 0 # Stores Ripper's top left new and old X and new and old Y respectively, all related to the map matrix 
-RIPPER_STATUS: .byte 0,0 # Sprite's Number, Movement Direction (0 = Right, 1 = Left)
-.eqv ZOOMER_HEALTH 50
+##############           Ripper            ##############
+Rippers: .word 0 # Holds the current "RippersA" label based on the current map (0 if none exist in current map)
+#Rippers_Next: .word 0 # Holds the "RippersA" label based on the next map (0 if none exist in next map)  
+#                     +-->   only changed when switching maps
+
+# With 5 rippers in each map, we have 72 bytes used (each ripper is 7 bytes appart from each other)
+.eqv ripper_size 7   # number of bytes per ripper
+.byte
+Rippers2: 5
+Ripper2_0: 0, 1, 0        # Stores Ripper's type (0 - normal, 1 - red), movement direction (0 - right, 1 - left), X offset
+           5, 5, 12, 12   # Stores Ripper's top left new and old X and new and old Y respectively, all related to the map matrix 
+Ripper2_1: 0, 0, 0        # Type, direction, X offset
+           11, 11, 18, 18 # X, old X, Y, old Y related to matrix
+Ripper2_2: 1, 0, 0    # Type, direction, X offset
+           2, 2, 26, 26 # X, old X, Y, old Y related to matrix
+Ripper2_3: 0, 1, 0    # Type, direction, X offset
+           17, 17, 31, 31 # X, old X, Y, old Y related to matrix
+Ripper2_4: 1, 0, 8    # Type, direction, X offset
+           3, 3, 34, 34 # X, old X, Y, old Y related to matrix
+
+Rippers4: 5
+Ripper4_0: 0, 0, 0        # Stores Ripper's type (0 - normal, 1 - red), movement direction (0 - right, 1 - left), X offset
+           9, 9, 30, 30   # Stores Ripper's top left new and old X and new and old Y respectively, all related to the map matrix 
+Ripper4_1: 0, 0, 8        # Type, direction, X offset
+           3, 3, 26, 26   # X, old X, Y, old Y related to matrix
+Ripper4_2: 0, 0, 0        # Type, direction, X offset
+           15, 15, 23, 23 # X, old X, Y, old Y related to matrix
+Ripper4_3: 1, 1, 0        # Type, direction, X offset
+           12, 12, 18, 18 # X, old X, Y, old Y related to matrix
+Ripper4_4: 1, 1, 0        # Type, direction, X offset
+           2, 2, 12, 12   # X, old X, Y, old Y related to matrix
+# 2 bytes left here
 
 ## RIDLEY ##
 RIDLEY_INFO: .byte 0, 0 # Stores Ridley's health points, Rendering (0 - Disabled, 1 - Enabled)
@@ -3295,3 +3313,79 @@ MaruMari: # 16 x 64, Height per sprite: 16
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
 
+################################################        Enemies        ################################################
+# Stores all sprites used for enemies in game
+# 
+# --> Total ammount of data: 
+#
+######################################################################################################################
+
+Ripper: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,103,252,252,252,103,199,199,199,199,199,
+199,199,199,199,103,103,252,103,103,103,103,103,199,199,199,199,
+199,199,199,199,199,103,114,103,103,103,103,199,252,252,199,199,
+199,199,103,252,199,199,103,114,103,103,199,103,103,103,252,199,
+103,252,199,103,114,199,199,103,103,199,199,103,199,199,103,114,
+199,103,114,199,103,199,199,199,103,199,199,199,252,252,199,103,
+199,199,199,103,199,199,103,199,103,199,103,199,199,199,114,199,
+199,199,103,199,199,103,199,199,199,199,103,103,103,103,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,103,252,252,252,103,199,199,199,199,199,199,
+199,199,199,199,103,103,103,103,103,252,103,103,199,199,199,199,
+199,199,252,252,199,103,103,103,103,114,103,199,199,199,199,199,
+199,252,103,103,103,199,103,103,114,103,199,199,252,103,199,199,
+114,103,199,199,103,199,199,103,103,199,199,114,103,199,252,103,
+103,199,252,252,199,199,199,103,199,199,199,103,199,114,103,199,
+199,114,199,199,199,103,199,103,199,103,199,199,103,199,199,199,
+199,199,103,103,103,103,199,199,199,199,103,199,199,103,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+
+Ripper_Variant: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,70,183,183,183,70,199,199,199,199,199,
+199,199,199,199,70,70,183,70,70,70,70,70,199,199,199,199,
+199,199,199,199,199,70,234,70,70,70,70,199,183,183,199,199,
+199,199,70,183,199,199,70,234,70,70,199,70,70,70,183,199,
+70,183,199,70,234,199,199,70,70,199,199,70,199,199,70,234,
+199,70,234,199,70,199,199,199,70,199,199,199,183,183,199,70,
+199,199,199,70,199,199,70,199,70,199,70,199,199,199,234,199,
+199,199,70,199,199,70,199,199,199,199,70,70,70,70,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,70,183,183,183,70,199,199,199,199,199,199,
+199,199,199,199,70,70,70,70,70,183,70,70,199,199,199,199,
+199,199,183,183,199,70,70,70,70,234,70,199,199,199,199,199,
+199,183,70,70,70,199,70,70,234,70,199,199,183,70,199,199,
+234,70,199,199,70,199,199,70,70,199,199,234,70,199,183,70,
+70,199,183,183,199,199,199,70,199,199,199,70,199,234,70,199,
+199,234,199,199,199,70,199,70,199,70,199,199,70,199,199,199,
+199,199,70,70,70,70,199,199,199,199,70,199,199,70,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,

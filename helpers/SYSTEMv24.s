@@ -8,13 +8,14 @@
 # 2024/1								#
 #########################################################################
 
-# incluir o MACROSv24.s no início do seu programa!!!!
+# incluir o MACROSv24.s no inï¿½cio do seu programa!!!!
 
 .data
 .align 2
 
 # Tabela de caracteres desenhados segundo a fonte 8x8 pixels do ZX-Spectrum
 LabelTabChar:
+LabelTabCharMetroid:
 .word 	0x00000000, 0x00000000, 0x10101010, 0x00100010, 0x00002828, 0x00000000, 0x28FE2828, 0x002828FE, 
 	0x38503C10, 0x00107814, 0x10686400, 0x00004C2C, 0x28102818, 0x003A4446, 0x00001010, 0x00000000, 
 	0x20201008, 0x00081020, 0x08081020, 0x00201008, 0x38549210, 0x00109254, 0xFE101010, 0x00101010, 
@@ -80,7 +81,7 @@ NumInfP:		.string "+Infinity"
 NumInfN:		.string "-Infinity"
 NumNaN:			.string "NaN"
 
-# tabela de causa de exceções 
+# tabela de causa de exceï¿½ï¿½es 
 Cause0: 		.string "Error: 0 Instruction address misaligned "
 Cause1: 		.string "Error: 1 Instruction access fault "
 Cause2: 		.string "Error: 2 Ilegal Instruction "
@@ -101,9 +102,9 @@ Instr:  		.string "Instr: "
 .text
 
 
-###### Devem ser colocadas aqui as identificações das interrupções e exceções #######
+###### Devem ser colocadas aqui as identificaï¿½ï¿½es das interrupï¿½ï¿½es e exceï¿½ï¿½es #######
 
-	csrwi ucause,1		# caso ocorra dropdown vai gerar exceção de instrução inválida
+	csrwi ucause,1		# caso ocorra dropdown vai gerar exceï¿½ï¿½o de instruï¿½ï¿½o invï¿½lida
 
 ExceptionHandling:	addi 	sp, sp, -8 	# salva 2 registradores utilizados para comparar ucause
 	sw 	t0, 0(sp)
@@ -112,18 +113,18 @@ ExceptionHandling:	addi 	sp, sp, -8 	# salva 2 registradores utilizados para com
 	csrr	s10,ucause     # le o ucause e salva em s10
 	
 	li 	t0, 8
-	bne 	t0, s10, errorExceptions  	# Não é ecall - nem precisa arrumar a pilha!
+	bne 	t0, s10, errorExceptions  	# Nï¿½o ï¿½ ecall - nem precisa arrumar a pilha!
 
-	lw 	t0, 0(sp)			# É ecall
+	lw 	t0, 0(sp)			# ï¿½ ecall
     	lw 	s10, 4(sp)  			# recupera registradores usados
     	addi 	sp, sp, 8			
 	j 	ecallException
 	
 ######################################################
-###############   Exceções de Erros   ################
+###############   Exceï¿½ï¿½es de Erros   ################
 ######################################################
 
-errorExceptions: csrr 	s11, utval      # le o utval da exceção e salva em s11	
+errorExceptions: csrr 	s11, utval      # le o utval da exceï¿½ï¿½o e salva em s11	
 	addi 	a0, zero, 0xc0 		## printa tela de azul
 	addi 	a1, zero, 0
 	addi 	a7, zero, 148
@@ -136,6 +137,7 @@ End_Cause0:	li 	t0, 0
 		li 	a1, 0
 		li 	a2, 1
 		li 	a3, 0x0000c0ff
+		li 	a5,0
 		jal	printString
 		j	End_uepc
 	
@@ -146,7 +148,8 @@ End_Cause1:	li 	t0, 1
 		li 	a1, 0
 		li 	a2, 1
 		li 	a3, 0x0000c0ff
-		jal 	printString	
+		li 	a5,0
+		jal	printString	
 		j	End_uepc
 			
 # Ilegal Instruction 
@@ -156,7 +159,8 @@ End_Cause2:	li 	t0, 2
 		li 	a1, 0
 		li 	a2, 1
 		li 	a3, 0x0000c0ff
-		jal 	printString
+		li 	a5,0
+		jal	printString
 		
 		la 	a0, Instr
 		j	End_utval
@@ -168,6 +172,7 @@ End_Cause4:	addi 	t0, zero, 4
 		li 	a1, 0
 		li 	a2, 1
 		li 	a3, 0x0000c0ff
+		li 	a5,0
 		jal	printString
 		
 		la 	a0, Addrs
@@ -180,7 +185,8 @@ End_Cause5:	li 	t0, 5
 		li 	a1, 0
 		li 	a2, 1
 		li 	a3, 0x0000c0ff
-		jal 	printString	
+		li 	a5,0
+		jal	printString	
 		
 		la 	a0, Addrs
 		j	End_utval
@@ -192,7 +198,8 @@ End_Cause6:	li 	t0, 6
 		li 	a1, 0
 		li 	a2, 1
 		li 	a3, 0x0000c0ff
-		jal 	printString
+		li 	a5,0
+		jal	printString
 		
 		la 	a0, Addrs
 		j	End_utval
@@ -204,7 +211,8 @@ End_Cause7:	li 	t0, 7
 		li 	a1, 0
 		li 	a2, 1
 		li 	a3, 0x0000c0ff
-		jal 	printString
+		li 	a5,0
+		jal	printString
 		
 		la 	a0, Addrs
 		j	End_utval
@@ -214,7 +222,8 @@ End_CauseD: 	la 	a0, CauseD
 		li 	a1, 0
 		li 	a2, 1
 		li 	a3, 0x0000c0ff
-		jal 	printString
+		li 	a5,0
+		jal	printString
 		
 		la 	a0, Addrs
 
@@ -222,6 +231,7 @@ End_CauseD: 	la 	a0, CauseD
 End_utval:	li 	a1, 0
 		li 	a2, 24
 		li 	a3, 0x000c0ff
+		li 	a5,0
 		jal	printString
 		
 		mv 	a0, s11
@@ -231,11 +241,12 @@ End_utval:	li 	a1, 0
 		jal 	printHex
 	
 
-End_uepc: 	la 	a0, PC 		# Imprime o pc em que a exceção ocorreu
+End_uepc: 	la 	a0, PC 		# Imprime o pc em que a exceï¿½ï¿½o ocorreu
 		li 	a1, 0
 		li 	a2, 12
 		li 	a3, 0x000c0ff
-		jal 	printString
+		li 	a5,0
+		jal	printString
 		
 		csrr 	a0, uepc	# Le uepc	
 		li	a1, 28
@@ -243,12 +254,12 @@ End_uepc: 	la 	a0, PC 		# Imprime o pc em que a exceção ocorreu
 		li 	a3, 0x0000c0ff
 		jal 	printHex	
 		
-		j goToExit 		# encerra execução
+		j goToExit 		# encerra execuï¿½ï¿½o
 
 
 
 ######################################################
-#############   exceção de ECALL   ###################
+#############   exceï¿½ï¿½o de ECALL   ###################
 ######################################################
 ecallException:   addi    sp, sp, -264              # Salva todos os registradores na pilha
     sw     x1,    0(sp)
@@ -409,7 +420,7 @@ ecallException:   addi    sp, sp, -264              # Salva todos os registrador
     addi    t0, zero, 134		# ecall 34 = print hex
     beq     t0, a7, goToPrintHex
    
-#    Print Bin não implementado ainda
+#    Print Bin nï¿½o implementado ainda
 #    addi    t0, zero, 35       	# ecall 35 = print bin
 #    beq     t0, a7, goToPrintBin
 #    addi    t0, zero, 134		# ecall 35 = print bin
@@ -451,7 +462,7 @@ ecallException:   addi    sp, sp, -264              # Salva todos os registrador
 	goToExit:   	DE1(s8,goToExitDE2)		# se for a DE1 pula
 			li 	a7, 10			# chama o ecall normal do Rars
 			ecall				# exit ecall	
-	goToExitDE2:	j 	goToExitDE2		# trava o processador : Não tem sistema operacional!
+	goToExitDE2:	j 	goToExitDE2		# trava o processador : Nï¿½o tem sistema operacional!
 
 	goToPrintInt:	jal     printInt               	# chama printInt
 			j       endEcall
@@ -608,7 +619,8 @@ NaoExisteEcall: addi 	a0, zero, 0xc0 		## printa tela de azul
 		li 	a1, 0
 		li 	a2, 1
 		li 	a3, 0x0000c0ff
-		jal 	printString
+		li 	a5,0
+		jal	printString
 		mv 	a0, a6
 		li 	a1, 104
 		li 	a2, 1
@@ -666,7 +678,7 @@ loop2printInt:	lw 	t2, 0(sp)			# le digito da pilha
 		sb 	zero, 0(t0)			# insere \NULL na string
 		
 		la 	a0, TempBuffer			# Endereco do buffer da srting
-		jal 	printString			# chama o print string
+		jal	printString			# chama o print string
 				
 		lw 	ra, 0(sp)			# recupera a
 		addi 	sp, sp, 4			# libera espaco
@@ -707,7 +719,7 @@ loopprintHex:	blt 	t3, zero, fimloopprintHex	# terminou? t3<0?
 		
 fimloopprintHex: sb 	zero,0(t2)		# grava \null na string
 		la 	a0, TempBuffer		# Argumento do print String
-    		jal	printString		# Chama o print string
+		jal	printString		# Chama o print string
     			
 		lw 	ra, 0(sp)		# recupera ra
 		addi 	sp, sp, 4		# libera espaco
@@ -755,6 +767,7 @@ fimprintString:	ret      	    			# retorna
 #  a2 = y                                               #
 #  a3 = cores (0x0000bbff) 	b = fundo, f = frente	#
 #  a4 = frame (0 ou 1)					#
+#  a5 -- Fonte (2024/01)
 #########################################################
 #   t0 = i                                             #
 #   t1 = j                                             #
@@ -794,7 +807,14 @@ printChar.mul1d:	add     t4, t4, a1               	# t4 = 320*y + x
 printChar.PULAFRAME:	add     t4, t4, tp               	# t4 = endereco de impressao do ultimo pixel da primeira linha do char
 			addi    t2, a0, -32               	# indice do char na memoria
 			slli    t2, t2, 3                 	# offset em bytes em relacao ao endereco inicial
+			bnez    a5, printChar.OUTRAFONTE # se a5 != 0, usar outra fonte
 			la      t3, LabelTabChar		# endereco dos caracteres na memoria
+			j printChar.endereco          # ir para calculo final do endereco
+printChar.OUTRAFONTE: # 2024/1
+# FONTE  --- pode comparar com outros valores de a5, mas sÃ³ coloquei mais uma fonte
+			la      t3, LabelTabCharMetroid     # Fonte alternativa
+			# j printChar.endereco      --- caso haja mais fontes    # ir para calculo final do endereco
+printChar.endereco:
 			add     t2, t2, t3               	# endereco do caractere na memoria
 			lw      t3, 0(t2)                 	# carrega a primeira word do char
 			li 	t0, 4				# i=4
@@ -929,7 +949,7 @@ loopreadString: beq 	a1, a3, fimreadString   	# buffer cheio fim
 
 		li 	tp, 0x08			
 		bne	t6, tp, PulaBackSpace		# Se nao for BACKSPACE
-		beq	zero, a3, loopreadString	# Se não tem nenhum caractere no buffer apenas volta a ler
+		beq	zero, a3, loopreadString	# Se nï¿½o tem nenhum caractere no buffer apenas volta a ler
 		addi	a3, a3, -1			# diminui contador
 		addi 	a0, a0, -1			# diminui endereco do buffer
 		sb 	zero, 0(a0)			# coloca zero no caractere anterior
@@ -1298,7 +1318,8 @@ ehInfprintFloat:	la 	a0, NumInfP			# string do infinito positivo
 			la 	a0, NumInfN			# string do infinito negativo
 								# imprime string
 		
-fimprintFloat:		jal 	printString			# imprime a string em a0
+fimprintFloat:		
+			jal	printString			# imprime a string em a0
 			lw 	ra, 0(sp)			# recupera ra
 			addi 	sp, sp, 4			# libera espaco
 			ret					# retorna
@@ -1587,7 +1608,7 @@ Random.DE1: 	li 	t0, LFSR	# carrega endereco do LFSR
 ############################################
 #  Random 42                           	   #
 #  			                   #
-#  a1    =    Valor máximo                 #
+#  a1    =    Valor mï¿½ximo                 #
 #  output a0 = numero randomico        	   #
 ############################################
 
@@ -1730,7 +1751,7 @@ PULA4BRES: 	slli 	t6, t0, 1		# 2*dy
 		ret		
 
 
-# Sugestao para nomes de loops: Sempre comecar com o nome da sub-rotina, então adicionar um '.', seguido do nome do loop . Garante que o nome do loop será único, se as sub-rotinas
+# Sugestao para nomes de loops: Sempre comecar com o nome da sub-rotina, entï¿½o adicionar um '.', seguido do nome do loop . Garante que o nome do loop serï¿½ ï¿½nico, se as sub-rotinas
 # tiverem nomes diferentes.
 
 #############################################
@@ -1771,7 +1792,7 @@ printIntUnsigned.loop2:	lw 	t2, 0(sp)		# le digito da pilha
 		sb 	zero, 0(t0)			# insere \NULL na string
 		
 		la 	a0, TempBuffer			# Endereco do buffer da srting
-		jal 	printString			# chama o print string
+		jal	printString			# chama o print string
 				
 		lw 	ra, 0(sp)			# recupera a
 		addi 	sp, sp, 4			# libera espaco
@@ -1781,11 +1802,11 @@ printIntUnsigned.fim:	ret
 
 
 ###########################################################################
-# lib de operações multiplicação, divisão e resto para a ISA RV32I
+# lib de operaï¿½ï¿½es multiplicaï¿½ï¿½o, divisï¿½o e resto para a ISA RV32I
 # Nomenclatura usada pelo gcc
 ###########################################################################
 
-# Multiplicação signed em a0 e a1  retorno em a0
+# Multiplicaï¿½ï¿½o signed em a0 e a1  retorno em a0
 # https://github.com/gcc-mirror/gcc/tree/master/libgcc/config/epiphany
 __mulsi3:	addi 	sp,sp,-12
 		sw 	a1,0(sp)
@@ -1808,7 +1829,7 @@ mulsi3.L1: 	lw 	a1,0(sp)
 		addi 	sp,sp,12
 		ret
         
-# Divisão unsigned em a0 e a1 retorno em a0
+# Divisï¿½o unsigned em a0 e a1 retorno em a0
 # https://stackoverflow.com/questions/34457575/integer-division-algorithm-analysis
 __udivsi3:	addi 	sp,sp,-16
 		sw 	a1,0(sp)
@@ -1856,20 +1877,20 @@ __umodsi3:	addi	sp, sp, -12
 		addi 	sp, sp, 12
 		ret
 		
-# Divisão signed em a0 e a1	
+# Divisï¿½o signed em a0 e a1	
 __divsi3:	addi	sp, sp, -16
 		sw 	t0, 0(sp)
 		sw 	t1, 4(sp)
 		sw 	t2, 8(sp)
 		sw 	ra, 12(sp)
-		srai	t0,a0,31	# indica se a0 é pos(0) ou neg (2^32-1)
-		srai 	t1,a1,31	# indica se a1 é pos(0) ou neg (2^32-1)
-		xor	t2,t0,t1	# indica se deve(!=0) ou não(==0) inverter o sinal do resultado
+		srai	t0,a0,31	# indica se a0 ï¿½ pos(0) ou neg (2^32-1)
+		srai 	t1,a1,31	# indica se a1 ï¿½ pos(0) ou neg (2^32-1)
+		xor	t2,t0,t1	# indica se deve(!=0) ou nï¿½o(==0) inverter o sinal do resultado
 		beqz 	t0,divsi3.pula1
 		neg	a0,a0		# nega
 divsi3.pula1:	beqz 	t1,divsi3.pula2
 		neg	a1,a1		# nega
-divsi3.pula2:	jal 	__udivsi3	# divisão unsigned
+divsi3.pula2:	jal 	__udivsi3	# divisï¿½o unsigned
 		beqz	t2, divsi3.pula3	
 		neg	a0,a0		# nega
 divsi3.pula3:	lw 	t0, 0(sp)
@@ -1884,8 +1905,8 @@ __modsi3:	addi	sp, sp, -12
 		sw 	t0, 0(sp)
 		sw 	t1, 4(sp)
 		sw 	ra, 8(sp)
-		srai	t0,a0,31	# indica se a0 é pos(0) ou neg (2^32-1)
-		srai 	t1,a1,31	# indica se a1 é pos(0) ou neg (2^32-1)
+		srai	t0,a0,31	# indica se a0 ï¿½ pos(0) ou neg (2^32-1)
+		srai 	t1,a1,31	# indica se a1 ï¿½ pos(0) ou neg (2^32-1)
 		beqz 	t0,modsi3.pula1
 		neg	a0,a0		# nega
 modsi3.pula1:	beqz 	t1,modsi3.pula2

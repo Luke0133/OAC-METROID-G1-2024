@@ -35,7 +35,7 @@ CHECK_HORIZONTAL_COLLISION:
     lbu a6, 8(t2)  # a6 = Player's X related to matrix
     lbu a7, 10(t2) # a7 = Player's Y related to matrix
 
-    addi a1,a1,3   # Adds 3 to the Matrix's address so that it goes to the begining of matrix
+    addi a1,a1,3   # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
     mul t0,a7,a5   # Player's Y related to matrix * Map Matrix's width
     add t0,a6,t0   # t0 = Player's X related to matrix +  Player's Y related to matrix * Map Matrix's width  
     add a1,a1,t0   # a1 = Map Matrix's address adjusted for Player's X and Y related to matrix
@@ -124,6 +124,7 @@ CHECK_HORIZONTAL_COLLISION:
 #    a0 = MOVE_X/MOVE_Y address (and returns as explained above)                #
 #	 a1 = current map's address                                                 #
 #    a2 = PLYR_POS address                                                      # 
+#    a3 = offset modifier (to be added to current offset if able to move)       #
 #                                                                               #
 #  ------------------             registers used            ------------------  #
 #    a3, a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK               #      
@@ -131,12 +132,14 @@ CHECK_HORIZONTAL_COLLISION:
 #  ------------------          temporary registers          ------------------  #
 #    t0, t1 --> temporary registers                                             #
 #    t2 = PLYR_POS address (stores from a2 to let it be modified)               #
-#    t3 = Player's X/Y offset                                                     #
+#    t3 = Player's X/Y offset                                                   #
+#    tp = offset modifier (stores from a3 to let it be modified)                #
 #                                                                               #    
 #################################################################################     
 
 CHECK_VERTICAL_COLLISION:
     mv t2,a2  # Moves a2 to t2
+    mv tp,a3  # Moves a3 to tp
     li a2,1   # Base case: check 1 tiles vertically
     li a3,1   # Sets for horizontal check 
     li a4,0   # Base case: ignore door
@@ -144,7 +147,7 @@ CHECK_VERTICAL_COLLISION:
     lbu a6, 8(t2)  # a6 = Player's X related to matrix
     lbu a7, 10(t2) # a7 = Player's Y related to matrix
 
-    addi a1,a1,3   # Adds 3 to the Matrix's address so that it goes to the begining of matrix
+    addi a1,a1,3   # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
     mul t0,a7,a5   # Player's Y related to matrix * Map Matrix's width
     add t0,a6,t0   # t0 = Player's X related to matrix +  Player's Y related to matrix * Map Matrix's width  
     add a1,a1,t0   # a1 = Map Matrix's address adjusted for Player's X and Y related to matrix
@@ -155,8 +158,9 @@ CHECK_VERTICAL_COLLISION:
     j CHECK_Y_DOWN          # otherwise check down
     
     CHECK_Y_UP:
-        li t1,2
-        bge t1,t3 CONTINUE_CHECK_Y_UP # If player's Y offset is 0, continue checking
+        # check if current offset + offset modifier (negative) will be less than or equal to 0
+        add t3,t3,tp     # current offset + offset modifier
+        bge zero,t3 CONTINUE_CHECK_Y_UP # If current offset + offset modifier <= 0, continue checking
         j END_VERTICAL_COLLISION    # otherwise, end procedure
     
         CONTINUE_CHECK_Y_UP:
@@ -184,13 +188,17 @@ CHECK_VERTICAL_COLLISION:
                 j CHECK_MAP_COLLISION           
     
     CHECK_Y_DOWN:
-        li t4,0   # If Y offset != 14
-        li t5,0   # If Y offset != 14
+        li t4,0   # If Y offset = 0
+        li t5,0   # If Y offset = 0
         beqz t3 CONTINUE_CHECK_Y_DOWN    # If player's Y offset = 0, continue checking
-        li t1,14  # Loads number 14 for comparing with Y offset 
+        # Othewise:
+        # 1 - set up t4 and t5, in case branch is correct
         mv t4,a5  # If Y offset = 14
         li t5,1   # If Y offset = 14
-        beq t1, t3 CONTINUE_CHECK_Y_DOWN # If player's Y offset = 14, continue checking
+        # 2 - check if current offset + offset modifier will be greater than or equal to 16
+        li t1,tile_size  # Loads 16
+        add t3,t3,tp     # current offset + offset modifier
+        bge t3,t1 CONTINUE_CHECK_Y_DOWN  # If current offset + offset modifier >= 16, continue checking (but check one tile bellow)
         
         j END_VERTICAL_COLLISION         # otherwise, end procedure
     
@@ -358,7 +366,7 @@ li a0,1  # Sets a0 to 1 (can move)
                         addi t1,t1,6 # Going to the next door frame's address                                  
                         addi t0,t0,1 # Iterating counter by 1                                   
                         bge t0,t2, END_COLLISION_DOOR_FRAME_LOOP # If all of the map's door frames were checked, end loop                                  
-                        j COLLISION_DOOR_FRAME_LOOP # otherwise, go back to the loop's begining                     
+                        j COLLISION_DOOR_FRAME_LOOP # otherwise, go back to the loop's beginning                     
                 END_COLLISION_DOOR_FRAME_LOOP:                     
                 # This is only reached if no door frame was found (error) 
                     j CONTINUE_CHECK_MAP_COLLISION_3     
@@ -407,7 +415,7 @@ li a0,1  # Sets a0 to 1 (can move)
                         addi t1,t1,4 # Going to the next door's address                                  
                         addi t0,t0,1 # Iterating counter by 1                                   
                         bge t0,t2, END_COLLISION_DOOR_LOOP # If all of the map's doors were checked, end loop                                  
-                        j COLLISION_DOOR_LOOP # otherwise, go back to the loop's begining                     
+                        j COLLISION_DOOR_LOOP # otherwise, go back to the loop's beginning                     
                 END_COLLISION_DOOR_LOOP:                     
                 # This is only reached if no door was found (error) or if door is open/opening, so player will be able to go through 
                     j CONTINUE_CHECK_MAP_COLLISION_3                                                                 

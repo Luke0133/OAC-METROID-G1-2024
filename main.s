@@ -7,23 +7,33 @@
 DEBUG: .string "\n"
 DEBUG2: .string " x "
 DEBUG1: .string "rarara\n"
+DEBUG12: .string "rarara -> "
 DEBUG11: .string "pasou\n"
 		
 .text
-li s1, 0  # Reseting time
-li s2, 0  # Game loop state 
 main:
+	li s1, 0  # Reseting time
+	li s2, 0  # Game loop state 
+
+	la t0, GRAVITY_FACTOR
+	flw fs0,0(t0)
+	la t0, JUMP_SPEED
+	flw fs1,0(t0)
+
 	j SETUP
 
 ##########################    GAME LOOP    ##########################
 #                Main operations for the game to run                #
-#     ------------         saved registers         ------------     #
+#  --------------          saved registers          --------------  #
 #       s0 = current frame                                          #
 #       s1 = last frame time                                        #
-#       s2 = game loop state: 0 - Normal Game Loop,                 #
-#                             1 - Entering Door Loop, -- on map_op.s              #
-#                             2 - Switching Map Loop, -- on map_op.s            #
-#                             3 - Exiting Door Loop,  -- on map_op.s              #
+#       s11 = stores return address in some procedures              #
+#                                                                   #
+#  --------------          float registers          --------------  #
+#    fs0 = gravity factor (const)                                   #
+#    fs1 = initial jump speed (const)                               #
+#    fs2 = player's Y speed (positive when down, negative when up)  #
+#                                                                   #
 #####################################################################
 
 GAME_LOOP:
@@ -45,9 +55,14 @@ GAME_LOOP:
 	
 	call UPDATE_STATUS      # Updates player's sprite status
 
+	call ENEMY_OPERATIONS
+	
 	li a0, 0     # Rendering player operation
 	li a1, 0     # Rendering full player
 	call RENDER_PLAYER	
+
+	li a0, 0     # Rendering UI operation
+	call RENDER_UI	
 
 #	call RENDER_DOOR_UPDATE         - probably not using :D
 	call RENDER_DOOR_FRAMES
@@ -61,7 +76,7 @@ GAME_LOOP:
 	call RENDER_PLAYER
 
 
-	call RENDER_LIFE
+	#call RENDER_LIFE
 
 	#la a0, Beam
 	#call BEAM_OPERATIONS
@@ -79,3 +94,6 @@ GAME_LOOP:
 
 
 .include "helpers/helpers.s"
+
+
+

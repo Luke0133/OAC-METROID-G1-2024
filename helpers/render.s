@@ -26,6 +26,7 @@
 #       s1 = X coordinate relative to sprite (top left)                 #
 #       s2 = Y coordinate relative to sprite (top left)                 #
 #       s3 = sprite width                                               #
+#       s4 = sprite height                                              #
 #     -----------          temporary registers           -----------    #
 #       t0 = bitmap display printing address                            #
 #       t1 = image address                                              #
@@ -34,15 +35,16 @@
 #       t4 = temporary operations                                       #
 #########################################################################
 RENDER:
-mul t4,a6,a4	# t4 = sprite status x height of rendering area (for files that have more than one sprite)
 beqz a7,NORMAL
 	CROP_MODE:	# When rendering cropped sprite 				
 		add a0,a0,s1	# Image address + X on sprite 
 		mul t3,s3,s2	# t3 = sprite width * Y on sprite
 		add a0,a0,t3	# a0 = Image address + X on sprite + sprite widht * Y on sprite
+		mul t4,a6,s4	# t4 = sprite status x height of rendering area (for files that have more than one sprite)
 		mul t4,t4,s3	# t4 = sprite status x height of rendering area x sprite's width
 		j START_RENDER
 	NORMAL:
+		mul t4,a6,a4	# t4 = sprite status x height of rendering area (for files that have more than one sprite)
 		mul t4,t4,a3	# t4 = sprite status x height of rendering area x width of rendering area (on NORMAL_RENDER: a3 = sprite's width)
 	
 	START_RENDER:
@@ -108,6 +110,7 @@ beqz a7,NORMAL
 #       s1 = X coordinate relative to sprite (top left)                 #
 #       s2 = Y coordinate relative to sprite (top left)                 #
 #       s3 = sprite width                                               #
+#       s4 = sprite height                                              #
 #     -----------          temporary registers           -----------    #
 #       t0 = bitmap display printing address                            #
 #       t1 = image address                                              #
@@ -116,15 +119,16 @@ beqz a7,NORMAL
 #       t4 = temporary operations                                       #
 #########################################################################
 RENDER_WORD:
-mul t4,a6,a4	# Sprite offset (for files that have more than one sprite)
 beqz a7,NORMAL_WORD
 	CROP_MODE_WORD:	# When rendering cropped sprite	
 		add a0,a0,s1	# Image address + X on sprite 
 		mul t3,s3,s2	# t3 = sprite width * Y on sprite
 		add a0,a0,t3	# a0 = Image address + X on sprite + sprite widht * Y on sprite
+		mul t4,a6,s4	# t4 = sprite status x height of rendering area (for files that have more than one sprite)
 		mul t4,t4,s3	# t4 = sprite status x height of rendering area x sprite's width
 		j START_RENDER_WORD
 	NORMAL_WORD:		# Executed even if on crop mode
+		mul t4,a6,a4	# t4 = sprite status x height of rendering area (for files that have more than one sprite)
 		mul t4,t4,a3	# t4 = sprite status x height of rendering area x width of rendering area (on NORMAL_RENDER: a3 = sprite's width)
 
 	START_RENDER_WORD:
@@ -271,11 +275,12 @@ RENDER_PLAYER:
 	j RENDER_PLAYER_TRAIL         # Otherwise (a0 = 1) render player's trail
 	RENDER_PLAYER_NORMAL:
 		# Storing Registers on Stack
-		addi sp,sp,-16
+		addi sp,sp,-20
 		sw s1,0(sp)
 		sw s2,4(sp)
 		sw s3,8(sp)
-		sw ra,12(sp)
+		sw s4,12(sp)
+		sw ra,16(sp)
 		# End of Stack Operations
 
 		# Loading informations for Checking Sprite
@@ -416,7 +421,8 @@ RENDER_PLAYER:
 					# CHECK SPIN JUMP?
 					
 
-					addi a2,a2, -4 # Offseting sprite's X so that it renders in propper place
+					addi a1,a1, -4 # Offseting sprite's X so that it renders in propper place
+					addi a2,a2, -6 # Offseting sprite's Y so that it renders in propper place
 					li a3, 24  # Sprite's Widht
 					li a4, 32  # Sprite's Height
 					mv a6, t5	# Jump sprites have their status set to 1 if player is attacking
@@ -481,6 +487,7 @@ RENDER_PLAYER:
 				# RENDER_PLAYER_CROP_RIGHT:
 				# Renders 16 pixels to the right
 					mv s3,a3         # Moves sprite's width to s3
+					mv s4,a4         # Moves sprite's height to s4
 					li a3,tile_size  # New width of rendering area
 					li a7,1          # Sets to crop mode
 					sub s1,s3,a3     # Sets starting X to be 16 pixels before width of sprite's width
@@ -490,6 +497,7 @@ RENDER_PLAYER:
 				RENDER_PLAYER_CROP_LEFT:
 				# Renders 16 pixels to the left
 					mv s3,a3         # Moves sprite's width to s3
+					mv s4,a4         # Moves sprite's height to s4
 					li a3,tile_size  # New width of rendering area
 					li a7,1          # Sets to crop mode
 					li s1,0          # Sets starting X on sprite to 0 
@@ -505,13 +513,14 @@ RENDER_PLAYER:
 				RENDER_PLAYER_SKIP_MISSILE:
 					call RENDER_WORD	# Calls RENDER_WORD procedure
 				END_RENDER_PLAYER:
-					# Procedure finished: Loading Registers from Stack
+				# Procedure finished: Loading Registers from Stack
 					lw s1,0(sp)
 					lw s2,4(sp)
 					lw s3,8(sp)
-					lw ra,12(sp)
-					addi sp,sp,16
-					# End of Stack Operations
+					lw s4,12(sp)
+					lw ra,16(sp)
+					addi sp,sp,20
+				# End of Stack Operations
 					ret	   # End of procedure
 		
 	RENDER_PLAYER_TRAIL:
@@ -565,7 +574,7 @@ RENDER_PLAYER:
 			mv ra, s11  # Returns s11 to ra -- so that we don't need to use the stack
 			ret			# End of procedure
 
-##########################    RENDER LIFE AND WEAPONS    ##########################
+##########################    RENDER UI    ##########################
 #              Renders life and weapons based on its usages                #
 #     -----------           argument registers           -----------    #
 #       a0,t0 = PLYR_HEALTH        #	
@@ -581,7 +590,7 @@ RENDER_PLAYER:
 # 		life points can be render according to her PLYR_HEALTH
 #########################################################################	
 
-RENDER_LIFE: 
+RENDER_UI: 
 	mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
 	call RENDER_LIFE_POINTS
 	mv ra, s11
@@ -609,6 +618,109 @@ RENDER_LIFE_POINTS:
 	ecall
 
 	ret
+
+##################            RENDER ENTITY             ##################
+#                Renders entity, cropping if necessary                   #	
+#                                                                        #		
+#  ----------------         argument registers         ----------------  #
+#    a0 = Image Address                                                  #
+#    a1 = X coordinate where rendering will start (top left)  -- screen  #
+#    a2 = Y coordinate where rendering will start (top left)  -- screen  #
+#    a3 = width of rendering area (usually the size of the sprite)       #
+#    a4 = height of rendering area (usually the size of the sprite)      #
+#    a5 = frame (0 or 1)                                                 #
+#    a6 = status of sprite (usually 0 for sprites that are alone)        #
+#                                                                        #	
+#  ----------------           registers used           ----------------  #
+#    a7 = operation (0 if normal printing, 1 cropped print)              #
+#    s1 = X coordinate relative to sprite (top left)                     #
+#    s2 = Y coordinate relative to sprite (top left)                     #
+#    s3 = sprite width                                                   #
+#    t0,t1 --> temporary registers
+#                                                                        #
+##########################################################################
+
+RENDER_ENTITY:
+	li a7,0     # at the beginning, sprite doesn't need to be cropped
+	li s1,0     # Setting s1 to 0, in case needs to crop but skips horizontal crop
+	li s2,0     # Setting s2 to 0, in case needs to crop but skips vertical crop
+	mv s3,a3    # Storing sprite's width in (in case needs to crop but skips horizontal crop)
+	mv s4,a4    # Storing sprite's width in (in case needs to crop but skips horizontal crop)
+
+	# Checking horizontal arguments (a1 - X and a3 - width)
+	add t0,a1,a3   # t0 (rightmost X + 1) = top left X related to screen + rendering area width 
+	bge zero,t0, END_RENDER_ENTITY # If t0 <= 0, sprite's outside of screen (don't try to render >:[ )
+	li t1,screen_width # t1 = 320
+	bge a1,t1, END_RENDER_ENTITY # If a1 >= 320, sprite's outside of screen (don't try to render >:[ )
+	# Otherwise, sprite's X is inside screen, but there are two more X cases that need to be checked
+		# 1 - is the top left X outside of left range?
+		blt a1,zero,CORRECT_X_LEFT # If so, crop the image
+		# 2 - is the top right X outside of right range?
+		blt t1,t0,CORRECT_X_RIGHT # If so, crop the image
+		j RENDER_ENTITY_CHECK_VERTICAL# Otherwise, the a1 and a3 arguments are already defined correctly, go check vertical		
+		
+		CORRECT_X_LEFT:
+			li a7,1         # Sprite will need to be cropped
+			sub s1,zero,a1  # s1 (X in sprite where rendering starts) will be the absolute value of a1
+
+			add a3,a3,a1    # Since a1 will be negative, a3 will be reduced to a smaller width
+			li a1,0         # and a1 will be set to 0 (leftmost X)  
+			j RENDER_ENTITY_CHECK_VERTICAL # Go check vertical arguments		
+		
+		CORRECT_X_RIGHT:
+			li a7,1         # Sprite will need to be cropped
+			mv s1,a1        # s1 (X in sprite where rendering starts) will the same as a1
+			
+			# a1 is inside the range, so it doesn't change
+			sub t0,t0,t1  # t0 will hold the excess width (what passes through the right border)
+			sub a3,a3,t0  # take away from width (a3) the excess
+			# j RENDER_ENTITY_CHECK_VERTICAL # Go check vertical arguments
+
+	RENDER_ENTITY_CHECK_VERTICAL:
+		# Checking vertical arguments (a2 - Y and a4 - height)
+		add t0,a2,a4   # t0 (lowermost Y + 1) = top left Y related to screen + rendering area height 
+		bge zero,t0, END_RENDER_ENTITY # If t0 <= 0, sprite's outside of screen (don't try to render >:[ )
+		li t1,screen_height # t1 = 240
+		addi t1,t1,tile_size
+		bge a2,t1, END_RENDER_ENTITY # If a2 >= 240, sprite's outside of screen (don't try to render >:[ )
+		# Otherwise, sprite's Y is inside screen, but there are two more Y cases that need to be checked
+			# 1 - is the topmost Y outside of upper range?
+			blt a2,zero,CORRECT_Y_TOP # If so, crop the image
+			# 2 - is the lowermost Y outside of bottom range?
+			blt t1,t0,CORRECT_Y_BOTTOM # If so, crop the image
+			j RENDER_ENTITY_START # Otherwise, the a2 and a4 arguments are already defined correctly, render	
+			
+			CORRECT_Y_TOP:
+				li a7,1         # Sprite will need to be cropped
+				sub s2,zero,a2  # s2 (Y in sprite where rendering starts) will be the absolute value of a2
+
+				add a4,a4,a2    # Since a2 will be negative, a4 will be reduced to a smaller height
+				li a2,0         # and a1 will be set to 0 (topmost Y)  
+				j RENDER_ENTITY_START # render	
+			
+			CORRECT_Y_BOTTOM:
+				li a7,1         # Sprite will need to be cropped
+				mv s2,a2        # s2 (Y in sprite where rendering starts) will the same as a2
+				
+				# a2 is inside the range, so it doesn't change
+				sub t0,t0,t1  # t0 will hold the excess height (what passes through the bottom border)
+				sub a4,a4,t0  # take away from height (a4) the excess
+				# j RENDER_ENTITY_START # render	
+		
+		RENDER_ENTITY_START:
+			# All the arguments have already been adjusted beforehand, so begin rendering
+		# Storing Registers on Stack
+			addi sp,sp,-4
+			sw ra,0(sp)
+		# End of Stack Operations
+			call RENDER_WORD  
+		# Procedure finished: Loading Registers from Stack
+			lw ra,0(sp)
+			addi sp,sp,4
+		# End of Stack Operations
+	END_RENDER_ENTITY:	
+		ret
+
 
 ###############          RENDER DOOR UPDATE          ###############
 #   Will render only the doors after a door needs to be updated    #
@@ -721,7 +833,7 @@ RENDER_DOOR_UPDATE:
 			addi a0,a0,4 # Going to the next door's address                                  
 			addi t1,t1,1 # Iterating counter by 1                                   
 			bge t1,t0, END_RENDER_DOOR_UPDATE # If all of the map's doors were checked, end loop                                  
-			j RENDER_DOOR_UPDATE_LOOP # otherwise, go back to the loop's begining                     
+			j RENDER_DOOR_UPDATE_LOOP # otherwise, go back to the loop's beginning                     
     
 	END_RENDER_DOOR_UPDATE: 
 		# Procedure finished: Loading Registers from Stack
@@ -842,7 +954,7 @@ RENDER_DOOR_FRAMES:
 			addi a0,a0,6 # Going to the next door frame's address                                  
 			addi t1,t1,1 # Iterating counter by 1                                   
 			bge t1,t0, END_RENDER_DOOR_FRAMES # If all of the map's doors were checked, end loop                                  
-			j RENDER_DOOR_FRAMES_LOOP # otherwise, go back to the loop's begining                     
+			j RENDER_DOOR_FRAMES_LOOP # otherwise, go back to the loop's beginning                     
     
 	END_RENDER_DOOR_FRAMES: 
 		# Procedure finished: Loading Registers from Stack
@@ -879,7 +991,7 @@ RENDER_DOOR_FRAMES:
 #       s3 = X where column loop will stop                                                #
 #                                                                                         #			
 #     -------------                temporary registers                -------------    	  #
-#       t0 = temporary operations (in the begining, it has the address of tile to render) #
+#       t0 = temporary operations (in the beginning, it has the address of tile to render) #
 #       t1 = tile to be rendered                                                          #				
 #       t2 = line counter (and also current Y) related to Matrix                          #
 #       t3 = column counter (and also current X) related to Matrix                        #
@@ -1019,7 +1131,7 @@ RENDER_MAP_LOOP:
 				addi t4,t4,4 # Going to the next door's address
 				addi t6,t6,1 # Iterating counter by 1
 				bge t6,t5, END_RENDER_DOOR_LOOP # If all of the map's doors were checked, end loop
-				j RENDER_DOOR_LOOP # otherwise, go back to the loop's begining
+				j RENDER_DOOR_LOOP # otherwise, go back to the loop's beginning
 	END_RENDER_DOOR_LOOP:
 	# This is only reached if no door was found (error) or if door is open, so background color will be rendered
 		mv t1,zero
@@ -1032,7 +1144,8 @@ RENDER_MAP_LOOP:
 		
 	CONTINUE_RENDER_MAP:
 	# Storing Registers on Stack
-	addi sp,sp,-52
+	addi sp,sp,-56
+	sw s4,52(sp)
 	sw s3,48(sp)
 	sw s2,44(sp)
 	sw s1,40(sp)
@@ -1137,7 +1250,7 @@ RENDER_MAP_LOOP:
 		# If no offset is taken into account, will skip unecessary parameters  
 		bnez t6, Continue_Crop 
 		j Skip_Offset
-		Continue_Crop : 
+		Continue_Crop: 
 		li a7,1			# Cropped Render operations
 		addi t6,t6,-1		# After this, t6 = 0 or t6 = 1
 		bnez t6, RightBottomCrop
@@ -1145,6 +1258,7 @@ RENDER_MAP_LOOP:
 			mv s1, a3		# s1 will store the X offset (where rendering will start from)
 			mv s2, a4		# s2 will store the Y offset (where rendering will start from)
 			li s3, tile_size	# s3 = 16
+			li s4, tile_size	# s4 = 16
 			sub a3,s3, s1		# a3 will hold rendering widht that is equal to the tile size (16) - X offset
 			sub a4,s3, s2		# a4 will hold rendering height that is equal to the tile size (16) - Y offset
 			j Start_NormalRender
@@ -1152,6 +1266,7 @@ RENDER_MAP_LOOP:
 			mv s1,zero		# s1 = 0 (rendering will start from the left)
 			mv s2,zero		# s2 = 0 (rendering will start from the top)
 			li s3, tile_size	# s3 = 16
+			li s4, tile_size	# s4 = 16
 			sub a1,a1,a3		# a1 will shift left the ammount of a3 (currently X offset) 
 			sub a2,a2,a4		# a2 will shift up the ammount of a4 (currently Y offset)
 			CheckX:
@@ -1174,6 +1289,7 @@ RENDER_MAP_LOOP:
 	
 	EndRender:
 # Procedure finished: Loading Registers from Stack
+	lw s4,52(sp)
 	lw s3,48(sp)
 	lw s2,44(sp)
 	lw s1,40(sp)
@@ -1187,7 +1303,7 @@ RENDER_MAP_LOOP:
 	lw t2,8(sp)
 	lw t3,4(sp)
 	lw tp,0(sp)
-	addi sp,sp,52
+	addi sp,sp,56
 # End of Stack Operations
 			
 	addi t3,t3,1	# Increments column counter (current X on Matrix)
