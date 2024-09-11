@@ -677,10 +677,9 @@ bnez a7,RENDER_ENTITY_TRAIL # If a0 != 0, render trail
 			add a3,a3,a1    # Since a1 will be negative, a3 will be reduced to a smaller width
 			li a1,0         # and a1 will be set to 0 (leftmost X)  
 			j RENDER_ENTITY_CHECK_VERTICAL # Go check vertical arguments		
-		
+			
 		CORRECT_X_RIGHT:
 			li a7,1         # Sprite will need to be cropped
-			mv s1,a1        # s1 (X in sprite where rendering starts) will the same as a1
 			
 			# a1 is inside the range, so it doesn't change
 			sub t0,t0,t1  # t0 will hold the excess width (what passes through the right border)
@@ -711,7 +710,6 @@ bnez a7,RENDER_ENTITY_TRAIL # If a0 != 0, render trail
 			
 			CORRECT_Y_BOTTOM:
 				li a7,1         # Sprite will need to be cropped
-				mv s2,a2        # s2 (Y in sprite where rendering starts) will the same as a2
 				
 				# a2 is inside the range, so it doesn't change
 				sub t0,t0,t1  # t0 will hold the excess height (what passes through the bottom border)
@@ -724,7 +722,7 @@ bnez a7,RENDER_ENTITY_TRAIL # If a0 != 0, render trail
 			addi sp,sp,-4
 			sw ra,0(sp)
 		# End of Stack Operations
-			call RENDER_WORD  
+			call RENDER 
 		# Procedure finished: Loading Registers from Stack
 			lw ra,0(sp)
 			addi sp,sp,4

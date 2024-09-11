@@ -39,7 +39,7 @@ MUSIC.STATUS:  .word 0,0
 
 ####### .eqv for player's sprite #######
 .eqv green 32
-.eqv cyan 240	
+.eqv cyan 240
 					   
 ####### Map informations ####### 
 CURRENT_MAP: .word 0  # Stores the address of current map
@@ -105,15 +105,24 @@ BEAM_3_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new a
 # 0/1 if is active; 
 
 ##############           Enemies            ##############
-## ZOOMER ##
-ZOOMER_INFO: .byte 0, 0 # Stores Zoomer's health points, Rendering (0 - Disabled, 1 - Enabled)
-ZOOMER_POS: .half 240, 0 # Stores Zoomer's current and old top left X respectively, both related to the screen  
-		    .byte 96, 0 # Stores Zoomer's current and old top left Y respectively, both related to the screen 
-	     		  0, 0 # Stores Zoomer's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-ZOOMER_MATRIX: .byte 0, 0, 0, 0 # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-ZOOMER_STATUS: .byte 0,0 # Sprite's Number, Movement Direction (Clockwise: 0 - Right/Top, 1 - Down/Right, 2 - Left/Bottom, 3 - Up/Left and
-#                                      Counter-Clockwise: 4 - Left/Top, 5 - Down/Left, 6 - Right/Bottom, 7 - Up/Right)
-.eqv ZOOMER_HEALTH 50
+
+##############           Zoomer            ##############
+
+Zoomers: .word 0 # Holds the current "ZoomersA" label based on the current map (0 if none exist in current map)
+#Zoomers_Next: .word 0 # Holds the "ZoomersA" label based on the next map (0 if none exist in next map)  
+#                     +-->   only changed when switching maps
+
+# With 5 zoomers in each map, we have 72 bytes used (each zoomer is 7 bytes appart from each other)
+.eqv zoomer_size 12   # number of bytes per zoomer
+.eqv zoomer_normal_health 3
+.eqv zoomer_variant_health 6
+.byte
+Zoomers1: 1
+Zoomer1_0: zoomer_normal_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           34, 0, 6, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 0, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Horizontal Platform (-1 = Left, 0 = none, 1 = Right), Vertical Platform (-1 = Up, 0 = On Ground, 1 = Down)
+
 
 ##############           Ripper            ##############
 Rippers: .word 0 # Holds the current "RippersA" label based on the current map (0 if none exist in current map)
@@ -146,7 +155,6 @@ Ripper4_3: 1, 1, 0        # Type, direction, X offset
            12, 12, 18, 18 # X, old X, Y, old Y related to matrix
 Ripper4_4: 1, 1, 0        # Type, direction, X offset
            2, 2, 12, 12   # X, old X, Y, old Y related to matrix
-# 2 bytes left here
 
 ## RIDLEY ##
 RIDLEY_INFO: .byte 0, 0 # Stores Ridley's health points, Rendering (0 - Disabled, 1 - Enabled)

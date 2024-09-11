@@ -1,0 +1,7 @@
+la t0,Zoomers
+lb t2, 12(t0) #loads y direction
+
+
+
+lb t1, 1(t0) #clockwise direction
+

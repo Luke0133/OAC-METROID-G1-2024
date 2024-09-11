@@ -323,7 +323,7 @@ BEAM_OPERATIONS:
         j ACTIVATE_BEAM #activate the beam
 
         CHECK_BEAM_ACTIVE_LOOP:
-            bne t3,t4,BEAM_CONTINUE #beam number == counter ? continue : end
+            blt t3,t4,BEAM_CONTINUE #counter < beam_number ? continue : end
             j END_INPUT_CHECK
             
             BEAM_CONTINUE:
@@ -348,6 +348,7 @@ BEAM_OPERATIONS:
 
             li t2,1 # fills with 1 the beam info 
             sb t2,0(t1) # stores in beam array
+            
             lb t2, 2(a0) # loads if player is facing up
             bnez t2, ACTIVATE_Y_AXIS_BEAM
        

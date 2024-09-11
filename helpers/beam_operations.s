@@ -3,23 +3,24 @@
 
 BEAM_OPERATIONS:
     la t0,BEAMS
-    la t1, BEAMS_NUMBER
+    li t1, BEAMS_NUMBER
     li t3,0
     la t5, MAP_INFO
     
     BEAM_LOOP:
         lb t2,0(t0) #loads if beam is active
-        beqz t2, PROCEED_LOOP # if it is active, proceed
-            
+        bnez t2, RENDER_BEAM # if it is active, render beam
+        j PROCEED_LOOP
+
         RENDER_BEAM:
-            lb t2, 1(t0)
-            beqz t2,CHECK_Y_AXIS_RENDER_BEAM
+            lb t2, 1(t0) # loads direction
+            beqz t2,CHECK_Y_AXIS_RENDER_BEAM #if direction=0, then check it for y move (up)
             
-            j CHECK_X_AXIS_RENDER_BEAM
+            j CHECK_X_AXIS_RENDER_BEAM #else, check for x-axis movement
             
             CHECK_Y_AXIS_RENDER_BEAM:
-                lb t2, 4(t0)
-                li t4, 12
+                lb t2, 4(t0) #loads y offset
+                li t4, 12 
                 bne t2,t4,PRINT_BEAM
                 j DELETE_BEAM 
 
@@ -34,7 +35,9 @@ BEAM_OPERATIONS:
                 #same for y
 
                 #coordinates -> x = a1, y = a2
-                
+
+                la a0,Beam_Horizontal 
+
                 lb t2, 5(t0) #loads new x of matrix
                 lb t3, 2(t5) #loads map x of matrix
                 sub t2,t2,t3 # load x - load x map
@@ -69,21 +72,18 @@ BEAM_OPERATIONS:
                 li a6, 0
                 li a7, 0
 
-                addi sp,sp,-16
+                addi sp,sp,-12
                 sw ra,0(sp)
                 sw t0,4(sp)
                 sw t1,8(sp)
-                sw a0,12(sp)
                 call RENDER
-                lw a0,12(sp)
                 lw t1,8(sp)
                 lw t0,4(sp)
                 lw ra,0(sp)
-                addi sp,sp,12
-
+                addi sp,sp,12                
 
         PROCEED_LOOP_BEAM:
-            bne t3,t1,CONTINUE_LOOP_BEAM
+            blt t3,t1,CONTINUE_LOOP_BEAM #counter < number_beams? : continue_loop : end_beam_operations
             j END_BEAM_OPERATIONS
             
             CONTINUE_LOOP_BEAM:
@@ -92,4 +92,5 @@ BEAM_OPERATIONS:
                 j BEAM_LOOOP
         
 
-END_BEAM_OPERATIONS
+END_BEAM_OPERATIONS:
+    ret

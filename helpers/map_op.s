@@ -11,6 +11,7 @@
 MAP_MOVE_RENDER:
 	la t0, CURRENT_MAP  # Loads CURRENT_MAP's address
 	lbu t1, 5(t0)       # Loads on t1 the CURRENT_MAP's rendering byte
+	li t1,2
 	li t2,3				# Loads number 3 -- related to "switch map" operation
 	blt t1,t2 CHECK_MAP_MOVE_RENDER_1 # If the rendering byte is 0, 1 or 2
 		ret				# If the rendering byte isn't <= 2

@@ -73,18 +73,18 @@ GAME_LOOP:
 	li t0,0xFF200604	# Loads Bitmap Display address
 	sw s0,0(t0)         # Stores new frame value (from s0) on Bitmap Display
 
-	li a0,1
-	call ENEMY_OPERATIONS
+	# li a0,1
+	# call ENEMY_OPERATIONS
 	
-	li a0, 1     # Rendering player's trail operation
-	li a1, 0     # Rendering full player (a1 doesn't really matter when a0 = 1)
-	call RENDER_PLAYER
+	# li a0, 1     # Rendering player's trail operation
+	# li a1, 0     # Rendering full player (a1 doesn't really matter when a0 = 1)
+	# call RENDER_PLAYER
 
 
 	#call RENDER_LIFE
 
 	#la a0, Beam
-	#call BEAM_OPERATIONS
+	call BEAM_OPERATIONS
 	
 	#call ENEMY_OPERATIONS
 

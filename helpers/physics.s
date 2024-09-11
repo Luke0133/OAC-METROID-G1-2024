@@ -339,13 +339,15 @@ CHECK_MOVE_Y:
                         li t3, 2        # Loads 2 and 
                         bne t3, t0, SKIP_ADJUST_Y_DOWN # compares with the result
                         # If map is vertical, correct its offset and coordinates
+                            lbu t0, 9(a1)    # Loads map's Y offset
                             sb zero, 9(a1)   # Sets map's Y offset to 0
                             lbu t4, 2(a2)    # Loads Map matrix height
                             li t3, m_screen_height # Loads Map screen height related to matrix
                             sub t3,t4,t3     # t4 = Map Matrix Height - Screen Matrix Height (t4 = Map's Y when it's on lowermost part of the map)
                             lbu t4, 7(a1)    # Loads Map Y postition on Matrix
                             bge t4,t3,SKIP_ADJUST_Y_DOWN  # If on lowermost Y, don't update map's Y it
-                            beqz t4,SKIP_ADJUST_Y_DOWN    # If on topmost Y, don't update map's Y it
+                            add t0,t4,t0   # t4 will only be 4 if offset was 0 and Y is zero
+                            beqz t0,SKIP_ADJUST_Y_DOWN    # If on topmost Y, don't update map's Y it
                             addi t4,t4,1     # adds 1 to it
                             sb t4, 7(a1)     # and stores it
                             li t3, 2         # t3 = 2 (map will be rendered again)

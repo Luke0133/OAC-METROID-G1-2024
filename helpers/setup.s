@@ -95,6 +95,9 @@ SETUP:
         sw t0,0(t4)     # Stores Doors1 address on Doors address
         la t0, Frames1  # Frames address
         sw t0,0(t5)     # Stores Frames1 address on Doors address
+        la t0,Zoomers   # Zoomers address
+        la t1,Zoomers1  # Loads ZoomersA address for Map 2
+        sw t1,0(t0)     # and stores it
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
         la a0, Map1 	# Map Address     

@@ -250,6 +250,135 @@ CHECK_VERTICAL_COLLISION:
         li a0,1  
         ret 
 
+########################        MOVE ZOOMER        ########################
+#       This procedure checks the tiles in front of Ripper when its       #
+#         X offset is 0. If there's something blocking its path,          #
+#                           it'll turn arround.                           #
+#                                                                         #
+#  ---------------           argument registers          ---------------  #
+#    a0 = Ripper's address                                                      #
+#	 a1 = Current map's address                                                 #
+#                                                                               #
+#  ------------------             registers used            ------------------  #
+#    a2,a3, a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK            #      
+#                                                                               #
+#  ------------------          temporary registers          ------------------  #
+#    t0, t1 --> temporary registers                                             #
+#    t2 = PLYR_POS address (stores from a2 to let it be modified)               #
+#    t3 = Player's X/Y offset                                                   #
+#    tp = offset modifier (stores from a3 to let it be modified)                #
+#                                                                               #    
+#################################################################################  
+
+MOVE_ZOOMER:
+    # Storing current X and Y to old X and Y
+    lbu t1,4(a0)  # Loads Zoomer's X
+    sb t1,5(a0)   # And stores it in Zoomer's old 
+    lbu t1,6(a0)  # Loads Zoomer's Y
+    sb t1,7(a0)   # And stores it in Zoomer's old Y
+
+    # Preparations for check
+    li t0,1       # In case no collision check is made
+
+    lbu t1,11(a0) # Loads Zoomer's Vertical Platform
+    beqz t1, MOVE_ZOOMER_CHECK_VERTICAL  # If not on vertical platform, try vertical
+    # Otherwise, check X movement 
+        lbu t1,2(a0)  # Loads Zoomer's X offset
+        bnez t1,SKIP_ZOOMER_COLLISION   # If offset isn't 0, move zoomer
+        # Otherwise, check collision
+            lbu a5,1(a1)  # Loads map's matrix width
+            lbu a6,4(a0)  # Loads Zoomer's current X
+            lbu a7,6(a0)  # Loads Zoomer's current Y
+
+            addi a1,a1,3   # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
+            mul t0,a7,a5   # Zoomer's Y related to matrix * Map Matrix's width
+            add t0,a6,t0   # t0 = Zoomer's X related to matrix +  Zoomer's Y related to matrix * Map Matrix's width  
+            add a1,a1,t0   # a1 = Map Matrix's address adjusted for Zoomer's X and Y related to matrix
+        
+        #lbu t0,9(a0)   # Loads Zoomer's Clock movement
+            lbu t0,11(a0)  # Loads Zoomer's Vertical Platform
+            bge t0,ZOOMER_COLLISION_HORIZONTAL_DOWN   # If on top of tile
+            # Otherwise, check on upper tile
+                addi a7,a7,-1 # Checking one tile up
+                sub a1,a1,a5  # Updates starting address on map matrix
+                j START_ZOOMER_COLLISION_HORIZONTAL_Y
+            
+            ZOOMER_COLLISION_HORIZONTAL_DOWN: 
+                addi a7,a7,1 # Checking one tile down
+                add a1,a1,a5 # Updates starting address on map matrix
+                #j START_ZOOMER_COLLISION
+
+            START_ZOOMER_COLLISION_HORIZONTAL_Y:
+            # Storing Registers on Stack
+                addi sp,sp,-12
+                sw a0,0(sp)
+                sw a1,4(sp)
+                sw ra,8(sp)
+            # End of Stack Operations
+
+                li a0,2  # Doesn't matter, since no doors will be checked
+                # a1 is already defined
+                li a2,1  # Only check one tile
+                li a3,1  # Vertical check
+                li a4,0  # Don't consider doors (since it never spawns there)
+                # a5 is already defined
+                # a6 is already defined
+                # a7 is already defined
+
+                call CHECK_MAP_COLLISION
+                mv t0,a0
+
+            # Procedure finished: Loading Registers from Stack
+                lw a0,0(sp)
+                lw a1,4(sp)
+                lw ra,8(sp)
+                addi sp,sp,12
+            # End of Stack Operations
+                bnez t0, MOVE_ZOOMER_CHANGE_PLATFORM  # If returning anything but 0, hange zoomer's platform
+    
+
+
+    MOVE_ZOOMER_CHANGE_PLATFORM:
+        
+
+
+    SKIP_ZOOMER_COLLISION:
+    # In case no collision check was made, t0 = 1
+        lbu t1,1(a0)  # Loads Zoomer's direction
+        bnez t0, CONTINUE_MOVE_ZOOMER  # If returning anything but 0, continue moving zoomer
+        # Otherwise, turn it arround
+            xori t1,t1,1  # Inverts direction
+            sb t1,1(a0)   # and stores it back
+            ret # and finish procedure
+
+        CONTINUE_MOVE_ZOOMER:
+            # Y never updates
+            lbu t0,3(a0)  # Loads Zoomer's X
+            lbu t2,2(a0)  # Loads Zoomer's X offset
+            beqz t1,MOVE_ZOOMER_RIGHT  # If direction is to the right
+            # Otherwise, update to the left
+                addi t2,t2,-2   # Movement for zoomer to the left
+                bge t2,zero,MOVE_ZOOMER_LEFT_SKIP_CORRECTION
+                    addi t2,t2,tile_size # adds 16 to offset
+                    addi t0,t0,-1        # subtracts 1 from X
+                MOVE_ZOOMER_LEFT_SKIP_CORRECTION:
+                    sb t0,3(a0)    # Stores Zoomer's new X
+                    sb t2,2(a0)    # Stores Zoomer's new X offset
+                    ret # and finish procedure
+
+            MOVE_ZOOMER_RIGHT:
+                addi t2,t2,2      # Movement for zoomer to the right
+                li t1,tile_size   # loads 16
+                blt t2,t1,MOVE_ZOOMER_RIGHT_SKIP_CORRECTION
+                    sub t2,t2,t1  # subtracts 16 from offset
+                    addi t0,t0,1  # subtracts 1 from X
+                MOVE_ZOOMER_RIGHT_SKIP_CORRECTION:
+                    sb t0,3(a0)   # Stores Zoomer's new X
+                    sb t2,2(a0)   # Stores Zoomer's new X offset
+                    ret # and finish procedure
+
+
+
 
 ########################        MOVE RIPPER        ########################
 #       This procedure checks the tiles in front of Ripper when its       #
@@ -288,9 +417,10 @@ MOVE_RIPPER:
         lbu a6,3(a0)  # Loads Ripper's current X
         lbu a7,5(a0)  # Loads Ripper's current Y
 
-        mul t0,a5,a7  # t0 = width * Y
-        addi a1,a1,3  # skip first 3 information bytes
-        add a1,a1,t0  # gets starting address on map matrix 
+        addi a1,a1,3   # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
+        mul t0,a7,a5   # Ripper's Y related to matrix * Map Matrix's width
+        add t0,a6,t0   # t0 = Ripper's X related to matrix +  Ripper's Y related to matrix * Map Matrix's width  
+        add a1,a1,t0   # a1 = Map Matrix's address adjusted for Ripper's X and Y related to matrix
     
         lbu t0,1(a0)  # Loads Ripper's direction
         beqz t0,RIPPER_COLLISION_RIGHT   # If moving right
@@ -322,6 +452,7 @@ MOVE_RIPPER:
         # a7 is already defined
 
         call CHECK_MAP_COLLISION
+        mv t0,a0
 
     # Procedure finished: Loading Registers from Stack
         lw a0,0(sp)
@@ -345,7 +476,7 @@ MOVE_RIPPER:
             lbu t2,2(a0)  # Loads Ripper's X offset
             beqz t1,MOVE_RIPPER_RIGHT  # If direction is to the right
             # Otherwise, update to the left
-                addi t2,t2,-4   # Movement for ripper to the left
+                addi t2,t2,-2   # Movement for ripper to the left
                 bge t2,zero,MOVE_RIPPER_LEFT_SKIP_CORRECTION
                     addi t2,t2,tile_size # adds 16 to offset
                     addi t0,t0,-1        # subtracts 1 from X
@@ -355,12 +486,12 @@ MOVE_RIPPER:
                     ret # and finish procedure
 
             MOVE_RIPPER_RIGHT:
-                addi t2,t2,4      # Movement for ripper to the right
+                addi t2,t2,2      # Movement for ripper to the right
                 li t1,tile_size   # loads 16
-                bge t2,zero,MOVE_RIPPER_LEFT_SKIP_CORRECTION
+                blt t2,t1,MOVE_RIPPER_RIGHT_SKIP_CORRECTION
                     sub t2,t2,t1  # subtracts 16 from offset
                     addi t0,t0,1  # subtracts 1 from X
-                MOVE_RIPPER_LEFT_SKIP_CORRECTION:
+                MOVE_RIPPER_RIGHT_SKIP_CORRECTION:
                     sb t0,3(a0)   # Stores Ripper's new X
                     sb t2,2(a0)   # Stores Ripper's new X offset
                     ret # and finish procedure
