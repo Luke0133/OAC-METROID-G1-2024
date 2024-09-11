@@ -387,6 +387,8 @@ MOVE_ZOOMER:
             bne t1,t2,MOVE_ZOOMER_CHECK_UP_0_OFF  # If offset != 8, check if it's 0
                 li a4,1  # Base case: Consider doors
                 add a4,a4,a2 # If on second check, consider ONLY doors
+                li tp,2  # Check 2 tiles
+                sub tp,tp,a2 # If on second check, check ONLY 1 tile
                 j MOVE_ZOOMER_CHECK_UP_SETUP # start collision check
             MOVE_ZOOMER_CHECK_UP_0_OFF:
             # Otherwise, if offset != 0, skip this collision check
