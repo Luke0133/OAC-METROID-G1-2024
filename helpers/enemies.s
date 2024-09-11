@@ -70,16 +70,7 @@ ZOOMER_OPERATIONS:
         lbu a5,4(a0) # Loads zoomer's current X
         li t2,m_render_distance  # Loads 4 (render distance)
         sub t3,t0,t2 # Gets leftmost threshold to manage zoomer
-        mv s8,a0
-    mv s7,a7
-    mv a0,t5
-    li a7,1
-    ecall
-    la a0,DEBUG
-    li a7,4
-    ecall
-    mv a7,s7
-    mv a0,s8
+        
         blt a5,t3,NEXT_IN_ZOOMER_OPERATIONS_LOOP # If zoomer's X isn't inside left border, go to next
         # Otherwise,
         add t3,t0,t2 # Calculate rightmost threshold to manage zoomer
@@ -114,7 +105,7 @@ ZOOMER_OPERATIONS:
             bnez a1,ZOOMER_OPERATIONS_LOOP_RENDER_TRAIL
             # a0 is already set
             lw a1,0(tp)
-            #call MOVE_ZOOMER
+            call MOVE_ZOOMER
             
             # Calculating Ripper's X related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
             lw a0,16(sp) # Gets a0 from stack again
@@ -179,7 +170,7 @@ ZOOMER_OPERATIONS:
             addi sp,sp,36
         # End of Stack Operations
 
-        NEXT_IN_ZOOMER_OPERATIONS_LOOP:                    
+        NEXT_IN_ZOOMER_OPERATIONS_LOOP: 
             addi a0,a0,zoomer_size  # Going to the next zoomer's address                                  
             addi a3,a3,1            # Iterating counter by 1                                   
             bge a3,a2, END_ZOOMER_OPERATIONS_LOOP # If all of the zoomer's were checked, end loop                                  

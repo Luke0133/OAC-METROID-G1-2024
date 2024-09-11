@@ -260,6 +260,7 @@ CHECK_VERTICAL_COLLISION:
 #	 a1 = Current map's address                                                 #
 #                                                                               #
 #  ------------------             registers used            ------------------  #
+#    a2 --> check state (will do 2)
 #    a2,a3, a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK            #      
 #                                                                               #
 #  ------------------          temporary registers          ------------------  #
@@ -271,113 +272,523 @@ CHECK_VERTICAL_COLLISION:
 #################################################################################  
 
 MOVE_ZOOMER:
+#ebreak
     # Storing current X and Y to old X and Y
     lbu t1,4(a0)  # Loads Zoomer's X
     sb t1,5(a0)   # And stores it in Zoomer's old 
     lbu t1,6(a0)  # Loads Zoomer's Y
     sb t1,7(a0)   # And stores it in Zoomer's old Y
 
-    # Preparations for check
-    li t0,1       # In case no collision check is made
+    li a2, 0      # First stage of check (platform) 
+    MOVE_ZOOMER_CHECK_LOOP:
+        # Preparations for check
+        li t0,1       # In case no collision check is made
 
-    lbu t1,11(a0) # Loads Zoomer's Vertical Platform
-    beqz t1, MOVE_ZOOMER_CHECK_VERTICAL  # If not on vertical platform, try vertical
-    # Otherwise, check X movement 
-        lbu t1,2(a0)  # Loads Zoomer's X offset
-        bnez t1,SKIP_ZOOMER_COLLISION   # If offset isn't 0, move zoomer
-        # Otherwise, check collision
-            lbu a5,1(a1)  # Loads map's matrix width
-            lbu a6,4(a0)  # Loads Zoomer's current X
-            lbu a7,6(a0)  # Loads Zoomer's current Y
+        lbu a5,1(a1)  # Loads map's matrix width
+        lbu a6,4(a0)  # Loads Zoomer's current X
+        lbu a7,6(a0)  # Loads Zoomer's current Y
 
-            addi a1,a1,3   # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
-            mul t0,a7,a5   # Zoomer's Y related to matrix * Map Matrix's width
-            add t0,a6,t0   # t0 = Zoomer's X related to matrix +  Zoomer's Y related to matrix * Map Matrix's width  
-            add a1,a1,t0   # a1 = Map Matrix's address adjusted for Zoomer's X and Y related to matrix
-        
-        #lbu t0,9(a0)   # Loads Zoomer's Clock movement
-            lbu t0,11(a0)  # Loads Zoomer's Vertical Platform
-            bge t0,ZOOMER_COLLISION_HORIZONTAL_DOWN   # If on top of tile
-            # Otherwise, check on upper tile
-                addi a7,a7,-1 # Checking one tile up
-                sub a1,a1,a5  # Updates starting address on map matrix
-                j START_ZOOMER_COLLISION_HORIZONTAL_Y
-            
-            ZOOMER_COLLISION_HORIZONTAL_DOWN: 
+        addi a1,a1,3   # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
+        mul t1,a7,a5   # Zoomer's Y related to matrix * Map Matrix's width
+        add t1,a6,t1   # t1 = Zoomer's X related to matrix +  Zoomer's Y related to matrix * Map Matrix's width  
+        add a1,a1,t1   # a1 = Map Matrix's address adjusted for Zoomer's X and Y related to matrix
+
+        li a4,0  # Base case: Don't consider doors (if X offset stays 0)
+        li tp,1  # Base case (will be passed to a2): only check 1 tile (if X offset stays 0)
+
+        lbu t1,10(a0)  # Loads Zoomer's Platform
+        lbu t2,2(a0)   # Loads Zoomer's X offset
+        lbu t3,3(a0)   # Loads Zoomer's Y offset
+        lbu t4,9(a0)   # Loads Zoomer's Clock movement
+        bnez t1,TRY_MOVE_ZOOMER_COLLISION_LEFT
+        # If t1 == 0, platform is bellow zoomer
+            li t1,8
+            bne t1,t2,MOVE_ZOOMER_CHECK_DOWN_0_OFF  # If offset != 8, check if it's 0
+                li a4,1  # Base case: Consider doors
+                add a4,a4,a2 # If on second check, consider ONLY doors
+                li tp,2  # Check 2 tiles
+                sub tp,tp,a2 # If on second check, check ONLY 1 tile
+                j MOVE_ZOOMER_CHECK_DOWN_SETUP # start collision check
+            MOVE_ZOOMER_CHECK_DOWN_0_OFF:
+            # Otherwise, if offset != 0, skip this collision check
+            bnez t2, MOVE_ZOOMER_PROPERLY
+
+            MOVE_ZOOMER_CHECK_DOWN_SETUP:  # Start checking
+            bnez a2, MOVE_ZOOMER_CHECK_DOWN_FOWARD
+            # If a2 = 0, it's on first check, so check platform bellow
                 addi a7,a7,1 # Checking one tile down
                 add a1,a1,a5 # Updates starting address on map matrix
-                #j START_ZOOMER_COLLISION
-
-            START_ZOOMER_COLLISION_HORIZONTAL_Y:
-            # Storing Registers on Stack
-                addi sp,sp,-12
-                sw a0,0(sp)
-                sw a1,4(sp)
-                sw ra,8(sp)
-            # End of Stack Operations
-
-                li a0,2  # Doesn't matter, since no doors will be checked
-                # a1 is already defined
-                li a2,1  # Only check one tile
                 li a3,1  # Vertical check
-                li a4,0  # Don't consider doors (since it never spawns there)
-                # a5 is already defined
-                # a6 is already defined
-                # a7 is already defined
+                j START_ZOOMER_COLLISION
+            
+            MOVE_ZOOMER_CHECK_DOWN_FOWARD:
+            # If a2 = 1, it's on second check, so check foward
+                beqz t4, MOVE_ZOOMER_CHECK_DOWN_FOWARD_CLOCKWISE
+                # If t4 = 1, check anti-clockwise (tile to the left)
+                    addi a6,a6,-1  # Checking left tile
+                    addi a1,a1,-1   # Updates starting address on map matrix
+                    li a3,0  # Horizontal check
+                    j START_ZOOMER_COLLISION
 
-                call CHECK_MAP_COLLISION
-                mv t0,a0
-
-            # Procedure finished: Loading Registers from Stack
-                lw a0,0(sp)
-                lw a1,4(sp)
-                lw ra,8(sp)
-                addi sp,sp,12
-            # End of Stack Operations
-                bnez t0, MOVE_ZOOMER_CHANGE_PLATFORM  # If returning anything but 0, hange zoomer's platform
-    
+                MOVE_ZOOMER_CHECK_DOWN_FOWARD_CLOCKWISE:
+                # If t4 = 0, check clockwise (tile to the right)
+                    addi a6,a6,1  # Checking right tile
+                    addi a1,a1,1   # Updates starting address on map matrix
+                    li a3,0  # Horizontal check
+                    j START_ZOOMER_COLLISION
 
 
-    MOVE_ZOOMER_CHANGE_PLATFORM:
+        TRY_MOVE_ZOOMER_COLLISION_LEFT:  li t5,1
+            bne t1,t5,TRY_MOVE_ZOOMER_COLLISION_UP
+            # If platform is to the left of zoomer:
+            li t1,8
+            bne t1,t2,MOVE_ZOOMER_CHECK_LEFT_0_OFF  # If X offset != 8, skip it
+                li a4,1  # Base case: Consider doors
+                sub a4,a4,a2 # If on second check, don't consider doors
+                
+                # Adding 1 to matrix and X because we need to check the current tile
+                # (it will be taken away bellow)
+                addi a6,a6,1   
+                addi a1,a1,1 
+            
+            MOVE_ZOOMER_CHECK_LEFT_0_OFF:
+            # Otherwise, if Y offset != 0, skip this collision check
+            bnez t3, MOVE_ZOOMER_PROPERLY
+
+            MOVE_ZOOMER_CHECK_LEFT_SETUP:  # Start checking
+            bnez a2, MOVE_ZOOMER_CHECK_DOWN_FOWARD
+            # If a2 = 0, it's on first check, so check platform bellow
+                addi a6,a6,-1  # Checking left tile (or current tile if X offset == 8)
+                addi a1,a1,-1   # Updates starting address on map matrix
+                li a3,0  # Horizontal check
+                j START_ZOOMER_COLLISION
+            
+            MOVE_ZOOMER_CHECK_LEFT_FOWARD:
+            # If a2 = 1, it's on second check, so check foward
+                beqz t4, MOVE_ZOOMER_CHECK_LEFT_FOWARD_CLOCKWISE
+                # If t4 = 1, check anti-clockwise (tile above)
+                    addi a7,a7,-1 # Checking one tile up
+                    sub a1,a1,a5  # Updates starting address on map matrix
+                    li a3,1  # Vertical check
+                    j START_ZOOMER_COLLISION
+
+                MOVE_ZOOMER_CHECK_LEFT_FOWARD_CLOCKWISE:
+                # If t4 = 0, check clockwise (tile bellow)
+                    addi a7,a7,1 # Checking one tile down
+                    add a1,a1,a5 # Updates starting address on map matrix
+                    li a3,1  # Vertical check
+                    j START_ZOOMER_COLLISION
+
+
+        TRY_MOVE_ZOOMER_COLLISION_UP:  li t5,2
+            bne t1,t5,MOVE_ZOOMER_COLLISION_RIGHT
+            # If platform is above zoomer:
+            li t1,8
+            bne t1,t2,MOVE_ZOOMER_CHECK_UP_0_OFF  # If offset != 8, check if it's 0
+                li a4,1  # Base case: Consider doors
+                add a4,a4,a2 # If on second check, consider ONLY doors
+                j MOVE_ZOOMER_CHECK_UP_SETUP # start collision check
+            MOVE_ZOOMER_CHECK_UP_0_OFF:
+            # Otherwise, if offset != 0, skip this collision check
+            bnez t2, MOVE_ZOOMER_PROPERLY
+
+            MOVE_ZOOMER_CHECK_UP_SETUP:  # Start checking
+            bnez a2, MOVE_ZOOMER_CHECK_UP_FOWARD
+            # If a2 = 0, it's on first check, so check platform bellow
+                addi a7,a7,-1 # Checking one tile above
+                sub a1,a1,a5  # Updates starting address on map matrix
+                li a3,1  # Vertical check
+                j START_ZOOMER_COLLISION
+            
+            MOVE_ZOOMER_CHECK_UP_FOWARD:
+            # If a2 = 1, it's on second check, so check foward
+                beqz t4, MOVE_ZOOMER_CHECK_UP_FOWARD_CLOCKWISE
+                # If t4 = 1, check anti-clockwise (tile to the left)
+                    addi a6,a6,1  # Checking right tile
+                    addi a1,a1,1   # Updates starting address on map matrix
+                    li a3,0  # Horizontal check
+                    j START_ZOOMER_COLLISION
+
+                MOVE_ZOOMER_CHECK_UP_FOWARD_CLOCKWISE:
+                # If t4 = 0, check clockwise (tile to the right)
+                    addi a6,a6,-1  # Checking left tile
+                    addi a1,a1,-1   # Updates starting address on map matrix
+                    li a3,0  # Horizontal check
+                    j START_ZOOMER_COLLISION
+
+
+        MOVE_ZOOMER_COLLISION_RIGHT:  # li t5,3
+            # If platform is to the right of zoomer:
+            li t1,8
+            bne t1,t2,MOVE_ZOOMER_CHECK_RIGHT_0_OFF  # If X offset != 8, skip this
+                li a4,1  # Base case: Consider doors
+                sub a4,a4,a2 # If on second check, don't consider doors
+            
+            MOVE_ZOOMER_CHECK_RIGHT_0_OFF:
+            # Otherwise, if Y offset != 0, skip this collision check
+            bnez t3, MOVE_ZOOMER_PROPERLY
+
+            MOVE_ZOOMER_CHECK_RIGHT_SETUP:  # Start checking
+            bnez a2, MOVE_ZOOMER_CHECK_RIGHT_FOWARD
+            # If a2 = 0, it's on first check, so check platform on the right
+                addi a6,a6,1   # Checking right tile
+                addi a1,a1,1   # Updates starting address on map matrix
+                li a3,0  # Horizontal check
+                j START_ZOOMER_COLLISION
+            
+            MOVE_ZOOMER_CHECK_RIGHT_FOWARD:
+            # If a2 = 1, it's on second check, so check foward
+                beqz t4, MOVE_ZOOMER_CHECK_RIGHT_FOWARD_CLOCKWISE
+                # If t4 = 1, check anti-clockwise (tile above)
+                    addi a7,a7,1 # Checking one tile down
+                    add a1,a1,a5 # Updates starting address on map matrix
+                    li a3,1  # Vertical check
+                    j START_ZOOMER_COLLISION
+
+                MOVE_ZOOMER_CHECK_RIGHT_FOWARD_CLOCKWISE:
+                # If t4 = 0, check clockwise (tile bellow)
+                    addi a7,a7,-1 # Checking one tile up
+                    sub a1,a1,a5  # Updates starting address on map matrix
+                    li a3,1  # Vertical check
+                    j START_ZOOMER_COLLISION
+
+
         
+        
+        START_ZOOMER_COLLISION:
+        # Storing Registers on Stack
+            addi sp,sp,-16
+            sw ra,0(sp)
+            sw a0,4(sp)
+            sw a1,8(sp)
+            sw a2,12(sp)
+        # End of Stack Operations
 
+            li a0,2  # All doors should be checked
+            # a1 is already defined
+            mv a2,tp #li a2,1  # Only check one tile
+            # a3 is already defined
+            # a4 is already defined
+            # a5 is already defined
+            # a6 is already defined
+            # a7 is already defined
 
-    SKIP_ZOOMER_COLLISION:
-    # In case no collision check was made, t0 = 1
-        lbu t1,1(a0)  # Loads Zoomer's direction
-        bnez t0, CONTINUE_MOVE_ZOOMER  # If returning anything but 0, continue moving zoomer
-        # Otherwise, turn it arround
-            xori t1,t1,1  # Inverts direction
-            sb t1,1(a0)   # and stores it back
-            ret # and finish procedure
+            call CHECK_MAP_COLLISION
+            mv t0,a0   # Stores result from a0 to t0
 
-        CONTINUE_MOVE_ZOOMER:
-            # Y never updates
-            lbu t0,3(a0)  # Loads Zoomer's X
-            lbu t2,2(a0)  # Loads Zoomer's X offset
-            beqz t1,MOVE_ZOOMER_RIGHT  # If direction is to the right
-            # Otherwise, update to the left
-                addi t2,t2,-2   # Movement for zoomer to the left
-                bge t2,zero,MOVE_ZOOMER_LEFT_SKIP_CORRECTION
+        # Procedure finished: Loading Registers from Stack
+            lw ra,0(sp)
+            lw a0,4(sp)
+            lw a1,8(sp)
+            lw a2,12(sp)
+            addi sp,sp,16
+        # End of Stack Operations
+        
+        bnez a2, MOVE_ZOOMER_SECOND_CHECK 
+        # If a2 = 0, it's on first check
+            bnez t0, MOVE_ZOOMER_CHANGE_PLATFORM # If returning anything but 0, change zoomer's platform
+            # Otherwise, there's "ground", so a foward check needs to be made
+                li a2,1 # Loads second check state
+                j MOVE_ZOOMER_CHECK_LOOP # and return to the beginning
+            
+            MOVE_ZOOMER_CHANGE_PLATFORM:
+                lbu t1,10(a0)  # Loads Zoomer's Platform
+                lbu t2,2(a0)   # Loads Zoomer's X offset
+                lbu t3,3(a0)   # Loads Zoomer's Y offset
+                lbu t4,9(a0)   # Loads Zoomer's Clock movement
+                bnez t1,TRY_MOVE_ZOOMER_CHANGE_PLATFORM_LEFT
+                # If platform is bellow zoomer:
+                    beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_DOWN_CLOCKWISE
+                    # Otherwise, zoomer is moving anti-clockwise:
+                        li t1, 3       # Sets platform to 3 (on the right)
+                        # t2 is the same -- Keeps X offset
+                        li t3, 4       # Sets Y offset to 4
+
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        sb t3,3(a0)   # Stores Zoomer's new Y offset
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                    MOVE_ZOOMER_CHANGE_PLATFORM_DOWN_CLOCKWISE:
+                    # If zoomer is moving clockwise:
+                        li t1, 1       # Sets platform to 1 (on the left)
+                        # t2 is the same -- Keeps X offset
+                        li t3, 4       # Sets Y offset to 4
+
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        sb t3,3(a0)   # Stores Zoomer's new Y offset
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                TRY_MOVE_ZOOMER_CHANGE_PLATFORM_LEFT:  li t5,1
+                bne t1,t5,TRY_MOVE_ZOOMER_CHANGE_PLATFORM_UP
+                # If platform is to the left of zoomer:
+                    beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_LEFT_CLOCKWISE
+                    # Otherwise, zoomer is moving anti-clockwise:
+                        li t1, 0       # Sets platform to 0 (bellow)
+                        li t2, 12      # Sets X offset to 12
+                        lbu t4,4(a0)   # Loads Zoomer's X
+                        addi t4,t4,-1  # Subtracts 1 from it (offset was reduced)
+                        # t3 is the same -- Keeps Y offset
+
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        sb t2,2(a0)   # Stores Zoomer's new X offset
+                        sb t4,4(a0)   # Stores Zoomer's new X
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                    MOVE_ZOOMER_CHANGE_PLATFORM_LEFT_CLOCKWISE:
+                    # If zoomer is moving clockwise:
+                        li t1, 2       # Sets platform to 2 (above)
+                        li t2, 12      # Sets X offset to 12
+                        lbu t4,4(a0)   # Loads Zoomer's X
+                        addi t4,t4,-1  # Subtracts 1 from it (offset was reduced)
+                        # t3 is the same -- Keeps Y offset
+
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        sb t2,2(a0)   # Stores Zoomer's new X offset
+                        sb t4,4(a0)   # Stores Zoomer's new X
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                TRY_MOVE_ZOOMER_CHANGE_PLATFORM_UP:  li t5,2
+                bne t1,t5,MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT
+                # If platform is above zoomer:
+                    beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_UP_CLOCKWISE
+                    # Otherwise, zoomer is moving anti-clockwise:
+                        li t1, 1       # Sets platform to 1 (on the left)
+                        # t2 is the same -- Keeps X offset
+                        li t3, 12      # Sets Y offset to 12
+                        lbu t4,6(a0)   # Loads Zoomer's Y
+                        addi t4,t4,-1  # Subtracts 1 from it (offset was reduced)
+
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        sb t3,3(a0)   # Stores Zoomer's new Y offset
+                        sb t4,6(a0)   # Stores Zoomer's new Y
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                    MOVE_ZOOMER_CHANGE_PLATFORM_UP_CLOCKWISE:
+                    # If zoomer is moving clockwise:
+                        li t1, 3       # Sets platform to 3 (on the right)
+                        # t2 is the same -- Keeps X offset
+                        li t3, 12      # Sets Y offset to 12
+                        lbu t4,6(a0)   # Loads Zoomer's Y
+                        addi t4,t4,-1  # Subtracts 1 from it (offset was reduced)
+
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        sb t3,3(a0)   # Stores Zoomer's new Y offset
+                        sb t4,6(a0)   # Stores Zoomer's new Y
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT:  # li t5,3
+                # If platform is to the right of zoomer:
+                    beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT_CLOCKWISE
+                    # Otherwise, zoomer is moving anti-clockwise:
+                        li t1, 2       # Sets platform to 2 (above)
+                        li t2, 4       # Sets X offset to 4
+                        # t3 is the same -- Keeps Y offset
+
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        sb t2,2(a0)   # Stores Zoomer's new X offset
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                    MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT_CLOCKWISE:
+                    # If zoomer is moving clockwise:
+                        li t1, 0       # Sets platform to 0 (bellow)
+                        li t2, 4      # Sets X offset to 4
+                        # t3 is the same -- Keeps Y offset
+
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        sb t2,2(a0)   # Stores Zoomer's new X offset
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+                
+        MOVE_ZOOMER_SECOND_CHECK: 
+        # If a2 = 1, it's on second check
+            bnez t0, MOVE_ZOOMER_PROPERLY  # If returning anything but 0, properly move zoomer
+            # Otherwise, there's a tile blocking its path, so change platform (opposite of its clock movement)
+                lbu t1,10(a0)  # Loads Zoomer's Platform
+                # This will only change platform, and not position/offset
+                lbu t4,9(a0)   # Loads Zoomer's Clock movement
+                bnez t1,TRY_MOVE_ZOOMER_CHANGE_PLATFORM_LEFT_V2
+                # If platform is bellow zoomer:
+                    beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_DOWN_CLOCKWISE_V2
+                    # Otherwise, zoomer is moving anti-clockwise:
+                        li t1, 1       # Sets platform to 1 (on the left)
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                    MOVE_ZOOMER_CHANGE_PLATFORM_DOWN_CLOCKWISE_V2:
+                    # If zoomer is moving clockwise:
+                        li t1, 3       # Sets platform to 3 (on the right)
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                TRY_MOVE_ZOOMER_CHANGE_PLATFORM_LEFT_V2:  li t5,1
+                bne t1,t5,TRY_MOVE_ZOOMER_CHANGE_PLATFORM_UP_V2
+                # If platform is to the left of zoomer:
+                    beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_LEFT_CLOCKWISE_V2
+                    # Otherwise, zoomer is moving anti-clockwise:
+                        li t1, 2       # Sets platform to 2 (above)
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                    MOVE_ZOOMER_CHANGE_PLATFORM_LEFT_CLOCKWISE_V2:
+                    # If zoomer is moving clockwise:
+                        li t1, 0       # Sets platform to 0 (bellow)
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                TRY_MOVE_ZOOMER_CHANGE_PLATFORM_UP_V2:  li t5,2
+                bne t1,t5,MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT
+                # If platform is above zoomer:
+                    beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_UP_CLOCKWISE
+                    # Otherwise, zoomer is moving anti-clockwise:
+                        li t1, 3       # Sets platform to 3 (on the right)
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                    MOVE_ZOOMER_CHANGE_PLATFORM_UP_CLOCKWISE_V2:
+                    # If zoomer is moving clockwise:
+                        li t1, 1       # Sets platform to 1 (on the left)
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT_V2:  # li t5,3
+                # If platform is to the right of zoomer:
+                    beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT_CLOCKWISE_V2
+                    # Otherwise, zoomer is moving anti-clockwise:
+                        li t1, 0       # Sets platform to 0 (bellow)
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+
+                    MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT_CLOCKWISE_V2:
+                    # If zoomer is moving clockwise:
+                        li t1, 2       # Sets platform to 2 (above)
+                        sb t1,10(a0)  # Stores Zoomer's new Platform
+                        j END_MOVE_ZOOMER # Ends Move Zoomer
+                
+        MOVE_ZOOMER_PROPERLY:
+        # In order to move zoomer, it needs to check clock direction and platform (again...)
+            lbu t1,10(a0)  # Loads Zoomer's Platform
+            lbu t2,2(a0)   # Loads Zoomer's X offset
+            lbu t3,3(a0)   # Loads Zoomer's Y offset
+            lbu t4,9(a0)   # Loads Zoomer's Clock movement
+            bnez t1,TRY_MOVE_ZOOMER_PROPERLY_LEFT
+            # If platform is bellow zoomer:
+                beqz t4, MOVE_ZOOMER_PROPERLY_DOWN_CLOCKWISE
+                # Otherwise, zoomer is moving anti-clockwise:
+                    addi t2,t2,-4     # Updates X offset
+                    # t3 stays the same -- don't change Y offset
+                    j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK # Checking if offset is ok
+
+                MOVE_ZOOMER_PROPERLY_DOWN_CLOCKWISE:
+                # If zoomer is moving clockwise:
+                    addi t2,t2,4     # Updates X offset
+                    # t3 stays the same -- don't change Y offset
+                    j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK # Checking if offset is ok
+
+            TRY_MOVE_ZOOMER_PROPERLY_LEFT:  li t5,1
+            bne t1,t5,TRY_MOVE_ZOOMER_PROPERLY_UP
+            # If platform is to the left of zoomer:
+                beqz t4, MOVE_ZOOMER_PROPERLY_LEFT_CLOCKWISE
+                # Otherwise, zoomer is moving anti-clockwise:
+                    # t2 stays the same -- don't change X offset
+                    addi t3,t3,-4     # Updates Y offset
+                    j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK # Checking if offset is ok
+
+                MOVE_ZOOMER_PROPERLY_LEFT_CLOCKWISE:
+                # If zoomer is moving clockwise:
+                    # t2 stays the same -- don't change X offset
+                    addi t3,t3,4     # Updates Y offset
+                    j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK # Checking if offset is ok
+
+            TRY_MOVE_ZOOMER_PROPERLY_UP:  li t5,2
+            bne t1,t5,MOVE_ZOOMER_PROPERLY_RIGHT
+            # If platform is above zoomer:
+                beqz t4, MOVE_ZOOMER_PROPERLY_UP_CLOCKWISE
+                # Otherwise, zoomer is moving anti-clockwise:
+                    addi t2,t2,4     # Updates X offset
+                    # t3 stays the same -- don't change Y offset
+                    j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK # Checking if offset is ok
+
+                MOVE_ZOOMER_PROPERLY_UP_CLOCKWISE:
+                # If zoomer is moving clockwise:
+                    addi t2,t2,-4     # Updates X offset
+                    # t3 stays the same -- don't change Y offset
+                    j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK # Checking if offset is ok
+
+            MOVE_ZOOMER_PROPERLY_RIGHT:  # li t5,3
+            # If platform is to the right of zoomer:
+                beqz t4, MOVE_ZOOMER_PROPERLY_RIGHT_CLOCKWISE
+                # Otherwise, zoomer is moving anti-clockwise:
+                    # t2 stays the same -- don't change X offset
+                    addi t3,t3,4     # Updates Y offset
+                    j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK # Checking if offset is ok
+
+                MOVE_ZOOMER_PROPERLY_RIGHT_CLOCKWISE:
+                # If zoomer is moving clockwise:
+                    # t2 stays the same -- don't change X offset
+                    addi t3,t3,-4     # Updates Y offset
+                    #j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK # Checking if offset is ok
+            
+            MOVE_ZOOMER_PROPERLY_OFFSET_CHECK:
+                sb t2,2(a0)   # Stores Zoomer's new X offset (may change depending on next checks)
+                bge t2,zero, SKIP_MOVE_ZOOMER_PROPERLY_X_OFFSET_NEGATIVE
+                # X offset is < 0
                     addi t2,t2,tile_size # adds 16 to offset
-                    addi t0,t0,-1        # subtracts 1 from X
-                MOVE_ZOOMER_LEFT_SKIP_CORRECTION:
-                    sb t0,3(a0)    # Stores Zoomer's new X
-                    sb t2,2(a0)    # Stores Zoomer's new X offset
-                    ret # and finish procedure
+                    lbu t4,4(a0)         # Loads Zoomer's X
+                    addi t4,t4,-1        # subtracts 1 from it
 
-            MOVE_ZOOMER_RIGHT:
-                addi t2,t2,2      # Movement for zoomer to the right
-                li t1,tile_size   # loads 16
-                blt t2,t1,MOVE_ZOOMER_RIGHT_SKIP_CORRECTION
-                    sub t2,t2,t1  # subtracts 16 from offset
-                    addi t0,t0,1  # subtracts 1 from X
-                MOVE_ZOOMER_RIGHT_SKIP_CORRECTION:
-                    sb t0,3(a0)   # Stores Zoomer's new X
-                    sb t2,2(a0)   # Stores Zoomer's new X offset
-                    ret # and finish procedure
+                    sb t2,2(a0)          # Stores Zoomer's new X offset
+                    sb t4,4(a0)          # Stores Zoomer's new X
+                    j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK_Y    # check Y offset
+                
+                SKIP_MOVE_ZOOMER_PROPERLY_X_OFFSET_NEGATIVE:
+                # X offset is >= 0 
+                li t0,tile_size
+                blt t2,t0,MOVE_ZOOMER_PROPERLY_OFFSET_CHECK_Y # X offset is ok
+                # X offset is >= 16
+                    sub t2,t2,t0         # subtracts 16 to offset
+                    lbu t4,4(a0)         # Loads Zoomer's X
+                    addi t4,t4,1         # adds 1 from it
 
+                    sb t2,2(a0)          # Stores Zoomer's new X offset
+                    sb t4,4(a0)          # Stores Zoomer's new X
+                    # j MOVE_ZOOMER_PROPERLY_OFFSET_CHECK_Y    # check Y offset
 
+                MOVE_ZOOMER_PROPERLY_OFFSET_CHECK_Y:
+                sb t3,3(a0)   # Stores Zoomer's new X offset (may change depending on next checks)
+                bge t3,zero, SKIP_MOVE_ZOOMER_PROPERLY_Y_OFFSET_NEGATIVE
+                # Y offset is < 0
+                    addi t3,t3,tile_size # adds 16 to offset
+                    lbu t4,6(a0)         # Loads Zoomer's Y
+                    addi t4,t4,-1        # subtracts 1 from it
+
+                    sb t3,3(a0)          # Stores Zoomer's new Y offset
+                    sb t4,6(a0)          # Stores Zoomer's new Y
+                    j END_MOVE_ZOOMER    # Finishes procedure
+                
+                SKIP_MOVE_ZOOMER_PROPERLY_Y_OFFSET_NEGATIVE:
+                # Y offset is >= 0 
+                li t0,tile_size
+                blt t3,t0,END_MOVE_ZOOMER # Y offset is ok
+                # Y offset is >= 16
+                    sub t3,t3,t0         # subtracts 16 to offset
+                    lbu t4,6(a0)         # Loads Zoomer's Y
+                    addi t4,t4,1         # adds 1 from it
+
+                    sb t3,3(a0)          # Stores Zoomer's new Y offset
+                    sb t4,6(a0)          # Stores Zoomer's new Y
+                    j END_MOVE_ZOOMER    # Finishes procedure
+
+    
+    #SKIP_ZOOMER_COLLISION:
+    ## In case no collision check was made, t0 = 1
+    #    lbu t1,1(a0)  # Loads Zoomer's direction
+    #    bnez t0, CONTINUE_MOVE_ZOOMER  # If returning anything but 0, continue moving zoomer
+    #    # Otherwise, turn it arround
+    #        xori t1,t1,1  # Inverts direction
+    #        sb t1,1(a0)   # and stores it back
+    #        ret # and finish procedure
+
+    END_MOVE_ZOOMER:
+        ret
 
 
 ########################        MOVE RIPPER        ########################

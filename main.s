@@ -84,7 +84,7 @@ GAME_LOOP:
 	#call RENDER_LIFE
 
 	#la a0, Beam
-	call BEAM_OPERATIONS
+	#call BEAM_OPERATIONS
 	
 	#call ENEMY_OPERATIONS
 

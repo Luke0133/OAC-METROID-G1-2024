@@ -120,8 +120,8 @@ Zoomers: .word 0 # Holds the current "ZoomersA" label based on the current map (
 Zoomers1: 1
 Zoomer1_0: zoomer_normal_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
            34, 0, 6, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 0, 0, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
-                        # Horizontal Platform (-1 = Left, 0 = none, 1 = Right), Vertical Platform (-1 = Up, 0 = On Ground, 1 = Down)
+           0, 0, 3, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the plat (0 - Down, 1 - Left, 2 - Up, 3 - Right), Vertical Platform (-1 = Up, 0 = On Ground, 1 = Down)
 
 
 ##############           Ripper            ##############
