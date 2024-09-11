@@ -313,13 +313,14 @@ INPUT_CHECK:
 		ret	
 
 BEAM_OPERATIONS:
-    #ebreak
+
+    ebreak
     la t1, BEAMS # loads plyrs_status attacking
     li t4, BEAMS_NUMBER # max counter of number beams
     li t3,0
 
     CHECK_BEAM_ACTIVE:
-        lb t2, 0(t1) #loads if beam is already active
+        lbu t2, 0(t1) #loads if beam is already active
         bnez t2, CHECK_BEAM_ACTIVE_LOOP # beam active? proceed into loop
         j ACTIVATE_BEAM #activate the beam
 
@@ -336,17 +337,16 @@ BEAM_OPERATIONS:
             ################ STORE OFSETS ######################
               
             #a2 = player pos
-            lb t2, 6(a2) #loads player x offset
+            lbu t2, 6(a2) #loads player x offset
             sb t2, 3(t1)
-            lb t2, 8(a2)
-            addi t2,t2,1
+            lbu t2, 8(a2)
+            addi t2,t2,3
             sb t2, 5(t1) #x new for beam
             sb t2, 7(t1) #x old for beam
 
-            lb t2, 7(a2) #loads player y offset
+            lbu t2, 7(a2) #loads player y offset
             sb t2, 4(t1)
-            lb t2, 9(t1)
-            addi t2,t2,1
+            lbu t2, 9(a2)
             sb t2, 6(t1) #y new for beam
             sb t2, 8(t1) #y old for beam
 
@@ -356,14 +356,14 @@ BEAM_OPERATIONS:
             li t2,1 # fills with 1 the beam info 
             sb t2,0(t1) # stores in beam array
             
-            lb t2, 2(a0) # loads if player is facing up
+            lbu t2, 2(a0) # loads if player is facing up
             bnez t2, ACTIVATE_Y_AXIS_BEAM
        
             #cima     = sub 1 tile no y,x eq jogador,offset x e y do jogador 
             #direita  = sum 1 tile x,y eq jogador,offset x e y do jogador 
             #esquerda = sub 1 tile x,y eq jogador, offset x e y do jogador 
         
-            lb t2, 1(a0) # loads player x direction
+            lbu t2, 1(a0) # loads player x direction
             bnez t2,ACTIVATE_LEFT_AXIS_BEAM # direction != 0 ? left : right
                  
             #right direction
