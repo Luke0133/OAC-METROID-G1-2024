@@ -14,7 +14,9 @@ MUSIC.NOTES: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60
 MUSIC.STATUS:  .word 0,0
 
 
-.eqv KDMMIO_ADDRESS 0xFF210000
+#.eqv KDMMIO_ADDRESS 0xFF210000
+.eqv KDMMIO_ADDRESS 0xFF200000
+
 ####### Informations related to frame rate  ####### 
 .eqv frame_rate 50 # T ms por frame 
 .eqv closing_door 4   # default number of iterations before opening door goes to closed state

@@ -312,7 +312,8 @@ INPUT_CHECK:
 	END_INPUT_CHECK:
 		ret	
 
-BEAM_OPERATIONS: 
+BEAM_OPERATIONS:
+    #ebreak
     la t1, BEAMS # loads plyrs_status attacking
     li t4, BEAMS_NUMBER # max counter of number beams
     li t3,0
@@ -336,10 +337,16 @@ BEAM_OPERATIONS:
               
             #a2 = player pos
             lb t2, 6(a2) #loads player x offset
+            sb t2, 3(t1)
+            lb t2, 8(a2)
+            addi t2,t2,1
             sb t2, 5(t1) #x new for beam
             sb t2, 7(t1) #x old for beam
 
             lb t2, 7(a2) #loads player y offset
+            sb t2, 4(t1)
+            lb t2, 9(t1)
+            addi t2,t2,1
             sb t2, 6(t1) #y new for beam
             sb t2, 8(t1) #y old for beam
 

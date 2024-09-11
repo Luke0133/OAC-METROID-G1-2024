@@ -35,6 +35,7 @@
 #       t4 = temporary operations                                       #
 #########################################################################
 RENDER:
+#ebreak
 beqz a7,NORMAL
 	CROP_MODE:	# When rendering cropped sprite 				
 		add a0,a0,s1	# Image address + X on sprite 
