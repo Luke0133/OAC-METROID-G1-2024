@@ -307,7 +307,7 @@ CHECK_MOVE_Y:
 
             mv a1,a2 # Moves current map's address to a1 
             mv a2,a3 # Moves PLYR_POS to a2
-            mv a3,a4 # Moves offset modifier to a3 
+            mv a3,a4 # Moves offset modifier to a3
             call CHECK_VERTICAL_COLLISION # Checking collision
             mv t0,a0     # Moves result of collision check to t0 
 

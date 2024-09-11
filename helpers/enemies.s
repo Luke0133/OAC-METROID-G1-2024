@@ -10,7 +10,7 @@ ENEMY_OPERATIONS:
 # End of Stack Operations
     la t0,CURRENT_MAP  # Loads CURRENT_MAP address
     lbu t0,4(t0)       # Loads current map byte
-    li t1,1            # loads 2 to compare with
+    li t1,5            # loads 2 to compare with
     bne t0,t1,ENEMY_OPERATIONS_SKIP_ZOOMER  # If not on map 4, don't check ripper
         call ZOOMER_OPERATIONS        # Checks rippers
     ENEMY_OPERATIONS_SKIP_ZOOMER:
