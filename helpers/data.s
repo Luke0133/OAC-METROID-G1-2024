@@ -57,7 +57,7 @@ NEXT_MAP_INFO: .byte 0, 0 # Next Map's Number, Number of iterations on switch
 
 
 ####### Player informations #########
-PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
+PLYR_INFO: .byte 100, 2 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
 PLYR_POS:  .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
 		   .byte 160, 0  # Stores Player's current and old top left Y respectively, both related to the screen 
 		         0, 0    # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
@@ -116,13 +116,162 @@ Zoomers: .word 0 # Holds the current "ZoomersA" label based on the current map (
 .eqv zoomer_size 12   # number of bytes per zoomer
 .eqv zoomer_normal_health 3
 .eqv zoomer_variant_health 6
-.byte
-Zoomers1: 1
-Zoomer1_0: zoomer_normal_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
-           36, 0, 7, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 0, 0, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
-                        # Where is the plat (0 - Down, 1 - Left, 2 - Up, 3 - Right), Vertical Platform (-1 = Up, 0 = On Ground, 1 = Down)
 
+# type: 0 (normal), 1 (variant), 2 (normal damage), 3 (variant damage)
+.byte
+Zoomers1: 6
+Zoomer1_0: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           34, 0, 7, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 3, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile)
+Zoomer1_1: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           32, 0, 5, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 1, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer1_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           9, 0, 7, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 1, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer1_3: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           55, 0, 2, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 2, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer1_4: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           55, 0, 9, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 2, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer1_5: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           48, 0, 12, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+
+Zoomers2: 9
+Zoomer2_0: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           15, 0, 5, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile)
+Zoomer2_1: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           9, 0, 7, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer2_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           4, 0, 9, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 1, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer2_3: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           12, 0, 11, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer2_4: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           6, 0, 18, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 3, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer2_5: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           12, 0, 22, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer2_6: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           4, 0, 28, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 0, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer2_7: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           7, 0, 33, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer2_8: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           17, 0, 34, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 3, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+
+Zoomers3: 6
+Zoomer3_0: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           2, 0, 10, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 1, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile)
+Zoomer3_1: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           18, 0, 12, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer3_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           31, 0, 2, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 3, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer3_3: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           40, 0, 3, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 2, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer3_4: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           43, 0, 12, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer3_5: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           48, 0, 1, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 1, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+
+Zoomers4: 11
+Zoomer4_0: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           5, 0, 41, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 3, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile)
+Zoomer4_1: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           15, 0, 38, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 0, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer4_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           8, 0, 33, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer4_3: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           10, 0, 26, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 1, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer4_4: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           10, 0, 22, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer4_5: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           4, 0, 21, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 0, 10   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer4_6: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           17, 0, 21, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 3, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer4_7: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           12, 0, 15, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 2, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer4_8: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           7, 0, 11, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer4_9: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           5, 0, 8, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 1, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer4_10: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           8, 0, 3, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+
+Zoomers5: 4
+Zoomer5_0: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           30, 0, 12, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile)
+Zoomer5_1: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
+           21, 0, 12, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 0, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer5_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           19, 0, 12, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 0, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
+Zoomer5_3: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
+           9, 0, 8, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
+           0, 1, 1, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+                        # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 
 ##############           Ripper            ##############
 Rippers: .word 0 # Holds the current "RippersA" label based on the current map (0 if none exist in current map)
@@ -1475,16 +1624,16 @@ Map7: # 20 x 15 (One Screen Map) -- 300 bytes
 # --> Total ammount of data: 31,664 bytes or ~31 KiB + 2 bytes (half word alignment)
 #
 #
-# Facing Right:												# Facing Left:
-# 01. Samus_Right_Idle - 20 x 64 --- 1280 bytes 			# 10. Samus_Left_Idle: - 20 x 64 --- 1280 bytes	
-# 02. Samus_Right_Idle_Up - 20 x 76 --- 1520 bytes			# 11. Samus_Left_Idle_Up - 20 x 76 --- 1520 bytes
-# 03. Samus_Righ - 20 x 96 --- 1920 bytes 					# 12. Samus_Left - 28 x 96 --- 2688 bytes
-# 04. Samus_Right_Attack - 28 x 96 --- 2688 bytes 			# 13. Samus_Left_Attack - 28 x 96 --- 2688 bytes
-# 05. Samus_Right_Up - 20 x 114 --- 2280 bytes				# 14. Samus_Left_Up - 20 x 114 --- 2280 bytes
-# 06. Samus_Right_Up_Attack - 20 x 114 --- 2280 bytes		# 15. Samus_Left_Up_Attack - 20 x 114 --- 2280 bytes
-# 07. Samus_Right_Jump - 24 x 64 --- 1536 bytes 			# 16. Samus_Left_Jump - 24 x 64 --- 1536 bytes
-# 08. Samus_Right_Jump_Up - 20 x 64 --- 1280 bytes			# 17. Samus_Left_Jump_Up - 24 x 64 --- 1536 bytes
-# 09. Samus_Right_Jump_Spin - 24 x 96 --- 2304 bytes		# 18. Samus_Left_Jump_Spin - 24 x 96 --- 2304 bytes
+# Facing Right:								  Facing Left:
+#   01. Samus_Right_Idle - 20 x 64 --- 1280 bytes               10. Samus_Left_Idle: - 20 x 64 --- 1280 bytes	
+#   02. Samus_Right_Idle_Up - 20 x 76 --- 1520 bytes            11. Samus_Left_Idle_Up - 20 x 76 --- 1520 bytes
+#   03. Samus_Righ - 20 x 96 --- 1920 bytes                     12. Samus_Left - 28 x 96 --- 2688 bytes
+#   04. Samus_Right_Attack - 28 x 96 --- 2688 bytes             13. Samus_Left_Attack - 28 x 96 --- 2688 bytes
+#   05. Samus_Right_Up - 20 x 114 --- 2280 bytes                14. Samus_Left_Up - 20 x 114 --- 2280 bytes
+#   06. Samus_Right_Up_Attack - 20 x 114 --- 2280 bytes         15. Samus_Left_Up_Attack - 20 x 114 --- 2280 bytes
+#   07. Samus_Right_Jump - 24 x 64 --- 1536 bytes               16. Samus_Left_Jump - 24 x 64 --- 1536 bytes
+#   08. Samus_Right_Jump_Up - 20 x 64 --- 1280 bytes            17. Samus_Left_Jump_Up - 24 x 64 --- 1536 bytes
+#   09. Samus_Right_Jump_Spin - 24 x 96 --- 2304 bytes          18. Samus_Left_Jump_Spin - 24 x 96 --- 2304 bytes
 #
 # Direction Defines Sprite Rotation:
 # 19. Morph_Ball - 16 x 64 --- 1024 bytes
@@ -3256,78 +3405,516 @@ Beam_Vertical: # 16 x 16, Height per sprite: 16
 
 MaruMari: # 16 x 64, Height per sprite: 16
 # 1024 bytes -- 1 KiB 
-.byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,103,103,103,103,0,0,0,0,0,0,
-0,0,0,0,103,103,103,14,14,103,103,103,0,0,0,0,
-0,0,0,103,103,14,14,103,103,103,103,103,103,0,0,0,
-0,0,0,103,14,14,14,103,103,103,103,103,103,0,0,0,
-0,0,103,103,14,14,103,103,103,103,103,103,103,103,0,0,
-0,0,103,14,103,103,103,103,103,103,103,103,103,103,0,0,
-0,0,103,14,103,103,103,103,103,103,103,103,103,103,0,0,
-0,0,103,103,103,103,103,103,103,103,103,103,103,103,0,0,
-0,0,103,103,103,103,103,103,103,103,103,103,103,103,0,0,
-0,0,0,103,103,103,103,103,103,103,103,0,103,0,0,0,
-0,0,0,103,103,103,103,103,103,0,0,103,103,0,0,0,
-0,0,0,0,103,103,103,0,0,0,103,103,0,0,0,0,
-0,0,0,0,0,0,103,103,103,103,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,234,234,234,234,0,0,0,0,0,0,
-0,0,0,0,234,234,234,209,209,234,234,234,0,0,0,0,
-0,0,0,234,234,209,209,234,234,234,234,234,234,0,0,0,
-0,0,0,234,209,209,209,234,234,234,234,234,234,0,0,0,
-0,0,234,234,209,209,234,234,234,234,234,234,234,234,0,0,
-0,0,234,209,234,234,234,234,234,234,234,234,234,234,0,0,
-0,0,234,209,234,234,234,234,234,234,234,234,234,234,0,0,
-0,0,234,234,234,234,234,234,234,234,234,234,234,234,0,0,
-0,0,234,234,234,234,234,234,234,234,234,234,234,234,0,0,
-0,0,0,234,234,234,234,234,234,234,234,0,234,0,0,0,
-0,0,0,234,234,234,234,234,234,0,0,234,234,0,0,0,
-0,0,0,0,234,234,234,0,0,0,234,234,0,0,0,0,
-0,0,0,0,0,0,234,234,234,234,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,252,252,252,252,0,0,0,0,0,0,
-0,0,0,0,252,252,252,103,103,252,252,252,0,0,0,0,
-0,0,0,252,252,103,103,252,252,252,252,252,252,0,0,0,
-0,0,0,252,103,103,103,252,252,252,252,252,252,0,0,0,
-0,0,252,252,103,103,252,252,252,252,252,252,252,252,0,0,
-0,0,252,103,252,252,252,252,252,252,252,252,252,252,0,0,
-0,0,252,103,252,252,252,252,252,252,252,252,252,252,0,0,
-0,0,252,252,252,252,252,252,252,252,252,252,252,252,0,0,
-0,0,252,252,252,252,252,252,252,252,252,252,252,252,0,0,
-0,0,0,252,252,252,252,252,252,252,252,0,252,0,0,0,
-0,0,0,252,252,252,252,252,252,0,0,252,252,0,0,0,
-0,0,0,0,252,252,252,0,0,0,252,252,0,0,0,0,
-0,0,0,0,0,0,252,252,252,252,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,183,183,183,183,0,0,0,0,0,0,
-0,0,0,0,183,183,183,14,14,183,183,183,0,0,0,0,
-0,0,0,183,183,14,14,183,183,183,183,183,183,0,0,0,
-0,0,0,183,14,14,14,183,183,183,183,183,183,0,0,0,
-0,0,183,183,14,14,183,183,183,183,183,183,183,183,0,0,
-0,0,183,14,183,183,183,183,183,183,183,183,183,183,0,0,
-0,0,183,14,183,183,183,183,183,183,183,183,183,183,0,0,
-0,0,183,183,183,183,183,183,183,183,183,183,183,183,0,0,
-0,0,183,183,183,183,183,183,183,183,183,183,183,183,0,0,
-0,0,0,183,183,183,183,183,183,183,183,0,183,0,0,0,
-0,0,0,183,183,183,183,183,183,0,0,183,183,0,0,0,
-0,0,0,0,183,183,183,0,0,0,183,183,0,0,0,0,
-0,0,0,0,0,0,183,183,183,183,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+.byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,103,103,103,103,199,199,199,199,199,199,
+199,199,199,199,103,103,103,14,14,103,103,103,199,199,199,199,
+199,199,199,103,103,14,14,103,103,103,103,103,103,199,199,199,
+199,199,199,103,14,14,14,103,103,103,103,103,103,199,199,199,
+199,199,103,103,14,14,103,103,103,103,103,103,103,103,199,199,
+199,199,103,14,103,103,103,103,103,103,103,103,103,103,199,199,
+199,199,103,14,103,103,103,103,103,103,103,103,103,103,199,199,
+199,199,103,103,103,103,103,103,103,103,103,103,103,103,199,199,
+199,199,103,103,103,103,103,103,103,103,103,103,103,103,199,199,
+199,199,199,103,103,103,103,103,103,103,103,199,103,199,199,199,
+199,199,199,103,103,103,103,103,103,199,199,103,103,199,199,199,
+199,199,199,199,103,103,103,199,199,199,103,103,199,199,199,199,
+199,199,199,199,199,199,103,103,103,103,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,234,234,234,234,199,199,199,199,199,199,
+199,199,199,199,234,234,234,209,209,234,234,234,199,199,199,199,
+199,199,199,234,234,209,209,234,234,234,234,234,234,199,199,199,
+199,199,199,234,209,209,209,234,234,234,234,234,234,199,199,199,
+199,199,234,234,209,209,234,234,234,234,234,234,234,234,199,199,
+199,199,234,209,234,234,234,234,234,234,234,234,234,234,199,199,
+199,199,234,209,234,234,234,234,234,234,234,234,234,234,199,199,
+199,199,234,234,234,234,234,234,234,234,234,234,234,234,199,199,
+199,199,234,234,234,234,234,234,234,234,234,234,234,234,199,199,
+199,199,199,234,234,234,234,234,234,234,234,199,234,199,199,199,
+199,199,199,234,234,234,234,234,234,199,199,234,234,199,199,199,
+199,199,199,199,234,234,234,199,199,199,234,234,199,199,199,199,
+199,199,199,199,199,199,234,234,234,234,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,252,252,252,252,199,199,199,199,199,199,
+199,199,199,199,252,252,252,103,103,252,252,252,199,199,199,199,
+199,199,199,252,252,103,103,252,252,252,252,252,252,199,199,199,
+199,199,199,252,103,103,103,252,252,252,252,252,252,199,199,199,
+199,199,252,252,103,103,252,252,252,252,252,252,252,252,199,199,
+199,199,252,103,252,252,252,252,252,252,252,252,252,252,199,199,
+199,199,252,103,252,252,252,252,252,252,252,252,252,252,199,199,
+199,199,252,252,252,252,252,252,252,252,252,252,252,252,199,199,
+199,199,252,252,252,252,252,252,252,252,252,252,252,252,199,199,
+199,199,199,252,252,252,252,252,252,252,252,199,252,199,199,199,
+199,199,199,252,252,252,252,252,252,199,199,252,252,199,199,199,
+199,199,199,199,252,252,252,199,199,199,252,252,199,199,199,199,
+199,199,199,199,199,199,252,252,252,252,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,183,183,183,183,199,199,199,199,199,199,
+199,199,199,199,183,183,183,14,14,183,183,183,199,199,199,199,
+199,199,199,183,183,14,14,183,183,183,183,183,183,199,199,199,
+199,199,199,183,14,14,14,183,183,183,183,183,183,199,199,199,
+199,199,183,183,14,14,183,183,183,183,183,183,183,183,199,199,
+199,199,183,14,183,183,183,183,183,183,183,183,183,183,199,199,
+199,199,183,14,183,183,183,183,183,183,183,183,183,183,199,199,
+199,199,183,183,183,183,183,183,183,183,183,183,183,183,199,199,
+199,199,183,183,183,183,183,183,183,183,183,183,183,183,199,199,
+199,199,199,183,183,183,183,183,183,183,183,199,183,199,199,199,
+199,199,199,183,183,183,183,183,183,199,199,183,183,199,199,199,
+199,199,199,199,183,183,183,199,199,199,183,183,199,199,199,199,
+199,199,199,199,199,199,183,183,183,183,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
 
 
 ################################################        Enemies        ################################################
 # Stores all sprites used for enemies in game
 # 
-# --> Total ammount of data: 
+# --> Total ammount of data: 1024 bytes (Ripper) + 6144 bytes (Zoomer) = 7 KiB
 #
+# Zoomers:							
+#   01. Zoomer_Down - 16 x 32 --- 512 bytes                      07. Zoomer_Variant_Up - 16 x 32 --- 512 bytes       
+#   02. Zoomer_Left - 16 x 32 --- 512 bytes                     08. Zoomer_Variant_Right - 16 x 32 --- 512 bytes 
+#   03. Zoomer_Up - 16 x 32 --- 512 bytes                        09. Zoomer_Damage_Down - 16 x 32 --- 512 bytes           
+#   04. Zoomer_Right - 16 x 32 --- 512 bytes                      10. Zoomer_Damage_Left - 16 x 32 --- 512 bytes             
+#   05. Zoomer_Variant_Down - 16 x 32 --- 512 bytes              11. Zoomer_Damage_Up - 16 x 32 --- 512 bytes                        
+#   06. Zoomer_Variant_Left - 16 x 32 --- 512 bytes             12. Zoomer_Damage_Right - 16 x 32 --- 512 bytes            
+#
+# Rippers:	
+#   01. Ripper - 16 x 32 --- 512 bytes
+#   02. Ripper_Variant - 16 x 32 --- 512 bytes
+#
+#
+#   07. - 16 x 32 --- 512 bytes               16. Samus_Left_Jump - 24 x 64 --- 1536 bytes
+#   08. - 16 x 32 --- 512 bytes           17. Samus_Left_Jump_Up - 24 x 64 --- 1536 bytes
+#   09. - 16 x 32 --- 512 bytes          18. Samus_Left_Jump_Spin - 24 x 96 --- 2304 bytes
 ######################################################################################################################
+
+Zoomer_Down: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,252,199,199,199,199,199,199,199,199,
+199,199,252,199,199,199,199,103,199,199,199,199,252,199,199,199,
+199,199,103,252,199,199,252,103,252,199,199,252,103,199,199,199,
+199,199,103,103,252,199,103,103,103,199,252,103,103,199,199,199,
+199,199,199,103,103,103,103,103,103,103,103,103,199,199,199,199,
+252,199,199,103,103,103,103,103,103,103,103,103,199,199,252,199,
+103,103,252,103,103,103,103,103,103,103,103,103,103,252,103,199,
+199,103,103,103,103,199,199,199,199,199,199,103,103,103,199,199,
+199,199,103,103,199,199,103,103,103,103,199,199,103,199,199,199,
+199,103,103,199,199,252,199,103,103,199,252,199,199,252,199,114,
+199,114,103,199,199,252,252,199,199,252,252,199,199,103,114,199,
+114,199,199,103,103,199,199,103,114,199,199,103,103,199,199,199,
+114,199,199,114,199,199,199,199,114,199,199,199,114,199,199,199,
+199,199,199,114,199,252,199,199,199,199,252,199,199,114,114,199,
+199,199,199,199,114,199,252,199,199,252,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,252,199,199,199,199,199,199,199,
+199,199,199,252,199,199,199,199,103,199,199,199,199,252,199,199,
+199,199,199,103,252,199,199,252,103,252,199,199,252,103,199,199,
+199,199,199,103,103,252,199,103,103,103,199,252,103,103,199,199,
+199,199,199,199,103,103,103,103,103,103,103,103,103,199,199,199,
+199,252,199,199,103,103,103,103,103,103,103,103,103,199,199,252,
+199,103,252,103,103,103,103,103,103,103,103,103,103,252,103,103,
+199,199,103,103,103,199,199,199,199,199,199,103,103,103,103,199,
+199,199,199,103,199,199,103,103,103,103,199,199,103,103,199,199,
+114,199,252,199,199,252,199,103,103,199,252,199,199,103,103,199,
+199,114,103,199,199,252,252,199,199,252,252,199,199,103,114,199,
+199,199,199,103,103,199,199,114,103,199,199,103,103,199,199,114,
+199,199,199,114,199,199,199,114,199,199,199,199,114,199,199,114,
+199,114,114,199,199,252,199,199,199,199,252,199,114,199,199,199,
+199,199,199,199,199,199,252,199,199,252,199,114,199,199,199,199,
+
+Zoomer_Left: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,114,114,199,199,199,103,252,199,199,199,199,199,199,199,
+199,199,199,199,114,199,103,103,199,199,199,199,199,199,199,199,
+199,199,199,103,103,252,103,252,199,199,103,103,252,199,199,199,
+199,114,114,103,199,199,103,103,103,103,103,252,199,199,199,199,
+114,199,199,103,199,199,199,103,103,103,252,199,199,199,199,199,
+199,252,199,199,252,252,199,199,103,103,199,199,199,199,199,199,
+252,199,199,199,252,199,103,199,103,103,103,252,199,199,199,199,
+199,199,199,103,199,103,103,199,103,103,103,103,103,252,199,199,
+199,199,114,114,199,103,103,199,103,103,103,252,199,199,199,199,
+252,199,199,199,252,199,103,199,103,103,199,199,199,199,199,199,
+199,252,199,199,252,252,199,199,103,103,252,199,199,199,199,199,
+199,199,199,103,199,199,199,103,103,103,103,252,199,199,199,199,
+199,199,114,103,199,199,103,103,103,199,103,103,252,199,199,199,
+199,114,199,103,103,103,103,103,199,199,199,199,199,199,199,199,
+199,114,199,199,114,199,103,103,252,199,199,199,199,199,199,199,
+199,199,199,199,199,114,199,199,103,252,199,199,199,199,199,199,
+199,199,199,199,199,114,199,199,103,252,199,199,199,199,199,199,
+199,114,199,199,114,199,103,103,252,199,199,199,199,199,199,199,
+199,114,199,103,103,103,103,103,199,199,199,199,199,199,199,199,
+199,199,114,103,199,199,103,103,103,199,103,103,252,199,199,199,
+199,199,199,103,199,199,199,103,103,103,103,252,199,199,199,199,
+199,252,199,199,252,252,199,199,103,103,252,199,199,199,199,199,
+252,199,199,199,252,199,103,199,103,103,199,199,199,199,199,199,
+199,199,114,114,199,103,103,199,103,103,103,252,199,199,199,199,
+199,199,199,103,199,103,103,199,103,103,103,103,103,252,199,199,
+252,199,199,199,252,199,103,199,103,103,103,252,199,199,199,199,
+199,252,199,199,252,252,199,199,103,103,199,199,199,199,199,199,
+114,199,199,103,199,199,199,103,103,103,252,199,199,199,199,199,
+199,114,114,103,199,199,103,103,103,103,103,252,199,199,199,199,
+199,199,199,103,103,252,103,252,199,199,103,103,252,199,199,199,
+199,199,199,199,114,199,103,103,199,199,199,199,199,199,199,199,
+199,199,114,114,199,199,199,103,252,199,199,199,199,199,199,199,
+
+Zoomer_Up: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,114,199,252,199,199,252,199,199,199,199,199,199,
+199,199,199,114,199,252,199,199,199,199,252,199,199,114,114,199,
+114,199,199,114,199,199,199,199,114,199,199,199,114,199,199,199,
+114,199,199,103,103,199,199,103,114,199,199,103,103,199,199,199,
+199,114,103,199,199,252,252,199,199,252,252,199,199,103,114,199,
+199,103,103,199,199,252,199,103,103,199,252,199,199,252,199,114,
+199,199,103,103,199,199,103,103,103,103,199,199,103,199,199,199,
+199,103,103,103,103,199,199,199,199,199,199,103,103,103,199,199,
+103,103,252,103,103,103,103,103,103,103,103,103,103,252,103,199,
+252,199,199,103,103,103,103,103,103,103,103,103,199,199,252,199,
+199,199,199,103,103,103,103,103,103,103,103,103,199,199,199,199,
+199,199,103,103,252,199,103,103,103,199,252,103,103,199,199,199,
+199,199,103,252,199,199,252,103,252,199,199,252,103,199,199,199,
+199,199,252,199,199,199,199,103,199,199,199,199,252,199,199,199,
+199,199,199,199,199,199,199,252,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,252,199,199,252,199,114,199,199,199,199,
+199,114,114,199,199,252,199,199,199,199,252,199,114,199,199,199,
+199,199,199,114,199,199,199,114,199,199,199,199,114,199,199,114,
+199,199,199,103,103,199,199,114,103,199,199,103,103,199,199,114,
+199,114,103,199,199,252,252,199,199,252,252,199,199,103,114,199,
+114,199,252,199,199,252,199,103,103,199,252,199,199,103,103,199,
+199,199,199,103,199,199,103,103,103,103,199,199,103,103,199,199,
+199,199,103,103,103,199,199,199,199,199,199,103,103,103,103,199,
+199,103,252,103,103,103,103,103,103,103,103,103,103,252,103,103,
+199,252,199,199,103,103,103,103,103,103,103,103,103,199,199,252,
+199,199,199,199,103,103,103,103,103,103,103,103,103,199,199,199,
+199,199,199,103,103,252,199,103,103,103,199,252,103,103,199,199,
+199,199,199,103,252,199,199,252,103,252,199,199,252,103,199,199,
+199,199,199,252,199,199,199,199,103,199,199,199,199,252,199,199,
+199,199,199,199,199,199,199,199,252,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+
+Zoomer_Right: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,199,199,199,252,103,199,199,199,114,114,199,199,
+199,199,199,199,199,199,199,199,103,103,199,114,199,199,199,199,
+199,199,199,252,103,103,199,199,252,103,252,103,103,199,199,199,
+199,199,199,199,252,103,103,103,103,103,199,199,103,114,114,199,
+199,199,199,199,199,252,103,103,103,199,199,199,103,199,199,114,
+199,199,199,199,199,199,103,103,199,199,252,252,199,199,252,199,
+199,199,199,199,252,103,103,103,199,103,199,252,199,199,199,252,
+199,199,252,103,103,103,103,103,199,103,103,199,103,199,199,199,
+199,199,199,199,252,103,103,103,199,103,103,199,114,114,199,199,
+199,199,199,199,199,199,103,103,199,103,199,252,199,199,199,252,
+199,199,199,199,199,252,103,103,199,199,252,252,199,199,252,199,
+199,199,199,199,252,103,103,103,103,199,199,199,103,199,199,199,
+199,199,199,252,103,103,199,103,103,103,199,199,103,114,199,199,
+199,199,199,199,199,199,199,199,103,103,103,103,103,199,114,199,
+199,199,199,199,199,199,199,252,103,103,199,114,199,199,114,199,
+199,199,199,199,199,199,252,103,199,199,114,199,199,199,199,199,
+199,199,199,199,199,199,252,103,199,199,114,199,199,199,199,199,
+199,199,199,199,199,199,199,252,103,103,199,114,199,199,114,199,
+199,199,199,199,199,199,199,199,103,103,103,103,103,199,114,199,
+199,199,199,252,103,103,199,103,103,103,199,199,103,114,199,199,
+199,199,199,199,252,103,103,103,103,199,199,199,103,199,199,199,
+199,199,199,199,199,252,103,103,199,199,252,252,199,199,252,199,
+199,199,199,199,199,199,103,103,199,103,199,252,199,199,199,252,
+199,199,199,199,252,103,103,103,199,103,103,199,114,114,199,199,
+199,199,252,103,103,103,103,103,199,103,103,199,103,199,199,199,
+199,199,199,199,252,103,103,103,199,103,199,252,199,199,199,252,
+199,199,199,199,199,199,103,103,199,199,252,252,199,199,252,199,
+199,199,199,199,199,252,103,103,103,199,199,199,103,199,199,114,
+199,199,199,199,252,103,103,103,103,103,199,199,103,114,114,199,
+199,199,199,252,103,103,199,199,252,103,252,103,103,199,199,199,
+199,199,199,199,199,199,199,199,103,103,199,114,199,199,199,199,
+199,199,199,199,199,199,199,252,103,199,199,199,114,114,199,199,
+
+Zoomer_Variant_Down: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,183,199,199,199,199,199,199,199,199,
+199,199,183,199,199,199,199,70,199,199,199,199,183,199,199,199,
+199,199,70,183,199,199,183,70,183,199,199,183,70,199,199,199,
+199,199,70,70,183,199,70,70,70,199,183,70,70,199,199,199,
+199,199,199,70,70,70,70,70,70,70,70,70,199,199,199,199,
+183,199,199,70,70,70,70,70,70,70,70,70,199,199,183,199,
+70,70,183,70,70,70,70,70,70,70,70,70,70,183,70,199,
+199,70,70,70,70,199,199,199,199,199,199,70,70,70,199,199,
+199,199,70,70,199,199,70,70,70,70,199,199,70,199,199,199,
+199,70,70,199,199,183,199,70,70,199,183,199,199,183,199,234,
+199,234,70,199,199,183,183,199,199,183,183,199,199,70,234,199,
+234,199,199,70,70,199,199,70,234,199,199,70,70,199,199,199,
+234,199,199,234,199,199,199,199,234,199,199,199,234,199,199,199,
+199,199,199,234,199,183,199,199,199,199,183,199,199,234,234,199,
+199,199,199,199,234,199,183,199,199,183,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,183,199,199,199,199,199,199,199,
+199,199,199,183,199,199,199,199,70,199,199,199,199,183,199,199,
+199,199,199,70,183,199,199,183,70,183,199,199,183,70,199,199,
+199,199,199,70,70,183,199,70,70,70,199,183,70,70,199,199,
+199,199,199,199,70,70,70,70,70,70,70,70,70,199,199,199,
+199,183,199,199,70,70,70,70,70,70,70,70,70,199,199,183,
+199,70,183,70,70,70,70,70,70,70,70,70,70,183,70,70,
+199,199,70,70,70,199,199,199,199,199,199,70,70,70,70,199,
+199,199,199,70,199,199,70,70,70,70,199,199,70,70,199,199,
+234,199,183,199,199,183,199,70,70,199,183,199,199,70,70,199,
+199,234,70,199,199,183,183,199,199,183,183,199,199,70,234,199,
+199,199,199,70,70,199,199,234,70,199,199,70,70,199,199,234,
+199,199,199,234,199,199,199,234,199,199,199,199,234,199,199,234,
+199,234,234,199,199,183,199,199,199,199,183,199,234,199,199,199,
+199,199,199,199,199,199,183,199,199,183,199,234,199,199,199,199,
+
+Zoomer_Variant_Left: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,234,234,199,199,199,70,183,199,199,199,199,199,199,199,
+199,199,199,199,234,199,70,70,199,199,199,199,199,199,199,199,
+199,199,199,70,70,183,70,183,199,199,70,70,183,199,199,199,
+199,234,234,70,199,199,70,70,70,70,70,183,199,199,199,199,
+234,199,199,70,199,199,199,70,70,70,183,199,199,199,199,199,
+199,183,199,199,183,183,199,199,70,70,199,199,199,199,199,199,
+183,199,199,199,183,199,70,199,70,70,70,183,199,199,199,199,
+199,199,199,70,199,70,70,199,70,70,70,70,70,183,199,199,
+199,199,234,234,199,70,70,199,70,70,70,183,199,199,199,199,
+183,199,199,199,183,199,70,199,70,70,199,199,199,199,199,199,
+199,183,199,199,183,183,199,199,70,70,183,199,199,199,199,199,
+199,199,199,70,199,199,199,70,70,70,70,183,199,199,199,199,
+199,199,234,70,199,199,70,70,70,199,70,70,183,199,199,199,
+199,234,199,70,70,70,70,70,199,199,199,199,199,199,199,199,
+199,234,199,199,234,199,70,70,183,199,199,199,199,199,199,199,
+199,199,199,199,199,234,199,199,70,183,199,199,199,199,199,199,
+199,199,199,199,199,234,199,199,70,183,199,199,199,199,199,199,
+199,234,199,199,234,199,70,70,183,199,199,199,199,199,199,199,
+199,234,199,70,70,70,70,70,199,199,199,199,199,199,199,199,
+199,199,234,70,199,199,70,70,70,199,70,70,183,199,199,199,
+199,199,199,70,199,199,199,70,70,70,70,183,199,199,199,199,
+199,183,199,199,183,183,199,199,70,70,183,199,199,199,199,199,
+183,199,199,199,183,199,70,199,70,70,199,199,199,199,199,199,
+199,199,234,234,199,70,70,199,70,70,70,183,199,199,199,199,
+199,199,199,70,199,70,70,199,70,70,70,70,70,183,199,199,
+183,199,199,199,183,199,70,199,70,70,70,183,199,199,199,199,
+199,183,199,199,183,183,199,199,70,70,199,199,199,199,199,199,
+234,199,199,70,199,199,199,70,70,70,183,199,199,199,199,199,
+199,234,234,70,199,199,70,70,70,70,70,183,199,199,199,199,
+199,199,199,70,70,183,70,183,199,199,70,70,183,199,199,199,
+199,199,199,199,234,199,70,70,199,199,199,199,199,199,199,199,
+199,199,234,234,199,199,199,70,183,199,199,199,199,199,199,199,
+
+Zoomer_Variant_Up: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,234,199,183,199,199,183,199,199,199,199,199,199,
+199,199,199,234,199,183,199,199,199,199,183,199,199,234,234,199,
+234,199,199,234,199,199,199,199,234,199,199,199,234,199,199,199,
+234,199,199,70,70,199,199,70,234,199,199,70,70,199,199,199,
+199,234,70,199,199,183,183,199,199,183,183,199,199,70,234,199,
+199,70,70,199,199,183,199,70,70,199,183,199,199,183,199,234,
+199,199,70,70,199,199,70,70,70,70,199,199,70,199,199,199,
+199,70,70,70,70,199,199,199,199,199,199,70,70,70,199,199,
+70,70,183,70,70,70,70,70,70,70,70,70,70,183,70,199,
+183,199,199,70,70,70,70,70,70,70,70,70,199,199,183,199,
+199,199,199,70,70,70,70,70,70,70,70,70,199,199,199,199,
+199,199,70,70,183,199,70,70,70,199,183,70,70,199,199,199,
+199,199,70,183,199,199,183,70,183,199,199,183,70,199,199,199,
+199,199,183,199,199,199,199,70,199,199,199,199,183,199,199,199,
+199,199,199,199,199,199,199,183,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,183,199,199,183,199,234,199,199,199,199,
+199,234,234,199,199,183,199,199,199,199,183,199,234,199,199,199,
+199,199,199,234,199,199,199,234,199,199,199,199,234,199,199,234,
+199,199,199,70,70,199,199,234,70,199,199,70,70,199,199,234,
+199,234,70,199,199,183,183,199,199,183,183,199,199,70,234,199,
+234,199,183,199,199,183,199,70,70,199,183,199,199,70,70,199,
+199,199,199,70,199,199,70,70,70,70,199,199,70,70,199,199,
+199,199,70,70,70,199,199,199,199,199,199,70,70,70,70,199,
+199,70,183,70,70,70,70,70,70,70,70,70,70,183,70,70,
+199,183,199,199,70,70,70,70,70,70,70,70,70,199,199,183,
+199,199,199,199,70,70,70,70,70,70,70,70,70,199,199,199,
+199,199,199,70,70,183,199,70,70,70,199,183,70,70,199,199,
+199,199,199,70,183,199,199,183,70,183,199,199,183,70,199,199,
+199,199,199,183,199,199,199,199,70,199,199,199,199,183,199,199,
+199,199,199,199,199,199,199,199,183,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+
+Zoomer_Variant_Right: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,199,199,199,183,70,199,199,199,234,234,199,199,
+199,199,199,199,199,199,199,199,70,70,199,234,199,199,199,199,
+199,199,199,183,70,70,199,199,183,70,183,70,70,199,199,199,
+199,199,199,199,183,70,70,70,70,70,199,199,70,234,234,199,
+199,199,199,199,199,183,70,70,70,199,199,199,70,199,199,234,
+199,199,199,199,199,199,70,70,199,199,183,183,199,199,183,199,
+199,199,199,199,183,70,70,70,199,70,199,183,199,199,199,183,
+199,199,183,70,70,70,70,70,199,70,70,199,70,199,199,199,
+199,199,199,199,183,70,70,70,199,70,70,199,234,234,199,199,
+199,199,199,199,199,199,70,70,199,70,199,183,199,199,199,183,
+199,199,199,199,199,183,70,70,199,199,183,183,199,199,183,199,
+199,199,199,199,183,70,70,70,70,199,199,199,70,199,199,199,
+199,199,199,183,70,70,199,70,70,70,199,199,70,234,199,199,
+199,199,199,199,199,199,199,199,70,70,70,70,70,199,234,199,
+199,199,199,199,199,199,199,183,70,70,199,234,199,199,234,199,
+199,199,199,199,199,199,183,70,199,199,234,199,199,199,199,199,
+199,199,199,199,199,199,183,70,199,199,234,199,199,199,199,199,
+199,199,199,199,199,199,199,183,70,70,199,234,199,199,234,199,
+199,199,199,199,199,199,199,199,70,70,70,70,70,199,234,199,
+199,199,199,183,70,70,199,70,70,70,199,199,70,234,199,199,
+199,199,199,199,183,70,70,70,70,199,199,199,70,199,199,199,
+199,199,199,199,199,183,70,70,199,199,183,183,199,199,183,199,
+199,199,199,199,199,199,70,70,199,70,199,183,199,199,199,183,
+199,199,199,199,183,70,70,70,199,70,70,199,234,234,199,199,
+199,199,183,70,70,70,70,70,199,70,70,199,70,199,199,199,
+199,199,199,199,183,70,70,70,199,70,199,183,199,199,199,183,
+199,199,199,199,199,199,70,70,199,199,183,183,199,199,183,199,
+199,199,199,199,199,183,70,70,70,199,199,199,70,199,199,234,
+199,199,199,199,183,70,70,70,70,70,199,199,70,234,234,199,
+199,199,199,183,70,70,199,199,183,70,183,70,70,199,199,199,
+199,199,199,199,199,199,199,199,70,70,199,234,199,199,199,199,
+199,199,199,199,199,199,199,183,70,199,199,199,234,234,199,199,
+
+Zoomer_Damage_Down: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,245,199,199,199,199,199,199,199,199,
+199,199,245,199,199,199,199,95,199,199,199,199,245,199,199,199,
+199,199,95,245,199,199,245,95,245,199,199,245,95,199,199,199,
+199,199,95,95,245,199,95,95,95,199,245,95,95,199,199,199,
+199,199,199,95,95,95,95,95,95,95,95,95,199,199,199,199,
+245,199,199,95,95,95,95,95,95,95,95,95,199,199,245,199,
+95,95,245,95,95,95,95,95,95,95,95,95,95,245,95,199,
+199,95,95,95,95,199,199,199,199,199,199,95,95,95,199,199,
+199,199,95,95,199,199,95,95,95,95,199,199,95,199,199,199,
+199,95,95,199,199,245,199,95,95,199,245,199,199,245,199,40,
+199,40,95,199,199,245,245,199,199,245,245,199,199,95,40,199,
+40,199,199,95,95,199,199,95,40,199,199,95,95,199,199,199,
+40,199,199,40,199,199,199,199,40,199,199,199,40,199,199,199,
+199,199,199,40,199,245,199,199,199,199,245,199,199,40,40,199,
+199,199,199,199,40,199,245,199,199,245,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,245,199,199,199,199,199,199,199,
+199,199,199,245,199,199,199,199,95,199,199,199,199,245,199,199,
+199,199,199,95,245,199,199,245,95,245,199,199,245,95,199,199,
+199,199,199,95,95,245,199,95,95,95,199,245,95,95,199,199,
+199,199,199,199,95,95,95,95,95,95,95,95,95,199,199,199,
+199,245,199,199,95,95,95,95,95,95,95,95,95,199,199,245,
+199,95,245,95,95,95,95,95,95,95,95,95,95,245,95,95,
+199,199,95,95,95,199,199,199,199,199,199,95,95,95,95,199,
+199,199,199,95,199,199,95,95,95,95,199,199,95,95,199,199,
+40,199,245,199,199,245,199,95,95,199,245,199,199,95,95,199,
+199,40,95,199,199,245,245,199,199,245,245,199,199,95,40,199,
+199,199,199,95,95,199,199,40,95,199,199,95,95,199,199,40,
+199,199,199,40,199,199,199,40,199,199,199,199,40,199,199,40,
+199,40,40,199,199,245,199,199,199,199,245,199,40,199,199,199,
+199,199,199,199,199,199,245,199,199,245,199,40,199,199,199,199,
+
+Zoomer_Damage_Left: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,40,40,199,199,199,95,245,199,199,199,199,199,199,199,
+199,199,199,199,40,199,95,95,199,199,199,199,199,199,199,199,
+199,199,199,95,95,245,95,245,199,199,95,95,245,199,199,199,
+199,40,40,95,199,199,95,95,95,95,95,245,199,199,199,199,
+40,199,199,95,199,199,199,95,95,95,245,199,199,199,199,199,
+199,245,199,199,245,245,199,199,95,95,199,199,199,199,199,199,
+245,199,199,199,245,199,95,199,95,95,95,245,199,199,199,199,
+199,199,199,95,199,95,95,199,95,95,95,95,95,245,199,199,
+199,199,40,40,199,95,95,199,95,95,95,245,199,199,199,199,
+245,199,199,199,245,199,95,199,95,95,199,199,199,199,199,199,
+199,245,199,199,245,245,199,199,95,95,245,199,199,199,199,199,
+199,199,199,95,199,199,199,95,95,95,95,245,199,199,199,199,
+199,199,40,95,199,199,95,95,95,199,95,95,245,199,199,199,
+199,40,199,95,95,95,95,95,199,199,199,199,199,199,199,199,
+199,40,199,199,40,199,95,95,245,199,199,199,199,199,199,199,
+199,199,199,199,199,40,199,199,95,245,199,199,199,199,199,199,
+199,199,199,199,199,40,199,199,95,245,199,199,199,199,199,199,
+199,40,199,199,40,199,95,95,245,199,199,199,199,199,199,199,
+199,40,199,95,95,95,95,95,199,199,199,199,199,199,199,199,
+199,199,40,95,199,199,95,95,95,199,95,95,245,199,199,199,
+199,199,199,95,199,199,199,95,95,95,95,245,199,199,199,199,
+199,245,199,199,245,245,199,199,95,95,245,199,199,199,199,199,
+245,199,199,199,245,199,95,199,95,95,199,199,199,199,199,199,
+199,199,40,40,199,95,95,199,95,95,95,245,199,199,199,199,
+199,199,199,95,199,95,95,199,95,95,95,95,95,245,199,199,
+245,199,199,199,245,199,95,199,95,95,95,245,199,199,199,199,
+199,245,199,199,245,245,199,199,95,95,199,199,199,199,199,199,
+40,199,199,95,199,199,199,95,95,95,245,199,199,199,199,199,
+199,40,40,95,199,199,95,95,95,95,95,245,199,199,199,199,
+199,199,199,95,95,245,95,245,199,199,95,95,245,199,199,199,
+199,199,199,199,40,199,95,95,199,199,199,199,199,199,199,199,
+199,199,40,40,199,199,199,95,245,199,199,199,199,199,199,199,
+
+Zoomer_Damage_Up: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,40,199,245,199,199,245,199,199,199,199,199,199,
+199,199,199,40,199,245,199,199,199,199,245,199,199,40,40,199,
+40,199,199,40,199,199,199,199,40,199,199,199,40,199,199,199,
+40,199,199,95,95,199,199,95,40,199,199,95,95,199,199,199,
+199,40,95,199,199,245,245,199,199,245,245,199,199,95,40,199,
+199,95,95,199,199,245,199,95,95,199,245,199,199,245,199,40,
+199,199,95,95,199,199,95,95,95,95,199,199,95,199,199,199,
+199,95,95,95,95,199,199,199,199,199,199,95,95,95,199,199,
+95,95,245,95,95,95,95,95,95,95,95,95,95,245,95,199,
+245,199,199,95,95,95,95,95,95,95,95,95,199,199,245,199,
+199,199,199,95,95,95,95,95,95,95,95,95,199,199,199,199,
+199,199,95,95,245,199,95,95,95,199,245,95,95,199,199,199,
+199,199,95,245,199,199,245,95,245,199,199,245,95,199,199,199,
+199,199,245,199,199,199,199,95,199,199,199,199,245,199,199,199,
+199,199,199,199,199,199,199,245,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,245,199,199,245,199,40,199,199,199,199,
+199,40,40,199,199,245,199,199,199,199,245,199,40,199,199,199,
+199,199,199,40,199,199,199,40,199,199,199,199,40,199,199,40,
+199,199,199,95,95,199,199,40,95,199,199,95,95,199,199,40,
+199,40,95,199,199,245,245,199,199,245,245,199,199,95,40,199,
+40,199,245,199,199,245,199,95,95,199,245,199,199,95,95,199,
+199,199,199,95,199,199,95,95,95,95,199,199,95,95,199,199,
+199,199,95,95,95,199,199,199,199,199,199,95,95,95,95,199,
+199,95,245,95,95,95,95,95,95,95,95,95,95,245,95,95,
+199,245,199,199,95,95,95,95,95,95,95,95,95,199,199,245,
+199,199,199,199,95,95,95,95,95,95,95,95,95,199,199,199,
+199,199,199,95,95,245,199,95,95,95,199,245,95,95,199,199,
+199,199,199,95,245,199,199,245,95,245,199,199,245,95,199,199,
+199,199,199,245,199,199,199,199,95,199,199,199,199,245,199,199,
+199,199,199,199,199,199,199,199,245,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+
+Zoomer_Damage_Right: # 16 x 32, Height per sprite: 16
+# 512 bytes
+.byte 199,199,199,199,199,199,199,245,95,199,199,199,40,40,199,199,
+199,199,199,199,199,199,199,199,95,95,199,40,199,199,199,199,
+199,199,199,245,95,95,199,199,245,95,245,95,95,199,199,199,
+199,199,199,199,245,95,95,95,95,95,199,199,95,40,40,199,
+199,199,199,199,199,245,95,95,95,199,199,199,95,199,199,40,
+199,199,199,199,199,199,95,95,199,199,245,245,199,199,245,199,
+199,199,199,199,245,95,95,95,199,95,199,245,199,199,199,245,
+199,199,245,95,95,95,95,95,199,95,95,199,95,199,199,199,
+199,199,199,199,245,95,95,95,199,95,95,199,40,40,199,199,
+199,199,199,199,199,199,95,95,199,95,199,245,199,199,199,245,
+199,199,199,199,199,245,95,95,199,199,245,245,199,199,245,199,
+199,199,199,199,245,95,95,95,95,199,199,199,95,199,199,199,
+199,199,199,245,95,95,199,95,95,95,199,199,95,40,199,199,
+199,199,199,199,199,199,199,199,95,95,95,95,95,199,40,199,
+199,199,199,199,199,199,199,245,95,95,199,40,199,199,40,199,
+199,199,199,199,199,199,245,95,199,199,40,199,199,199,199,199,
+199,199,199,199,199,199,245,95,199,199,40,199,199,199,199,199,
+199,199,199,199,199,199,199,245,95,95,199,40,199,199,40,199,
+199,199,199,199,199,199,199,199,95,95,95,95,95,199,40,199,
+199,199,199,245,95,95,199,95,95,95,199,199,95,40,199,199,
+199,199,199,199,245,95,95,95,95,199,199,199,95,199,199,199,
+199,199,199,199,199,245,95,95,199,199,245,245,199,199,245,199,
+199,199,199,199,199,199,95,95,199,95,199,245,199,199,199,245,
+199,199,199,199,245,95,95,95,199,95,95,199,40,40,199,199,
+199,199,245,95,95,95,95,95,199,95,95,199,95,199,199,199,
+199,199,199,199,245,95,95,95,199,95,199,245,199,199,199,245,
+199,199,199,199,199,199,95,95,199,199,245,245,199,199,245,199,
+199,199,199,199,199,245,95,95,95,199,199,199,95,199,199,40,
+199,199,199,199,245,95,95,95,95,95,199,199,95,40,40,199,
+199,199,199,245,95,95,199,199,245,95,245,95,95,199,199,199,
+199,199,199,199,199,199,199,199,95,95,199,40,199,199,199,199,
+199,199,199,199,199,199,199,245,95,199,199,199,40,40,199,199,
+
+###### Ripper Sprites 
 
 Ripper: # 16 x 32, Height per sprite: 16
 # 512 bytes

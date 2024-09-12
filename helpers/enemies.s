@@ -8,24 +8,10 @@ ENEMY_OPERATIONS:
     addi sp,sp,-4
     sw ra,0(sp)
 # End of Stack Operations
-    la t0,CURRENT_MAP  # Loads CURRENT_MAP address
-    lbu t0,4(t0)       # Loads current map byte
-    li t1,5            # loads 2 to compare with
-    bne t0,t1,ENEMY_OPERATIONS_SKIP_ZOOMER  # If not on map 4, don't check ripper
-        call ZOOMER_OPERATIONS        # Checks rippers
-    ENEMY_OPERATIONS_SKIP_ZOOMER:
-
-    la t0,CURRENT_MAP  # Loads CURRENT_MAP address
-    lbu t0,4(t0)       # Loads current map byte
-    li t1,2            # loads 2 to compare with
-    beq t0,t1,ENEMY_OPERATIONS_CHECK_RIPPER  # If on map 2, go to check ripper
-    # Otherwise, check if it's on map 4
-    li t1,4            # loads 4 to compare with
-    bne t0,t1,ENEMY_OPERATIONS_SKIP_RIPPER  # If not on map 4, don't check ripper
-    # Otherwise, check rippers
-    ENEMY_OPERATIONS_CHECK_RIPPER:
-        call RIPPER_OPERATIONS        # Checks rippers
-    ENEMY_OPERATIONS_SKIP_RIPPER:
+    call ZOOMER_OPERATIONS        # Checks zoomers
+    
+    call RIPPER_OPERATIONS        # Checks rippers
+    
 # Procedure finished: Loading Registers from Stack
     lw ra,0(sp)
     addi sp,sp,4
@@ -60,6 +46,9 @@ ZOOMER_OPERATIONS:
     la tp, CURRENT_MAP # Loads CURRENT_MAP address
     
     lw a0,0(a0)    # Loads the ZoomersA address over the Zoomers address
+    beqz a0,END_ZOOMER_OPERATIONS_LOOP # If a0 = 0, there are no zoomers in this map
+    # Otherwise, continue
+
     lbu a2,0(a0)   # Loads number of Zoomers in current map
     
     li a3,0        # Counter for zoomers
@@ -133,27 +122,86 @@ ZOOMER_OPERATIONS:
             li a3,tile_size   # 16 = width of rendering area
             li a4,tile_size   # 16 = height of rendering area
             mv a5,s0          # gets frame to be rendered on
-            lbu a6,1(a0)      # zoomer's status is its direction
+            lbu a6,8(a0)      # Loads zoomer's status is its direction
+            xori a6,a6,1      # switches it
+            sb a6,8(a0)       # and stores it back for using next time
 
-            lbu a0,1(a0)      # gets zoomer's type number
-            beqz a0,ZOOMER_OPERATIONS_LOOP_RENDER_NORMAL
-                la a0,Ripper_Variant  # loads image address of red zoomer
-                j ZOOMER_OPERATIONS_LOOP_RENDER
-            ZOOMER_OPERATIONS_LOOP_RENDER_NORMAL:
-                la a0,Ripper  # loads image address of normal zoomer
+            lbu t0,1(a0)      # gets zoomer's type number
+            lbu t1,10(a0)     # gets zoomer's platform
+
+            bnez t1,ZOOMER_OPERATIONS_LOOP_TRY_LEFT
+            # If there's a platform bellow, continue
+                bnez t0,ZOOMER_OPERATIONS_LOOP_DOWN_NOT_NORMAL
+                # If type is normal:
+                    la a0,Zoomer_Down
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+                ZOOMER_OPERATIONS_LOOP_DOWN_NOT_NORMAL:li t2,1
+                bne t0,t2,ZOOMER_OPERATIONS_LOOP_DOWN_DAMAGE
+                # If type is variant:
+                    la a0,Zoomer_Variant_Down
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+                ZOOMER_OPERATIONS_LOOP_DOWN_DAMAGE:
+                # If taking damage:
+                    la a0,Zoomer_Damage_Down
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+
+            ZOOMER_OPERATIONS_LOOP_TRY_LEFT: li t2,1
+            bne t1,t2,ZOOMER_OPERATIONS_LOOP_TRY_UP
+            # If there's a platform to the left, continue
+                bnez t0,ZOOMER_OPERATIONS_LOOP_LEFT_NOT_NORMAL
+                # If type is normal:
+                    la a0,Zoomer_Left
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+                ZOOMER_OPERATIONS_LOOP_LEFT_NOT_NORMAL:li t2,1
+                bne t0,t2,ZOOMER_OPERATIONS_LOOP_LEFT_DAMAGE
+                # If type is variant:
+                    la a0,Zoomer_Variant_Left
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+                ZOOMER_OPERATIONS_LOOP_LEFT_DAMAGE:
+                # If taking damage:
+                    la a0,Zoomer_Damage_Left
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+
+            ZOOMER_OPERATIONS_LOOP_TRY_UP: li t2,2
+            bne t1,t2,ZOOMER_OPERATIONS_LOOP_RIGHT
+            # If there's a platform above, continue
+                bnez t0,ZOOMER_OPERATIONS_LOOP_UP_NOT_NORMAL
+                # If type is normal:
+                    la a0,Zoomer_Up
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+                ZOOMER_OPERATIONS_LOOP_UP_NOT_NORMAL:li t2,1
+                bne t0,t2,ZOOMER_OPERATIONS_LOOP_UP_DAMAGE
+                # If type is variant:
+                    la a0,Zoomer_Variant_Up
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+                ZOOMER_OPERATIONS_LOOP_UP_DAMAGE:
+                # If taking damage:
+                    la a0,Zoomer_Damage_Up
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+
+            ZOOMER_OPERATIONS_LOOP_RIGHT: # li t2,3
+            # If there's a platform to the right, continue
+                bnez t0,ZOOMER_OPERATIONS_LOOP_RIGHT_NOT_NORMAL
+                # If type is normal:
+                    la a0,Zoomer_Right
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+                ZOOMER_OPERATIONS_LOOP_RIGHT_NOT_NORMAL:li t2,1
+                bne t0,t2,ZOOMER_OPERATIONS_LOOP_RIGHT_DAMAGE
+                # If type is variant:
+                    la a0,Zoomer_Variant_Right
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+                ZOOMER_OPERATIONS_LOOP_RIGHT_DAMAGE:
+                # If taking damage:
+                    la a0,Zoomer_Damage_Right
+                    j ZOOMER_OPERATIONS_LOOP_RENDER
+
             ZOOMER_OPERATIONS_LOOP_RENDER:
                 li a7,0             # Normal render
                 call RENDER_ENTITY  # Renders it
                 j ZOOMER_OPERATIONS_LOOP_AFTER_OPERATIONS
             
             ZOOMER_OPERATIONS_LOOP_RENDER_TRAIL:
-                lbu a1,4(a0)   #  Loads Ripper's old X coordinate related to matrix
-                addi a1,a1,-1  #  sends old X to the left
-                lbu a2,6(a0)   #  Loads Ripper's old Y coordinate related to matrix
-                li a3, 3       #  Width of rendering trail area
-                li a4, 1       #  Height of rendering trail area
-                li a7, 1       #  Render trail
-                call RENDER_ENTITY  # Renders it
+                # We aren't using this anymore
                 # j ZOOMER_OPERATIONS_LOOP_AFTER_OPERATIONS
             
         ZOOMER_OPERATIONS_LOOP_AFTER_OPERATIONS:
@@ -187,10 +235,7 @@ ZOOMER_OPERATIONS:
 
 ################         RIPPER OPERATIONS         #################
 #          Checks if Ripper should be rendered and moved           #
-#                       (if on screen range)                       #		
-#  ----------------      argument registers      ----------------  #
-#    a0 = 0 - Normal Procedure, 1 - Only render trail              #
-#                                                                  #
+#             (if on screen range) - takes no arguments            #		
 #  ----------------        registers used        ----------------  #
 #    a0 = Current Map's Ripper address                             #
 #    a1 = 0 - Normal Procedure, 1 - Only render trail              #
@@ -207,12 +252,14 @@ RIPPER_OPERATIONS:
     addi sp,sp,-4
     sw ra,0(sp)
 # End of Stack Operations
-    mv a1,a0       # Moves argument to a0
-
+    
     la a0,Rippers  # Loads Rippers address
     la tp, CURRENT_MAP # Loads CURRENT_MAP address
     
     lw a0,0(a0)    # Loads the RippersA address over the Rippers address
+    beqz a0,END_RIPPER_OPERATIONS_LOOP # If a0 = 0, there are no rippers in this map
+    # Otherwise, continue
+
     lbu a2,0(a0)   # Loads number of Rippers in current map
     
     li a3,0        # Counter for rippers
@@ -254,7 +301,6 @@ RIPPER_OPERATIONS:
             sw tp,32(sp)
         # End of Stack Operations
             
-            bnez a1,RIPPER_OPERATIONS_LOOP_RENDER_TRAIL
             # a0 is already set
             lw a1,0(tp)
             call MOVE_RIPPER
@@ -293,16 +339,6 @@ RIPPER_OPERATIONS:
                 la a0,Ripper  # loads image address of normal ripper
             RIPPER_OPERATIONS_LOOP_RENDER:
                 li a7,0             # Normal render
-                call RENDER_ENTITY  # Renders it
-                j RIPPER_OPERATIONS_LOOP_AFTER_OPERATIONS
-            
-            RIPPER_OPERATIONS_LOOP_RENDER_TRAIL:
-                lbu a1,4(a0)   #  Loads Ripper's old X coordinate related to matrix
-                addi a1,a1,-1  #  sends old X to the left
-                lbu a2,6(a0)   #  Loads Ripper's old Y coordinate related to matrix
-                li a3, 3       #  Width of rendering trail area
-                li a4, 1       #  Height of rendering trail area
-                li a7, 1       #  Render trail
                 call RENDER_ENTITY  # Renders it
                 # j RIPPER_OPERATIONS_LOOP_AFTER_OPERATIONS
             

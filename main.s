@@ -48,7 +48,7 @@ GAME_LOOP:
  
 	call INPUT_CHECK	    # Checks player's input
 	call PHYSICS            # Physics operations
-
+	
 	call UPDATE_DOORS       # Updates doors
 	call MAP_MOVE_RENDER    # Renders map when necessary
 	

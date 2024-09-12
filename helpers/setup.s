@@ -93,13 +93,17 @@ SETUP:
     MAP1_SETUP:
         la t0, Doors1   # Doors address
         sw t0,0(t4)     # Stores Doors1 address on Doors address
+
         la t0, Frames1  # Frames address
         sw t0,0(t5)     # Stores Frames1 address on Doors address
+
         la t0,Zoomers   # Zoomers address
-        la t1,Zoomers1  # Loads ZoomersA address for Map 2
+        la t1,Zoomers1  # Loads Zoomers1 address for Map 1
         sw t1,0(t0)     # and stores it
+
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
+
         la a0, Map1 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
@@ -171,12 +175,19 @@ SETUP:
     MAP2_SETUP:
         la t0, Doors2   # Doors address
         sw t0,0(t4)     # Stores Doors2 address on Doors address
+
         la t0, Frames2  # Frames address
         sw t0,0(t5)     # Stores Frames2 address on Doors address
-        la t0,Rippers   # Rippers address
-        la t1,Rippers2  # Loads RippersA address for Map 2
+
+        la t0,Zoomers   # Zoomers address
+        la t1,Zoomers2  # Loads Zoomers2 address for Map 2
         sw t1,0(t0)     # and stores it
-        la a0, Map2 	# Map Address
+
+        la t0,Rippers   # Rippers address
+        la t1,Rippers2  # Loads Rippers2 address for Map 2
+        sw t1,0(t0)     # and stores it
+        
+        la a0, Map2 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map2 address on CURRENT_MAP
 
@@ -246,11 +257,18 @@ SETUP:
     MAP3_SETUP:
         la t0, Doors3   # Doors address
         sw t0,0(t4)     # Stores Doors3 address on Doors address
+
         la t0, Frames3  # Frames address
         sw t0,0(t5)     # Stores Frames3 address on Doors address
+
+        la t0,Zoomers   # Zoomers address
+        la t1,Zoomers3  # Loads Zoomers3 address for Map 3
+        sw t1,0(t0)     # and stores it
+
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
-        la a0, Map3 	# Map Address
+
+        la a0, Map3 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map3 address on CURRENT_MAP
 
@@ -321,12 +339,19 @@ SETUP:
     MAP4_SETUP:
         la t0, Doors4   # Doors address
         sw t0,0(t4)     # Stores Doors4 address on Doors address
+
         la t0, Frames4  # Frames address
         sw t0,0(t5)     # Stores Frames4 address on Doors address
-        la t0,Rippers   # Rippers address
-        la t1,Rippers4  # Loads RippersA address for Map 4
+
+        la t0,Zoomers   # Zoomers address
+        la t1,Zoomers4  # Loads Zoomers4 address for Map 4
         sw t1,0(t0)     # and stores it
-        la a0, Map4 	# Map Address
+
+        la t0,Rippers   # Rippers address
+        la t1,Rippers4  # Loads Rippers4 address for Map 4
+        sw t1,0(t0)     # and stores it
+        
+        la a0, Map4 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map4 address on CURRENT_MAP
 
@@ -396,11 +421,18 @@ SETUP:
     MAP5_SETUP:
         la t0, Doors5   # Doors address
         sw t0,0(t4)     # Stores Doors5 address on Doors address
+
         la t0, Frames5  # Frames address
         sw t0,0(t5)     # Stores Frames5 address on Doors address
+
+        la t0,Zoomers   # Zoomers address
+        la t1,Zoomers5  # Loads Zoomers5 address for Map 5
+        sw t1,0(t0)     # and stores it
+
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
-        la a0, Map5 	# Map Address
+
+        la a0, Map5 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map5 address on CURRENT_MAP
 
@@ -470,11 +502,17 @@ SETUP:
     MAP6_SETUP:
         la t0, Doors6   # Doors address
         sw t0,0(t4)     # Stores Doors6 address on Doors address
+
         la t0, Frames6  # Frames address
         sw t0,0(t5)     # Stores Frames6 address on Doors address
+
+        la t0,Zoomers   # Zoomers address
+        sw zero,0(t0)   # Stores 0 to it (no zoomers)
+
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
-        la a0, Map6 	# Map Address
+
+        la a0, Map6 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map6 address on CURRENT_MAP
 
@@ -542,12 +580,18 @@ SETUP:
         
     MAP7_SETUP:
         la t0, Doors7   # Doors address
-        sw t0,0(t4)     # Stores Doors7 address on Doors address
+        sw t0,0(t4)     # Stores Doors1 address on Doors address
+
         la t0, Frames7  # Frames address
         sw t0,0(t5)     # Stores Frames7 address on Doors address
+
+        la t0,Zoomers   # Zoomers address
+        sw zero,0(t0)   # Stores 0 to it (no zoomers)
+
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
-        la a0, Map7 	# Map Address
+
+        la a0, Map7 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map7 address on CURRENT_MAP
 
