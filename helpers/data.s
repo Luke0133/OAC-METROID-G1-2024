@@ -92,7 +92,7 @@ MARU_MARI_INFO: 1,0 # Whether power up is enabled or not, sprite status (0 -> 1 
 BEAMS:
 BEAM_1_INFO: .byte 0, 0, 0  # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,-1=left), Number of times that has been rendered
 BEAM_1_POS:  .byte 0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-BEAM_1_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
+BEAM_1_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new X,Y and old X,Y, respectively, all related to the map matrix 
 
 BEAM_2_INFO: .byte 0, 0, 0 # Rendering (0 - Disabled, 1 - Enabled), Direction (0=up,1=right,-1=left),Number of times that has been rendered
 BEAM_2_POS: .byte 0, 0 # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)

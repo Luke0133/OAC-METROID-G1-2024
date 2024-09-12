@@ -314,7 +314,7 @@ INPUT_CHECK:
 
 BEAM_OPERATIONS:
 
-    ebreak
+    #ebreak
     la t1, BEAMS # loads plyrs_status attacking
     li t4, BEAMS_NUMBER # max counter of number beams
     li t3,0
@@ -340,7 +340,7 @@ BEAM_OPERATIONS:
             lbu t2, 6(a2) #loads player x offset
             sb t2, 3(t1)
             lbu t2, 8(a2)
-            addi t2,t2,3
+            addi t2,t2,4
             sb t2, 5(t1) #x new for beam
             sb t2, 7(t1) #x old for beam
 
@@ -371,11 +371,10 @@ BEAM_OPERATIONS:
             li t2,1 #loads right direction
             sb t2,1(t1) #stores in beam direction
 
-
             j END_INPUT_CHECK
 
             ACTIVATE_LEFT_AXIS_BEAM:
-                li t2,2 #loads left direction
+                li t2,-1 #loads left direction
                 sb t2,1(t1) #stores in beam direction
                 j END_INPUT_CHECK
 
