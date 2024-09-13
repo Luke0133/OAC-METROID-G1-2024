@@ -159,7 +159,7 @@ INPUT_CHECK:
                 sb t1, 3(a0) # Stores new direction on PLYR_STATUS
         
                 li t1, -1      # Loads direction for MOVE_Y (-1 = up)
-                sb t1, 7(a0)  # Stores new direction on MOVE_Y
+                sb t1, 7(a0)   # Stores new direction on MOVE_Y
                 
                 # USES FLOATING POINT OPERATIONS
                 fmv.s fs2,fs1  # Sets fs2 (player's Y speed) to -9 
@@ -168,10 +168,11 @@ INPUT_CHECK:
     INPUT.K: # Shoots
         beqz t3, K.SHOOT
         j END_INPUT_CHECK
-        K.SHOOT:    li t1, 1     # Loads attacking status (1 = attacking)
-        sb t1, 5(a0) # Stores new attack status on PLYR_STATUS
-        #j END_INPUT_CHECK
-        j BEAM_OPERATIONS
+        K.SHOOT:    
+            li t1, 1     # Loads attacking status (1 = attacking)
+            sb t1, 5(a0) # Stores new attack status on PLYR_STATUS
+            #j END_INPUT_CHECK
+            j BEAM_SPAWN
 
     INPUT.J:   # Switches to missile mode (if available)
         la t0, PLYR_INFO_2    # Loads address to PLYR_INFO_2
@@ -276,7 +277,9 @@ INPUT_CHECK:
 
 
     INPUT.DEL: # Kills Player
-        #call KILL_PLYR
+        li a0,2
+        li a1,10
+        j DAMAGE_PLAYER
         j END_INPUT_CHECK
     
 
@@ -286,17 +289,15 @@ INPUT_CHECK:
         j END_INPUT_CHECK
 
     OUT_OF_MORPH_BALL:
-    #    lb t1, 7(a0)  # Loads direction on MOVE_Y
-    #    beqz t1, CONTINUE_OUT_OF_MORPH_BALL
-    #        j END_INPUT_CHECK
-    #    CONTINUE_OUT_OF_MORPH_BALL:
-        li t1, -1      # Loads direction for MOVE_Y (-1 = up)
+        li t1, -1     # Loads direction for MOVE_Y (-1 = up)
         sb t1, 7(a0)  # Stores new direction on MOVE_Y
 
         # Setting arguments for COLLISION CHECK
         la a0, MOVE_Y
         la a1, CURRENT_MAP
         lw a1, 0(a1)
+        la a2, PLYR_POS
+        li a3, 0
 
         # MOVE_Y will return to 0 afterwards
         mv s11, ra # storing return address in s11
@@ -307,71 +308,8 @@ INPUT_CHECK:
         beqz a0, SKIP_OUT_OF_MORPH_BALL
             sb zero, 4(t0) # key = up ? ball = 0 
         SKIP_OUT_OF_MORPH_BALL: 
-        sb zero, 7(t0)  # Stores new direction on MOVE_Y
+        li t1,1       # Sets MOVE_Y to 1 (falling) so that player is placed on the ground correctly
+        sb t0, 7(t0)  # Stores new direction on MOVE_Y
 
 	END_INPUT_CHECK:
 		ret	
-
-BEAM_OPERATIONS: 
-    la t1, BEAMS # loads plyrs_status attacking
-    li t4, BEAMS_NUMBER # max counter of number beams
-    li t3,0
-
-    CHECK_BEAM_ACTIVE:
-        lb t2, 0(t1) #loads if beam is already active
-        bnez t2, CHECK_BEAM_ACTIVE_LOOP # beam active? proceed into loop
-        j ACTIVATE_BEAM #activate the beam
-
-        CHECK_BEAM_ACTIVE_LOOP:
-            blt t3,t4,BEAM_CONTINUE #counter < beam_number ? continue : end
-            j END_INPUT_CHECK
-            
-            BEAM_CONTINUE:
-                addi t3,t3,1 #inc counter
-                addi t1,t1,9 #proceed into beam(i+1)
-                j CHECK_BEAM_ACTIVE #check if beam is active
-        
-        ACTIVATE_BEAM:
-            ################ STORE OFSETS ######################
-              
-            #a2 = player pos
-            lb t2, 6(a2) #loads player x offset
-            sb t2, 5(t1) #x new for beam
-            sb t2, 7(t1) #x old for beam
-
-            lb t2, 7(a2) #loads player y offset
-            sb t2, 6(t1) #y new for beam
-            sb t2, 8(t1) #y old for beam
-
-            #########################################
-
-
-            li t2,1 # fills with 1 the beam info 
-            sb t2,0(t1) # stores in beam array
-            
-            lb t2, 2(a0) # loads if player is facing up
-            bnez t2, ACTIVATE_Y_AXIS_BEAM
-       
-            #cima     = sub 1 tile no y,x eq jogador,offset x e y do jogador 
-            #direita  = sum 1 tile x,y eq jogador,offset x e y do jogador 
-            #esquerda = sub 1 tile x,y eq jogador, offset x e y do jogador 
-        
-            lb t2, 1(a0) # loads player x direction
-            bnez t2,ACTIVATE_LEFT_AXIS_BEAM # direction != 0 ? left : right
-                 
-            #right direction
-
-            li t2,1 #loads right direction
-            sb t2,1(t1) #stores in beam direction
-
-
-            j END_INPUT_CHECK
-
-            ACTIVATE_LEFT_AXIS_BEAM:
-                li t2,2 #loads left direction
-                sb t2,1(t1) #stores in beam direction
-                j END_INPUT_CHECK
-
-            ACTIVATE_Y_AXIS_BEAM:
-                sb zero, 1(t1)
-                j END_INPUT_CHECK

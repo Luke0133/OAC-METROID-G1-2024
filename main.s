@@ -19,6 +19,9 @@ main:
 	flw fs0,0(t0)
 	la t0, JUMP_SPEED
 	flw fs1,0(t0)
+	
+	la t0, RIDLEY_JUMP_SPEED
+	flw fs3,0(t0)
 
 	j SETUP
 
@@ -31,8 +34,16 @@ main:
 #                                                                   #
 #  --------------          float registers          --------------  #
 #    fs0 = gravity factor (const)                                   #
-#    fs1 = initial jump speed (const)                               #
+#    fs1 = player's initial jump speed (const)                      #
 #    fs2 = player's Y speed (positive when down, negative when up)  #
+#    fs3 = ridley's initial jump speed                              #
+#    fs4 = ridley's Y speed (positive when down, negative when up)  #
+#                                                                   #
+#    fs5 = PLASMA_0's Y speed (same logic as the others)            #
+#    fs6 = PLASMA_1's Y speed (same logic as the others)            #
+#    fs7 = PLASMA_2's Y speed (same logic as the others)            #
+#    fs8 = PLASMA_3's Y speed (same logic as the others)            #
+#    fs9 = PLASMA_4's Y speed (same logic as the others)            #
 #                                                                   #
 #####################################################################
 
@@ -47,15 +58,16 @@ GAME_LOOP:
     xori s0,s0,1		    # Switches frame value (register)
  
 	call INPUT_CHECK	    # Checks player's input
+
 	call PHYSICS            # Physics operations
-	
+ 
 	call UPDATE_DOORS       # Updates doors
 	call MAP_MOVE_RENDER    # Renders map when necessary
 	
 	li a0,0
 	call ENEMY_OPERATIONS
 
-	call UPDATE_MARU_MARI   # Updates Maru Mari's sprite (in sprite op)
+	call BEAMS_OPERATIONS
 	
 	call UPDATE_STATUS      # Updates player's sprite status
 
@@ -84,7 +96,7 @@ GAME_LOOP:
 	#call RENDER_LIFE
 
 	#la a0, Beam
-	#call BEAM_OPERATIONS
+	
 	
 	#call ENEMY_OPERATIONS
 

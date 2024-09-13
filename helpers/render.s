@@ -261,6 +261,16 @@ RENDER_COLOR:
 
 RENDER_PLAYER:
 	mv tp,a1  # tp gets value from a1
+
+	la t1, PLYR_INFO_2	 # Loads address of the second part of PLYR_INFO
+    lbu t0,3(t1)         # and damage cooldown
+	beqz t0,RENDER_PLAYER_SKIP_DAMAGE
+		lbu t0,7(t1)     # Loads render byte
+		xori t2,t0,1     # inverts it
+		sb t2,7(t1)      # and stores it
+		bnez t0,RENDER_PLAYER_SKIP_DAMAGE # If it wasn't 0, render
+		ret	# Otherwise, finish procedure
+    RENDER_PLAYER_SKIP_DAMAGE:
 	la t0, PLYR_STATUS # Loads PLAYER_STATUS address
 	la t2,PLYR_POS	# Loads PLYR_POS address
 	# Loading informations for Rendering Sprite

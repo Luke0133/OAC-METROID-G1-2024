@@ -2,10 +2,13 @@
 # ----> Summary: collisions.s stores collision related procedures, including the movement of enemies and projectiles
 # 1 - CHECK HORIZONTAL COLLISION (Checks player's horizontal collision)
 # 2 - CHECK VERTICAL COLLISION (Checks player's vertical collision)
-# 3 - MOVE_ZOOMER
-# 4 - MOVE_RIPPER
+# 3 - MOVE ZOOMER
+# 4 - MOVE RIPPER
+# 5 - MOVE RIDLEY
+# 6 - MOVE PLASMA BREATH
 
 
+# N-1 - CHECK MAP COLLISION (The one in charge of checking the map's tiles)
 # N - CHECK MAP COLLISION (The one in charge of checking the map's tiles)
 
 #######################     CHECK HORIZONTAL COLLISION     ######################
@@ -52,8 +55,12 @@ CHECK_HORIZONTAL_COLLISION:
     
     lbu t3, 6(t2)  # t3 = Player's X offset
     lb t0, 0(a0)   # Loads MOVE_X information to t0
+    
     li a0,2        # Sets a0 to 2 (check any type of door)
     bnez t0, CHECK_X_DIRECTION  # If player's not moving, end procedure 
+    la t1, PLYR_INFO_2	   # Loads address of the second part of PLYR_INFO
+    lb t1,4(t1)            # Gets the DAMAGE_MOVE_X value
+    bnez t1, CHECK_X_DIRECTION  # If player's not moving, end procedure 
     j END_HORIZONTAL_COLLISION 
     
     CHECK_X_DIRECTION:
@@ -82,6 +89,9 @@ CHECK_HORIZONTAL_COLLISION:
         addi a7,a7,1  # Increments current Y on matrix(+1 Y)
     
     CONTINUE_CHECK_X_DIRECTION_2:
+        blt t0, zero, CHECK_X_LEFT # If player is moving left (t0 < 0), go to CHECK_X_LEFT
+        la t0, PLYR_INFO_2	   # Loads address of the second part of PLYR_INFO
+        lb t0,4(t0)            # Gets the DAMAGE_MOVE_X value
         blt t0, zero, CHECK_X_LEFT # If player is moving left (t0 < 0), go to CHECK_X_LEFT
         j CHECK_X_RIGHT            # otherwise, go to CHECK_X_RIGHT
         
@@ -257,17 +267,26 @@ CHECK_VERTICAL_COLLISION:
         li a0,1  
         ret 
 
-########################        MOVE ZOOMER        ########################
-#       This procedure checks the tiles in front of Ripper when its       #
-#         X offset is 0. If there's something blocking its path,          #
-#                           it'll turn arround.                           #
-#                                                                         #
-#  ---------------           argument registers          ---------------  #
+###########################        MOVE ZOOMER        ###########################
+#      This procedure checks the tiles in front and at the base of a Zoomer     #
+#  when X/Y offset is 0. When there's no tile on the base of a zoomer, it will  #
+#       turn following its clock direction (clockwise or anti-clockwise).       # 
+#   If there is a tile on the base of the zoomer, it'll try to move foward by   #
+#     checking the tile in front of it (determined by the clock direction).     #
+#   In the case where there's something blocking it, it'll turn arround in the  #
+#    opposite clock direction (in the case of going arround the map borders,    # 
+#   this will result in the zoomer moving in the opposite direction that one    # 
+#    would think, for instance, going anti-clockwise even though zoomer was     #
+#     set to go clockwise). This will also work for closed doors, since the     #
+#       movement is checked for an X offset of 8 (with special treatments).     # 
+#                                                                               #
+#                                 **im tired**                                  #
+#                                                                               #
+#  ------------------           argument registers          ------------------  #
 #    a0 = Ripper's address                                                      #
 #	 a1 = Current map's address                                                 #
 #                                                                               #
 #  ------------------             registers used            ------------------  #
-#    a2 --> check state (will do 2)
 #    a2,a3, a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK            #      
 #                                                                               #
 #  ------------------          temporary registers          ------------------  #
@@ -323,7 +342,8 @@ MOVE_ZOOMER:
                 j MOVE_ZOOMER_CHECK_DOWN_SETUP # start collision check
             MOVE_ZOOMER_CHECK_DOWN_0_OFF:
             # Otherwise, if offset != 0, skip this collision check
-            bnez t2, MOVE_ZOOMER_PROPERLY
+            beqz t2, MOVE_ZOOMER_CHECK_DOWN_SETUP
+                j MOVE_ZOOMER_PROPERLY
 
             MOVE_ZOOMER_CHECK_DOWN_SETUP:  # Start checking
             bnez a2, MOVE_ZOOMER_CHECK_DOWN_FOWARD
@@ -362,7 +382,8 @@ MOVE_ZOOMER:
                 sub a4,a4,a2 # If on second check, don't consider doors           
             MOVE_ZOOMER_CHECK_LEFT_0_OFF:
             # Otherwise, if Y offset != 0, skip this collision check
-            bnez t3, MOVE_ZOOMER_PROPERLY
+            beqz t3, MOVE_ZOOMER_CHECK_LEFT_SETUP
+                j MOVE_ZOOMER_PROPERLY
 
             MOVE_ZOOMER_CHECK_LEFT_SETUP:  # Start checking
             bnez a2, MOVE_ZOOMER_CHECK_LEFT_FOWARD
@@ -410,7 +431,8 @@ MOVE_ZOOMER:
                 j MOVE_ZOOMER_CHECK_UP_SETUP # start collision check
             MOVE_ZOOMER_CHECK_UP_0_OFF:
             # Otherwise, if offset != 0, skip this collision check
-            bnez t2, MOVE_ZOOMER_PROPERLY
+            beqz t2, MOVE_ZOOMER_CHECK_UP_SETUP
+                j MOVE_ZOOMER_PROPERLY
 
             MOVE_ZOOMER_CHECK_UP_SETUP:  # Start checking
             bnez a2, MOVE_ZOOMER_CHECK_UP_FOWARD
@@ -451,7 +473,8 @@ MOVE_ZOOMER:
             
             MOVE_ZOOMER_CHECK_RIGHT_0_OFF:
             # Otherwise, if Y offset != 0, skip this collision check
-            bnez t3, MOVE_ZOOMER_PROPERLY
+            beqz t3, MOVE_ZOOMER_CHECK_RIGHT_SETUP
+                j MOVE_ZOOMER_PROPERLY
 
             MOVE_ZOOMER_CHECK_RIGHT_SETUP:  # Start checking
             bnez a2, MOVE_ZOOMER_CHECK_RIGHT_FOWARD
@@ -509,7 +532,10 @@ MOVE_ZOOMER:
             addi sp,sp,16
         # End of Stack Operations
         
-        bnez a2, MOVE_ZOOMER_SECOND_CHECK 
+        beqz a2, MOVE_ZOOMER_FIRST_CHECK 
+            j MOVE_ZOOMER_SECOND_CHECK
+            
+        MOVE_ZOOMER_FIRST_CHECK:
         # If a2 = 0, it's on first check
             bnez t0, MOVE_ZOOMER_CHANGE_PLATFORM # If returning anything but 0, change zoomer's platform
             li t5,8
@@ -533,8 +559,6 @@ MOVE_ZOOMER:
 
                     MOVE_ZOOMER_CHANGE_PLATFORM_DOWN_CLOCKWISE_OFF_8:
                     # If zoomer is moving clockwise:
- #                       li t5,2
-  #                      beq t5,t0,MOVE_ZOOMER_REPEAT_LOOP
                         li t1, 1       # Sets platform to 1 (on the left)
                         # t2 is the same -- Keeps X offset
                         li t3, 2       # Sets Y offset to 4
@@ -567,8 +591,6 @@ MOVE_ZOOMER:
 
                     MOVE_ZOOMER_CHANGE_PLATFORM_DOWN_CLOCKWISE:
                     # If zoomer is moving clockwise:
- #                       li t5,2
-  #                      beq t5,t0,MOVE_ZOOMER_REPEAT_LOOP
                         li t1, 1       # Sets platform to 1 (on the left)
                         # t2 is the same -- Keeps X offset
                         li t3, 2       # Sets Y offset to 4
@@ -580,8 +602,6 @@ MOVE_ZOOMER:
                 TRY_MOVE_ZOOMER_CHANGE_PLATFORM_LEFT:  li t5,1
                 bne t1,t5,TRY_MOVE_ZOOMER_CHANGE_PLATFORM_UP
                 # If platform is to the left of zoomer:
- #                   li t5,2
-  #                  beq t5,t0,MOVE_ZOOMER_REPEAT_LOOP
                     beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_LEFT_CLOCKWISE
                     # Otherwise, zoomer is moving anti-clockwise:
                         li t1, 0       # Sets platform to 0 (bellow)
@@ -650,8 +670,6 @@ MOVE_ZOOMER:
 
                 MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT:  # li t5,3
                 # If platform is to the right of zoomer:
-    #                li t5,2
-    #                bnez tp,MOVE_ZOOMER_REPEAT_LOOP
                     beqz t4, MOVE_ZOOMER_CHANGE_PLATFORM_RIGHT_CLOCKWISE
                     # Otherwise, zoomer is moving anti-clockwise:
                         li t1, 2       # Sets platform to 2 (above)
@@ -874,12 +892,12 @@ MOVE_ZOOMER:
         ret
 
 
-########################        MOVE RIPPER        ########################
-#       This procedure checks the tiles in front of Ripper when its       #
-#         X offset is 0. If there's something blocking its path,          #
-#                           it'll turn arround.                           #
-#                                                                         #
-#  ---------------           argument registers          ---------------  #
+###########################        MOVE RIPPER        ###########################
+#          This procedure checks the tiles in front of Ripper when its          #
+#            X offset is 0. If there's something blocking its path,             #
+#                              it'll turn arround.                              #
+#                                                                               #
+#  ------------------           argument registers          ------------------  #
 #    a0 = Ripper's address                                                      #
 #	 a1 = Current map's address                                                 #
 #                                                                               #
@@ -990,6 +1008,416 @@ MOVE_RIPPER:
                     sb t0,3(a0)   # Stores Ripper's new X
                     sb t2,2(a0)   # Stores Ripper's new X offset
                     ret # and finish procedure
+
+
+###########################        MOVE RIDLEY        ###########################
+#         Ridley does not move through the X axis. Rather, he only jumps        #
+#   from time to time. This procedure will make sure that he jumps and lands    #
+#           in the right spot. It does not check collision above and            #
+#                   considers a cooldown for ridley to jump.                    #
+#                                                                               #
+#  ------------------           argument registers          ------------------  #
+#    a0 = Ridley's address                                                      #
+#	 a1 = Current map's address                                                 #
+#                                                                               #
+#  ------------------             registers used            ------------------  #
+#    a2 = Ridley's matrix Y that will be modified and possibly stored           #
+#    a3 = Ridley's Y offset that will be modified and possibly stored           #
+#    a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK                   #      
+#                                                                               #
+#  ------------------          temporary registers          ------------------  #
+#    t0, t1 --> temporary registers                                             #
+#    t2 = PLYR_POS address (stores from a2 to let it be modified)               #
+#    t3 = Player's X/Y offset                                                   #
+#    tp = offset modifier (stores from a3 to let it be modified)                #
+#                                                                               #    
+#################################################################################  
+
+MOVE_RIDLEY:
+#ebreak
+    lbu a3,2(a0)    # Loads Ridley's Y offset
+    # Storing current X and Y to old X and Y
+    lbu a2,3(a0)  # Loads Ridley's Y
+    sb a2,4(a0)   # And stores it in Ridley's old Y
+
+    # Proper movement calculations 
+    lb t0,7(a0)   # Loads Ridley's MOVE_Y
+    lb t2,8(a0)   # Loads JUMP information
+    blt t0,zero, MOVE_RIDLEY_UP   # In case MOVE_Y = -1
+    bnez t0, ITERATE_RIDLEY_JUMP  # In case of MOVE_Y = 1, just iterate jump downards
+    # Otherwise, 
+        j MOVE_RIDLEY_PROPERLY
+        
+    MOVE_RIDLEY_UP:   
+        fcvt.w.s t1,fs4                    # gets Ridley's current Y speed (truncated)
+        bge t1,zero, SWITCH_RIDLEY_DOWN    # if less then zero, switch down
+        li t1, ridley_max_jump             # maximum height of jump 
+        blt t2, t1, ITERATE_RIDLEY_JUMP    # if still not there, iterate jump
+        # Otherwise, switch to falling                
+            SWITCH_RIDLEY_DOWN:     
+                li t1, 1         # Loads 1 (Down)       
+                sb t1, 7(a0)     # Switches MOVE_Y to 1 (Down)  
+                sb zero, 8(a0)   # reset jump information
+
+                fcvt.s.w fs4,zero       # Sets speed to zero       
+                j END_MOVE_RIDLEY  
+            
+        ITERATE_RIDLEY_JUMP:
+            fadd.s fs4,fs4,fs0    # fs4 = Ridley's current Y speed + gravity factor       
+            fcvt.w.s t3,fs4       # Sets t3 = floor(fs4)
+
+#    li t0,max_speed             # Loads max speed (8, when falling)
+#    blt t3,t0, SKIP_MAX_SPEED   # If t3 < 8, skip this part
+#    # Otherwise, set offset modifier to 8
+#        li a4,max_speed
+#        # speed doesn't need to be changed (will be 0 when on the ground and 8 while in freefall)
+#    SKIP_MAX_SPEED: 
+         
+            # Iterating JUMP factor with absolute value of t3
+            mv t0,t3                # moves t3 to t0
+            bge t0,zero, SKIP_ABS_RIDLEY   # if t0 >= 0, skip this
+                sub t0,zero,t0             # otherwise, t0 will be its opposite 
+            SKIP_ABS_RIDLEY:
+                add t2,t2,t0               # t0 to t2 (JUMP factor)
+                sb t2, 8(a0)               # and stores it
+
+        add a3,a3,t3	# Adds the Y Movement to the Ridley's Offset
+        
+        bge a3,zero,SKIP_UP_Y_RIDLEY
+        # If a3 < 0, Ridley is moving to the upper tile
+        addi a2, a2, -1		    # Ridley's Y on matrix -= 1 (goes to the left)
+        addi a3, a3, tile_size  # Offset gets corrected (relative to new Y on matrix coordinate)
+        
+        SKIP_UP_Y_RIDLEY:
+            li t0, tile_size
+            blt a3,t0, SKIP_DOWN_Y_RIDLEY
+            # If a3 >= 16, Ridley is moving to the lower tile
+            addi a2,a2, 1	 # Ridley's Y on matrix += 1 (goes to the right)
+            sub a3,a3,t0	 # Offset gets corrected (relative to new Y on matrix coordinate)
+        
+        SKIP_DOWN_Y_RIDLEY:  
+        # Preparations for check
+        li t0,1       # In case no collision check is made
+        lb t1,7(a0)   # Loads Ridley's MOVE_Y
+        blt t1,zero,MOVE_RIDLEY_PROPERLY # If moving up, doesn't need collision (he doesn't jump to high)
+        # Otherwise, begin collision check
+            lbu t0,2(a0)   # Loads Ridley's Y offset
+            li t1, 10      # For comparing
+            add t0,t0,t3   # Current Y offset + Y offset modifier
+
+            bge t0,t1 CONTINUE_RIDLEY_COLLISION    # If the result >= 10, continue checking
+                j MOVE_RIDLEY_PROPERLY             # Othewise, just move the reptile dragon thing ¯\_(ツ)_/¯
+
+        CONTINUE_RIDLEY_COLLISION:
+            lb t0,7(a0)   # Loads Ridley's MOVE_Y
+            bgt t0,zero CONTINUE_RIDLEY_COLLISION_2   # In case MOVE_Y = 1
+                j MOVE_RIDLEY_PROPERLY # If MOVE_Y = 0 or -1
+        CONTINUE_RIDLEY_COLLISION_2:
+        # In order to check down, moves address down 3 tiles
+            lbu a5,1(a1)     # Loads map's matrix width
+            li a6,ridley_X   # Loads Ridley's current X
+            lbu a7,3(a0)     # Loads Ridley's current Y
+            addi a7,a7,3     # adds 3 to Y, so that address will be 3 tiles down
+
+            addi a1,a1,3          # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
+            mul t0,a7,a5          # (Ridley's matrix Y + 3)  * Map Matrix's width
+            add t0,a6,t0          # t0 = Ridley's X related to matrix + (Ridley's matrix Y + 3)  * Map Matrix's width
+            add a1,a1,t0          # a1 = Map Matrix's address adjusted for Ridley's X and Y (+3) related to matrix       
+
+            START_RIDLEY_COLLISION:
+            # Storing Registers on Stack
+                addi sp,sp,-20
+                sw a3,16(sp)
+                sw a2,12(sp)
+                sw a1,8(sp)
+                sw a0,4(sp)
+                sw ra,0(sp)
+            # End of Stack Operations
+
+                li a0,2  # Doesn't matter, since no doors will be checked
+                # a1 is already defined
+                li a2,1  # Only check one tile
+                li a3,1  # Vertical check
+                li a4,0  # Don't consider doors (since it never spawns there)
+                # a5 is already defined
+                # a6 is already defined
+                # a7 is already defined
+                li tp, 1  # Entity collision
+                call CHECK_MAP_COLLISION
+                mv t0,a0
+
+            # Procedure finished: Loading Registers from Stack
+                lw a3,16(sp)
+                lw a2,12(sp)
+                lw a1,8(sp)
+                lw a0,4(sp)
+                lw ra,0(sp)
+                addi sp,sp,20
+            # End of Stack Operations
+            
+            # After checking collision
+            bnez t0, MOVE_RIDLEY_PROPERLY   # If returning anything but 0, Ridley can move
+            # Otherwise (in theory) the only time Ridley should face a collision is when moving down
+                fcvt.s.w fs4,zero # Resets Ridley's jump speed
+                sb zero, 7(a0) # RIDLEY_MOVE_Y = 0
+                sb zero, 8(a0) # RIDLEY_JUMP = 0
+                # Don't adjust Ridley's Y
+                li t0,10        # setting new Y offset    
+                sb t0,2(a0)     # Sets Ridley's Y offset to 10
+
+                lbu t0, 9(a0)   # Loads jump cooldown
+                bnez t0,MOVE_RIDLEY_SKIP_COOLDOWN_RESET  # If cooldown isn't 0, don't reset it
+                # Otherwise, reset cooldown
+                    li t0,ridley_jump_cooldown  
+                    sb t0, 9(a0)
+                MOVE_RIDLEY_SKIP_COOLDOWN_RESET:
+                #j END_MOVE_RIDLEY    
+        
+        MOVE_RIDLEY_PROPERLY:         
+            lbu t0, 9(a0)   # Loads jump cooldown 
+            bnez t0,MOVE_RIDLEY_PROPERLY_ITERATE_COOLDOWN
+            # If able to jump, change ridley's coordinates
+                sb a2,3(a0)     # Stores Ridley's new Y 
+                sb a3,2(a0)     # Stores new Y offset
+                j END_MOVE_RIDLEY
+
+            MOVE_RIDLEY_PROPERLY_ITERATE_COOLDOWN:
+            # If not able to jump, iterate over jump cooldown
+                addi t0,t0,-1   # Takes 1 from cooldown
+                bnez t0,MOVE_RIDLEY_PROPERLY_FINISH_ITERATE_COOLDOWN
+                # If cooldown is 0, set up ridley to jump
+                    fmv.s fs4,fs3  # moves ridley's initial speed to fs4
+                    li t1,-1       # Loads -1 (Up)
+                    sb t1,7(a0)    # and stores it on Ridley's MOVE_Y
+                MOVE_RIDLEY_PROPERLY_FINISH_ITERATE_COOLDOWN:
+                # If cooldown is still not 0 (or is and jump speed was already set), store it back 
+                # and end it all (the procedure o_o)
+                    sb t0, 9(a0)   # Loads jump cooldown
+                    #j END_MOVE_RIDLEY      
+    
+    END_MOVE_RIDLEY:
+        ret
+
+#######################        MOVE PLASMA BREATH        ########################
+#         Plasma breaths move in a "zig-zag" way, kicking on the ground         #
+#   (it follows an oblique motion). It must consider all vertical collisions    #
+#              (up and down), ignoring horizontal collision checks              #
+#                       (unless it passes an X threshold)                       #
+#                                                                               #
+#  ------------------           argument registers          ------------------  #
+#    a0 = Plasma Breath's address                                               #
+#	 a1 = Current map's address                                                 #
+#                                                                               #
+#  ------------------             registers used            ------------------  #
+#    a2 = Ridley's matrix Y that will be modified and possibly stored           #
+#    a3 = Ridley's Y offset that will be modified and possibly stored           #
+#    a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK                   #      
+#                                                                               #
+#  ------------------          temporary registers          ------------------  #
+#    t0, t1 --> temporary registers                                             #
+#    t2 = PLYR_POS address (stores from a2 to let it be modified)               #
+#    t3 = Player's X/Y offset                                                   #
+#    tp = offset modifier (stores from a3 to let it be modified)                #
+#                                                                               #    
+#################################################################################  
+
+MOVE_PLASMA_BREATH:
+            #lbu a1,6(a0) # Loads plasma breath's current X
+            #lbu t0,3(a0) # Loads plasma breath's X offset
+    
+    # X doesn't need a collision check
+    lbu t3,6(a0) # Loads plasma breath's current X
+    sb t3,7(a0)  # And stores it on old X
+
+    lbu t0,3(a0) # Loads plasma breath's X offset
+    lbu t1,1(a0) # Loads plasma breath's X movement (always positive)
+
+    add t0,t0,t1 # Adds X movement to X offset
+ 
+    li t2,tile_size # Loads 16
+    blt t0,t2,MOVE_PLASMA_BREATH_SKIP_CORRECTION # If less than 16, skip correction
+        addi t3,t3,1   # Adds 1 to X
+        sub t0,t0,t2   # Corrects X offset 
+    MOVE_PLASMA_BREATH_SKIP_CORRECTION:
+        sb t3,6(a0)    # Stores new X (or the same, if unaltered)
+        sb t0,3(a0)    # Stores new X offset
+
+    li t1,disable_threshold  # Loads X where plasma breath should be disabled
+    blt t3,t1,MOVE_PLASMA_BREATH_KEEP  # If it didn't surpass the threshold, continue
+    # Otherwise, set it to be disabled
+        li t1,2     # Loads "To be Disabled" 
+        sb t1,0(a0) # and stores it on enable byte
+        # This loop will continue normally and even the collision will work. Only
+        # when arriving on the next loop's PLASMA_BREATH_OPERATIONS will it be disabled
+
+    MOVE_PLASMA_BREATH_KEEP:
+    # Altering Y and doing a collision check afterwards
+    lbu a2,8(a0)    # Loads plasma breath's current Y
+    sb a2,9(a0)     # And stores it on old Y
+    lbu a3,4(a0)    # Loads plasma breath's current Y
+
+    # Proper movement calculations 
+    lb t0,2(a0)   # Loads Plasma Breath's MOVE_Y
+ #   lb t2,8(a0)   # Loads JUMP information
+    blt t0,zero, MOVE_PLASMA_BREATH_UP   # In case MOVE_Y = -1 
+        j ITERATE_PLASMA_BREATH_JUMP     # Otherwise, just iterate
+        
+    MOVE_PLASMA_BREATH_UP:   
+        fcvt.w.s t1,fa0                           # Gets Plasma Breath's current Y speed (truncated)
+        bge t1,zero, SWITCH_PLASMA_BREATH_DOWN    # If less then zero, switch down
+        j ITERATE_PLASMA_BREATH_JUMP                     # If still not there, iterate jump
+        # Otherwise, switch to falling                
+            SWITCH_PLASMA_BREATH_DOWN:     
+                li t1, 1         # Loads 1 (Down)       
+                sb t1, 2(a0)     # Switches MOVE_Y to 1 (Down) 
+                # keep the same speed
+                #fcvt.s.w fa0,zero       # Sets speed to zero       
+                j END_MOVE_PLASMA_BREATH
+            
+        ITERATE_PLASMA_BREATH_JUMP:
+            fadd.s fa0,fa0,fs0    # fa0 = Plasma Breath's current Y speed + gravity factor       
+            fcvt.w.s t3,fa0       # Sets t3 = floor(fa0)
+
+            li t0,plasma_max_speed             # Loads max speed (8, when falling)
+            blt t3,t0, SKIP_PLASMA_MAX_SPEED   # If t3 < 8, skip this part
+            # Otherwise, set offset modifier to 8
+                li t3,plasma_max_speed
+                fcvt.s.w fa0,t0
+
+            SKIP_PLASMA_MAX_SPEED: 
+            # Iterating JUMP factor with absolute value of t3
+        #    mv t0,t3                # moves t3 to t0
+        #    bge t0,zero, SKIP_ABS_RIDLEY   # if t0 >= 0, skip this
+        #        sub t0,zero,t0             # otherwise, t0 will be its opposite 
+        #    SKIP_ABS_RIDLEY:
+        #        add t2,t2,t0               # t0 to t2 (JUMP factor)
+        #        sb t2, 8(a0)               # and stores it
+
+        add a3,a3,t3	# Adds the Y Movement to the Plasma Breath's Offset      
+        bge a3,zero,SKIP_UP_Y_PLASMA_BREATH
+        # If a3 < 0, Plasma Breath is moving to the upper tile 
+        addi a2, a2, -1		    # Plasma Breath's Y on matrix -= 1 (goes to the left)
+        addi a3, a3, tile_size  # Offset gets corrected (relative to new Y on matrix coordinate)
+        
+        SKIP_UP_Y_PLASMA_BREATH:
+            li t0, tile_size
+            blt a3,t0, SKIP_DOWN_Y_PLASMA_BREATH
+            # If a3 >= 16, Plasma Breath is moving to the lower tile
+            addi a2,a2, 1	 # Plasma Breath's Y on matrix += 1 (goes to the right)
+            sub a3,a3,t0	 # Offset gets corrected (relative to new Y on matrix coordinate)
+        
+        SKIP_DOWN_Y_PLASMA_BREATH:  
+        # Preparations for check
+#        li t0,1       # In case no collision check is made
+        
+        lbu a5,1(a1)     # Loads map's matrix width
+        lbu a6,6(a0)     # Loads plasma breath's current X
+        lbu a7,8(a0)     # Loads plasma breath's current Y
+
+        addi a1,a1,3     # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
+        mul t0,a7,a5     # (Plasma Breath's matrix Y + 3)  * Map Matrix's width
+        add t0,a6,t0     # t0 = Plasma Breath's X related to matrix + (Plasma Breath's matrix Y + 3)  * Map Matrix's width
+        add a1,a1,t0     # a1 = Map Matrix's address adjusted for Plasma Breath's X and Y (+3) related to matrix       
+
+        lbu t0,4(a0)     # Loads Plasma Breath's Y offset
+        lb t1,2(a0)      # Loads Plasma Breath's MOVE_Y
+        blt t1,zero, CHECK_Y_UP_PLASMA_BREATH # If t1 < 0, check up, 
+        j CHECK_Y_DOWN_PLASMA_BREATH          # otherwise check down
+
+        CHECK_Y_UP_PLASMA_BREATH:
+            li t1, 8       # For comparing
+            add t0,t0,t3   # Current Y offset + Y offset modifier
+            bge t1,t0 CONTINUE_PLASMA_BREATH_COLLISION_UP    # If the result <= 8, continue checking
+                j MOVE_PLASMA_BREATH_PROPERLY  # Othewise, just move the fourth state of matter breath 
+
+            CONTINUE_PLASMA_BREATH_COLLISION_UP:
+            # If it arrived here, it'll check the current tile to see if
+            # plasma breath can move up, and since it's already been calculated
+                j START_PLASMA_BREATH_COLLISION
+        
+        CHECK_Y_DOWN_PLASMA_BREATH:
+            add a1,a1,a5  # Moves matrix one tile down
+            addi a7,a7,1  # Moves Y one tile down
+            beqz t3 CONTINUE_CHECK_Y_DOWN_PLASMA_BREATH   # If plasma breath's Y offset == 0, continue checking
+            # Othewise:
+            # 1 - Go another tile down, in case branch condition is met
+            add a1,a1,a5  # If Y offset != 0
+            addi a7,a7,1  # If Y offset != 0
+            # 2 - check if current offset + offset modifier will be greater than or equal to 16
+            li t1,tile_size  # Loads 16
+            add t0,t0,t3     # Current Y offset + Y offset modifier
+            bge t0,t1 CONTINUE_CHECK_Y_DOWN_PLASMA_BREATH  # If current offset + offset modifier >= 16, continue checking (but check one tile bellow)
+                j MOVE_PLASMA_BREATH_PROPERLY              # Othewise, just move the the fourth state of matter breath (Ha, you've only read one "the")
+
+            CONTINUE_CHECK_Y_DOWN_PLASMA_BREATH:
+            # If it arrived here, but Y offset != 0, it'll check 2 two tiles down
+            # Otherwise, it'll check only one tile down
+                j START_PLASMA_BREATH_COLLISION
+
+            START_PLASMA_BREATH_COLLISION:
+            # Storing Registers on Stack
+                addi sp,sp,-20
+                sw a3,16(sp)
+                sw a2,12(sp)
+                sw a1,8(sp)
+                sw a0,4(sp)
+                sw ra,0(sp)
+            # End of Stack Operations
+
+                li a0,2  # Doesn't matter, since no doors will be checked
+                # a1 is already defined
+                li a2,1  # Only check one tile
+                li a3,1  # Vertical check
+                li a4,0  # Don't consider doors (since it never spawns there)
+                # a5 is already defined
+                # a6 is already defined
+                # a7 is already defined
+                li tp, 1  # Entity collision
+                call CHECK_MAP_COLLISION
+                mv t0,a0
+
+            # Procedure finished: Loading Registers from Stack
+                lw a3,16(sp)
+                lw a2,12(sp)
+                lw a1,8(sp)
+                lw a0,4(sp)
+                lw ra,0(sp)
+                addi sp,sp,20
+            # End of Stack Operations
+            
+            # After checking collision
+            bnez t0, MOVE_PLASMA_BREATH_PROPERLY   # If returning anything but 0, Plasma Breath can move
+            # Otherwise (in theory) the only time Ridley should face a collision is when moving down
+                #fcvt.s.w fa0,zero # Resets Ridley's jump speed              
+                fneg.s fa0,fa0  # Invert speed
+                
+                lb t0,2(a0)   # Loads Plasma Breath's MOVE_Y,
+                neg t1,t0     # inverts it,
+                lb t1,2(a0)   # and stores it back
+                
+                blt t0,zero,SWITCH_PLASMA_BREATH_DOWN_2 # If t0 (old MOVE_Y) <= -1 adjust coordinates
+                # Otherwise, adjust coordinates for the falling plasma breath
+                    lbu t0,4(a0)   # Loads plasma breath's current Y offset  
+                    beqz t0,MOVE_PLASMA_BREATH_SKIP_ADJUST_Y  
+                        sb zero, 4(a0) # Sets plasma breath's Y offset to 0     
+                        sb a2,8(a0)    # Stores new Y 
+                    MOVE_PLASMA_BREATH_SKIP_ADJUST_Y: 
+                    # If Y offset was 0, everything was already set
+                        j END_MOVE_PLASMA_BREATH   # Finish procedure
+                
+                SWITCH_PLASMA_BREATH_DOWN_2:
+                # If moving up, all we need to do is set Y offset to 8, since it's already in the correct Y
+                    li t0,8      # Loads new Y offset
+                    sb t0,4(a0)  # and stores it back
+                    j END_MOVE_PLASMA_BREATH   # Finish procedure
+        
+        MOVE_PLASMA_BREATH_PROPERLY:         
+            sb a2,8(a0)     # Stores Plasma Breath's new Y 
+            sb a3,4(a0)     # Stores new Y offset
+            #j END_MOVE_PLASMA_BREATH   
+    
+    END_MOVE_PLASMA_BREATH:
+        ret
 
 ######################      CHECK MAP COLLISION      ######################    
 #   Checks the tile on the address given by a1, and returns whether the   #

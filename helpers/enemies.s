@@ -2,6 +2,8 @@
 # 1 - ENEMY OPERATIONS (Checks enemies in current map and renders/moves them)
 # 2 - ZOOMER OPERATIONS
 # 3 - RIPPER OPERATIONS 
+# 4 - RIDLEY OPERATIONS 
+# 5 - PLASMA BREATH OPERATIONS 
 
 ENEMY_OPERATIONS:
 # Storing Registers on Stack
@@ -12,6 +14,14 @@ ENEMY_OPERATIONS:
     
     call RIPPER_OPERATIONS        # Checks rippers
     
+    la t0,CURRENT_MAP             # Loads map address
+    lbu t0,4(t0)                  # and from it, loads map's number
+    li t1,7                       # Loads 7 to compare with map's number
+    bne t0,t1,SKIP_RIDLEY         # If not on map 7, skip Ridley >:D
+        call RIDLEY_OPERATIONS    # Checks Ridley
+
+        call PLASMA_BREATH_OPERATIONS  # Checks Plasma Breaths (ITS.TEDIOUS.TO.KEEP.WRITING.PLASMA.BREATH.EVERY.TIME.I.CANT.TAKE.IT.ANYMOREEEE)
+    SKIP_RIDLEY:
 # Procedure finished: Loading Registers from Stack
     lw ra,0(sp)
     addi sp,sp,4
@@ -20,15 +30,12 @@ ret
 
 ################         ZOOMER OPERATIONS         #################
 #          Checks if Zoomer should be rendered and moved           #
-#                       (if on screen range)                       #		
-#  ----------------      argument registers      ----------------  #
-#    a0 = 0 - Normal Procedure      #
-#                                                                  #
+#                       (if on screen range)                       #
+#                                                                  #	
 #  ----------------        registers used        ----------------  #
 #    a0 = Current Map's Zoomer address                             #
-#    a1 = 0 - Normal Procedure             #
-#    a2 = Number of zoomers in current map                         #
-#    a3 = Loop counter                                             #
+#    a1 = Number of zoomers in current map                         #
+#    a2 = Loop counter                                             #
 #    tp = CURRENT_MAP's address                                    #
 #    t0 -- t6 = Temporary Registers                                #
 #    a0 -- a7 => used as arguments                                 #
@@ -40,18 +47,18 @@ ZOOMER_OPERATIONS:
     addi sp,sp,-4
     sw ra,0(sp)
 # End of Stack Operations
-    mv a1,a0       # Moves argument to a0
-
     la a0,Zoomers  # Loads Zoomers address
     la tp, CURRENT_MAP # Loads CURRENT_MAP address
     
     lw a0,0(a0)    # Loads the ZoomersA address over the Zoomers address
-    beqz a0,END_ZOOMER_OPERATIONS_LOOP # If a0 = 0, there are no zoomers in this map
-    # Otherwise, continue
+    bnez a0,CONTINUE_ZOOMER_OPERATIONS  # If there are zoomers in this map
+        j END_ZOOMER_OPERATIONS_LOOP    # If a0 = 0, there are no zoomers in this map
 
-    lbu a2,0(a0)   # Loads number of Zoomers in current map
+    CONTINUE_ZOOMER_OPERATIONS:
+    # Otherwise, continue
+    lbu a1,0(a0)   # Loads number of Zoomers in current map
     
-    li a3,0        # Counter for zoomers
+    li a2,0        # Counter for zoomers
     addi a0,a0,1   # Goes to next byte (where zoomers from current map start)
     ZOOMER_OPERATIONS_LOOP:
         # Checking X
@@ -91,7 +98,6 @@ ZOOMER_OPERATIONS:
             sw tp,32(sp)
         # End of Stack Operations
             
-            bnez a1,ZOOMER_OPERATIONS_LOOP_RENDER_TRAIL
             # a0 is already set
             lw a1,0(tp)
             call MOVE_ZOOMER
@@ -122,6 +128,7 @@ ZOOMER_OPERATIONS:
             li a3,tile_size   # 16 = width of rendering area
             li a4,tile_size   # 16 = height of rendering area
             mv a5,s0          # gets frame to be rendered on
+
             lbu a6,8(a0)      # Loads zoomer's status is its direction
             xori a6,a6,1      # switches it
             sb a6,8(a0)       # and stores it back for using next time
@@ -220,8 +227,8 @@ ZOOMER_OPERATIONS:
 
         NEXT_IN_ZOOMER_OPERATIONS_LOOP: 
             addi a0,a0,zoomer_size  # Going to the next zoomer's address                                  
-            addi a3,a3,1            # Iterating counter by 1                                   
-            bge a3,a2, END_ZOOMER_OPERATIONS_LOOP # If all of the zoomer's were checked, end loop                                  
+            addi a2,a2,1            # Iterating counter by 1                                   
+            bge a2,a1, END_ZOOMER_OPERATIONS_LOOP # If all of the zoomers were checked, end loop                                  
             j ZOOMER_OPERATIONS_LOOP # otherwise, go back to the loop's beginning                     
     
     END_ZOOMER_OPERATIONS_LOOP:   
@@ -239,8 +246,8 @@ ZOOMER_OPERATIONS:
 #  ----------------        registers used        ----------------  #
 #    a0 = Current Map's Ripper address                             #
 #    a1 = 0 - Normal Procedure, 1 - Only render trail              #
-#    a2 = Number of rippers in current map                         #
-#    a3 = Loop counter                                             #
+#    a1 = Number of rippers in current map                         #
+#    a2 = Loop counter                                             #
 #    tp = CURRENT_MAP's address                                    #
 #    t0 -- t6 = Temporary Registers                                #
 #    a0 -- a7 => used as arguments                                 #
@@ -257,12 +264,14 @@ RIPPER_OPERATIONS:
     la tp, CURRENT_MAP # Loads CURRENT_MAP address
     
     lw a0,0(a0)    # Loads the RippersA address over the Rippers address
-    beqz a0,END_RIPPER_OPERATIONS_LOOP # If a0 = 0, there are no rippers in this map
-    # Otherwise, continue
+    bnez a0,CONTINUE_RIPPER_OPERATIONS    # If there are rippers in this map
+        j END_RIPPER_OPERATIONS_LOOP      # If a0 = 0, there are no rippers in this map
 
-    lbu a2,0(a0)   # Loads number of Rippers in current map
+    CONTINUE_RIPPER_OPERATIONS:
+    # Otherwise, continue
+    lbu a1,0(a0)   # Loads number of Rippers in current map
     
-    li a3,0        # Counter for rippers
+    li a2,0        # Counter for rippers
     addi a0,a0,1   # Goes to next byte (where rippers from current map start)
     RIPPER_OPERATIONS_LOOP:
         # Checking X
@@ -358,8 +367,8 @@ RIPPER_OPERATIONS:
 
         NEXT_IN_RIPPER_OPERATIONS_LOOP:                    
             addi a0,a0,ripper_size  # Going to the next ripper's address                                  
-            addi a3,a3,1            # Iterating counter by 1                                   
-            bge a3,a2, END_RIPPER_OPERATIONS_LOOP # If all of the ripper's were checked, end loop                                  
+            addi a2,a2,1            # Iterating counter by 1                                   
+            bge a2,a1, END_RIPPER_OPERATIONS_LOOP # If all of the rippers were checked, end loop                                  
             j RIPPER_OPERATIONS_LOOP # otherwise, go back to the loop's beginning                     
     
     END_RIPPER_OPERATIONS_LOOP:   
@@ -370,7 +379,426 @@ RIPPER_OPERATIONS:
         ret
 
 
+################         RIDLEY OPERATIONS         #################
+#          Renders Ridley, makes him jump and attack >:]           #
+#                                                                  #		
+#  ----------------        registers used        ----------------  #
+#    a0 = Ridley address                                           #
+#    a1 = Number of rippers in current map                         #
+#    a2 = Loop counter                                             #
+#    tp = CURRENT_MAP's address                                    #
+#    t0 -- t6 = Temporary Registers                                #
+#    a0 -- a7 => used as arguments                                 #
+#                                                                  #
+####################################################################
+
+RIDLEY_OPERATIONS:
+# Storing Registers on Stack
+    addi sp,sp,-4
+    sw ra,0(sp)
+# End of Stack Operations
+    
+    la a0,RIDLEY_INFO  # Loads Ridley's address
+    la tp, CURRENT_MAP # Loads CURRENT_MAP address
+    
+# Storing Registers on Stack
+    addi sp,sp,-36
+    sw s1,0(sp)
+    sw s2,4(sp)
+    sw s3,8(sp)
+    sw s4,12(sp)
+    sw a0,16(sp)
+    sw a1,20(sp)
+    sw a2,24(sp)
+    sw a3,28(sp)
+    sw tp,32(sp)
+# End of Stack Operations
+        
+    # a0 is already set
+    lw a1,0(tp)
+    call MOVE_RIDLEY
+    
+    # Calculating Ridley's X related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+    lw a0,16(sp)     # Gets a0 from stack again
+    lw tp,32(sp)     # Gets tp from stack again
+    li a1,ridley_X   # Loads ridley's current X
+    addi a1,a1,-1    # subtracts 1 from it (a sort of offset for rendering sprite in proper place)
+    lbu t0,6(tp)     # Loads map's current X  
+    sub a1,a1,t0     # Gets the X matrix related to the map's X (a1 = ridley's X - map's X)
+    slli a1,a1,tile_size_shift # Multiplies a5 by 16 in order to get X related to screen
+    li t0,ridley_X_Offset # Loads ridley's X offset
+    add a1,a1,t0          # Adds offset to position
+    lbu t0,8(tp)          # Loads map's X offset
+    sub a1,a1,t0          # and takes it from ridley's position
+# dislocation?
+    
+    # Calculating Ridley's Y related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+    lbu a2,3(a0) # Loads ridley's current Y
+    lbu t1,7(tp) # Loads map's current Y
+    sub a2,a2,t1 # Gets the Y matrix related to the map's Y (a2 = ridley's Y - map's Y)
+    slli a2,a2,tile_size_shift # Multiplies a2 by 16 in order to get Y related to screen
+    lbu t0,2(a0) # Loads ridley's Y offset
+    add a2,a2,t0 # Adds offset to position
+    lbu t1,9(tp) # Loads map's Y offset
+    sub a2,a2,t1 # and takes it from ridley's position
+    
+    li a3,32   # 16 = width of rendering area
+    mv a5,s0          # gets frame to be rendered on
+
+    lbu a6,5(a0)      # Loads ridley's status is its direction
+    xori a6,a6,1      # switches it
+    sb a6,5(a0)       # and stores it back for using next time
+
+    li t0, ridley_jump_animation              # Loads screen's Y threshold where jumping animation appears
+    lbu a0,1(a0)                              # Gets ridley's type number
+    bge t0,a2,RIDLEY_OPERATIONS_RENDER_JUMP   # If Y (a2) <= 80, render jumping animation
+    # If ridley isn't jumping:
+        li a4,40   # 40 = height of rendering area
+        bnez a0,RIDLEY_OPERATIONS_RENDER_DAMAGE
+        # If ridley is normal
+            la a0,Ridley
+            j RIDLEY_OPERATIONS_RENDER
+
+        RIDLEY_OPERATIONS_RENDER_DAMAGE:
+        # If ridley is taking damage
+            la a0,Ridley_Damage
+            j RIDLEY_OPERATIONS_RENDER
+
+    RIDLEY_OPERATIONS_RENDER_JUMP:
+    # If ridley is jumping:
+        li a4,48   # 48 = height of rendering area
+        bnez a0,RIDLEY_OPERATIONS_RENDER_JUMP_DAMAGE
+        # If ridley is normal
+            la a0,Ridley_Jump
+            j RIDLEY_OPERATIONS_RENDER
+
+        RIDLEY_OPERATIONS_RENDER_JUMP_DAMAGE:
+        # If ridley is taking damage  
+            la a0,Ridley_Damage_Jump
+            # j RIDLEY_OPERATIONS_RENDER  
+
+    RIDLEY_OPERATIONS_RENDER:
+        li a7,0             # Normal render
+        call RENDER_ENTITY  # Renders it
+        
+    # Trying to attack
+    li a1,9                  # Range
+    li a7,RandIntRangeEcall  # random integer within range ecall
+    ecall
+    li t0,5                  # to compare with result (in a0)
+    blt a0,t0,RIDLEY_OPERATIONS_ATTACK  # 50% chance to attack
+        j END_RIDLEY_OPERATIONS_PART_1  # 50% chance to not attack
+    RIDLEY_OPERATIONS_ATTACK: 
+        lw a0,16(sp)      # Gets Ridley's address again
+        lbu t0,10(a0)     # Loads attack cooldown byte
+        beqz t0,RIDLEY_OPERATIONS_ATTACK_CONTINUE 
+        # If still on cooldown, don't attack
+            addi t0,t0,-1   # Subtracs 1 from cooldown
+            sb t0,10(a0)    # and stores it back
+            j END_RIDLEY_OPERATIONS_PART_1
+        RIDLEY_OPERATIONS_ATTACK_CONTINUE:
+        # If not on cooldown anymore, attack:
+            li t0,ridley_attack_cooldown   # Resets ridley's cooldown
+            sb t0,10(a0)                   # and stores it back
+            
+            la a2,PLASMA_BREATH_ARRAY  # Loads Plasma breath array
+            li t0,0 # resets counter
+            li t1,plasma_number # gets number of plasma breaths in game
+
+            # Begin Loop
+            PLASMA_SPAWN_LOOP:
+                lw a0,16(sp)      # Gets Ridley's address again
+                lbu t2,0(a2) # Loads enable byte
+                beqz t2,PLASMA_SPAWN_LOOP_CONTINUE # If not enabled, enable current plasma breath
+                    j NEXT_IN_PLASMA_SPAWN__LOOP   # Otherwise, check other plasma breaths
+                PLASMA_SPAWN_LOOP_CONTINUE:   
+                # Spawning Plasma Breath
+                    # Enabling
+                    li t2,1     # Enabled
+                    sb t2,0(a2) # stores enable byte
+
+                    # Determining X and X offset
+                    li t2,ridley_X_Offset  # Loads 6
+                    sb zero,3(a2) # Stores 6 on X offset (since ridley's X offset is always 6)
+
+                    li t2,ridley_X  # Loads 10
+                    addi t2,t2,1    # adds 1 to it
+                    sb t2,6(a2)     # Stores 11 on X (since ridley's X is always 10)
+                    sb t2,7(a2)     # Stores 11 on old X (since ridley's X is always 10)
+
+                    # Determining Y and Y offset
+                    lbu t2,2(a0)    # Loads ridley's Y offset
+                    sb t2,4(a2)     # Stores it on Y offset
+
+                    lbu t2,3(a0)    # Loads ridley's current Y
+                    sb t2,8(a2)     # Stores it on Y
+                    sb t2,9(a2)     # Stores it on dol Y
+
+                    # Getting random X movement
+                    li a1,2                  # Range
+                    li a7,RandIntRangeEcall  # random integer within range ecall
+                    ecall
+
+                    addi t2,a0,1   # X movement will be between 1 and 3 (inclusive)
+                    sb t2,1(a2)    # Stores it on X movement
+
+                    # Setting MOVE_Y
+                    li t2,-1       # Loads -1 (Up)
+                    sb t2,2(a2)    # Stores it on MOVE_Y (Up)
+
+                    # Setting Random Y speed
+                    li a1,4                  # Range
+                    li a7,RandIntRangeEcall  # random integer within range ecall
+                    ecall
+
+                    li t2,-8                 # Loads -8 (base speed)
+                    add t2,t2,a0             # Speed will be between -8 and -4
+
+                    # Checking which Plasma Breath we are activating in order to set Y speed
+                    bnez t0,PLASMA_SPAWN_LOOP_NOT_PLASMA_0
+                    #    fs5 = PLASMA_0's Y speed  
+                        fcvt.s.w fs5,t2    # Sets PLASMA_0's Y speed 
+                        j END_RIDLEY_OPERATIONS_PART_1  # Break loop
+
+                    PLASMA_SPAWN_LOOP_NOT_PLASMA_0: li t1,1
+                    bne t0,t1,PLASMA_SPAWN_LOOP_NOT_PLASMA_1
+                    #    fs6 = PLASMA_1's Y speed 
+                        fcvt.s.w fs6,t2    # Sets PLASMA_1's Y speed
+                        j END_RIDLEY_OPERATIONS_PART_1  # Break loop
+
+                    PLASMA_SPAWN_LOOP_NOT_PLASMA_1: li t1,2
+                    bne t0,t1,PLASMA_SPAWN_LOOP_NOT_PLASMA_2
+                    #    fs7 = PLASMA_2's Y speed 
+                        fcvt.s.w fs7,t2    # Sets PLASMA_2's Y speed
+                        j END_RIDLEY_OPERATIONS_PART_1  # Break loop
+
+                    PLASMA_SPAWN_LOOP_NOT_PLASMA_2: li t1,3
+                    bne t0,t1,PLASMA_SPAWN_LOOP_NOT_PLASMA_3
+                    #    fs8 = PLASMA_3's Y speed 
+                        fcvt.s.w fs8,t2    # Sets PLASMA_3's Y speed
+                        j END_RIDLEY_OPERATIONS_PART_1  # Break loop
+
+                    PLASMA_SPAWN_LOOP_NOT_PLASMA_3: # li t1,4
+                    #    fs9 = PLASMA_4's Y speed 
+                        fcvt.s.w fs9,t2    # Sets PLASMA_4's Y speed
+                        j END_RIDLEY_OPERATIONS_PART_1  # Break loop
+
+                NEXT_IN_PLASMA_SPAWN__LOOP:                    
+                    addi a2,a2,plasma_size  # Going to the next plasma breath address                                  
+                    addi t0,t0,1            # Iterating counter by 1                                   
+                    bge t0,t1, END_RIDLEY_OPERATIONS_PART_1 # If all of the plasma breaths were checked, end loop (don't attack)                                
+                    j PLASMA_SPAWN_LOOP # otherwise, go back to the loop's beginning 
+
+    END_RIDLEY_OPERATIONS_PART_1:
+    # Procedure finished: Loading Registers from Stack
+        lw s1,0(sp)
+        lw s2,4(sp)
+        lw s3,8(sp)
+        lw s4,12(sp)
+    #    lw a0,16(sp)
+    #    lw a1,20(sp)
+    #    lw a2,24(sp)
+    #    lw a3,28(sp)
+    #    lw tp,32(sp)
+        addi sp,sp,36
+    # End of Stack Operations 
+
+    END_RIDLEY_OPERATIONS:
+    # Procedure finished: Loading Registers from Stack
+        lw ra,0(sp)
+        addi sp,sp,4
+    # End of Stack Operations   
+        ret
 
 
-		
-   
+##############        PLASMA BREATH OPERATIONS        ##############
+#         Renders enabled plasma breaths and moves them :D         #
+#                                                                  #		
+#  ----------------        registers used        ----------------  #
+#    a0 = PLASMA BREATH ARRAY address                              #
+#    a1 = Number of plasma breaths in current map                  #
+#    a2 = Loop counter                                             #
+#    tp = CURRENT_MAP's address                                    #
+#    t0 -- t6 = Temporary Registers                                #
+#    a0 -- a7 => used as arguments                                 #
+#                                                                  #
+####################################################################
+
+
+PLASMA_BREATH_OPERATIONS:
+# Storing Registers on Stack
+    addi sp,sp,-4
+    sw ra,0(sp)
+# End of Stack Operations
+    la tp, CURRENT_MAP         # Loads CURRENT_MAP address
+
+    la a0,PLASMA_BREATH_ARRAY  # Loads Plasma breath array
+
+    li a2,0 # resets counter
+    li a1,plasma_number # gets number of plasma breaths in game
+    PLASMA_BREATH_OPERATIONS_LOOP:
+        lbu t2,0(a0) # Loads enable byte
+        bnez t2,PLASMA_BREATH_OPERATIONS_LOOP_CONTINUE    # If enabled,
+            j NEXT_IN_PLASMA_BREATH_OPERATIONS_LOOP       # Otherwise, check other plasma breaths
+        PLASMA_BREATH_OPERATIONS_LOOP_CONTINUE:  
+            li t0,2  # Loads "To be Disabled" 
+            bne t0,t2, PLASMA_BREATH_OPERATIONS_LOOP_CONTINUE_2   # If plasma breath is trully enabled,
+            # Otherwise
+                sb zero,0(a0) # Disables plasma breath
+                j NEXT_IN_PLASMA_BREATH_OPERATIONS_LOOP  # Check other plasma breaths
+            
+        PLASMA_BREATH_OPERATIONS_LOOP_CONTINUE_2:
+        # If procedure arrived here, move current plasma breath and render it
+        # Storing Registers on Stack
+            addi sp,sp,-36
+            sw s1,0(sp)
+            sw s2,4(sp)
+            sw s3,8(sp)
+            sw s4,12(sp)
+            sw a0,16(sp)
+            sw a1,20(sp)
+            sw a2,24(sp)
+            sw a3,28(sp)
+            sw tp,32(sp)
+        # End of Stack Operations           
+            
+            # Checking which Plasma Breath we are moving
+            bnez a2,PLASMA_BREATH_OPERATIONS_LOOP_NOT_PLASMA_0
+            #    fs5 = PLASMA_0's Y speed  
+                fmv.s fa0,fs5   # Moves PLASMA_0's current Y speed to fa0 
+                j PLASMA_BREATH_OPERATIONS_LOOP_MOVE  # Move
+
+            PLASMA_BREATH_OPERATIONS_LOOP_NOT_PLASMA_0: li t0,1
+            bne a2,t0,PLASMA_BREATH_OPERATIONS_LOOP_NOT_PLASMA_1
+            #    fs6 = PLASMA_1's Y speed 
+                fmv.s fa0,fs6   # Moves PLASMA_1's current Y speed to fa0
+                j PLASMA_BREATH_OPERATIONS_LOOP_MOVE  # Move
+
+            PLASMA_BREATH_OPERATIONS_LOOP_NOT_PLASMA_1: li t0,2
+            bne a2,t0,PLASMA_BREATH_OPERATIONS_LOOP_NOT_PLASMA_2
+            #    fs7 = PLASMA_2's Y speed 
+                fmv.s fa0,fs7   # Moves PLASMA_2's current Y speed to fa0
+                j PLASMA_BREATH_OPERATIONS_LOOP_MOVE  # Move
+
+            PLASMA_BREATH_OPERATIONS_LOOP_NOT_PLASMA_2: li t0,3
+            bne a2,t0,PLASMA_BREATH_OPERATIONS_LOOP_NOT_PLASMA_3
+            #    fs8 = PLASMA_3's Y speed 
+                fmv.s fa0,fs8   # Moves PLASMA_3's current Y speed to fa0
+                j PLASMA_BREATH_OPERATIONS_LOOP_MOVE  # Move
+
+            PLASMA_BREATH_OPERATIONS_LOOP_NOT_PLASMA_3: # li t0,4
+            #    fs9 = PLASMA_4's Y speed 
+                fmv.s fa0,fs9   # Moves PLASMA_4's current Y speed to fa0
+                # j PLASMA_BREATH_OPERATIONS_LOOP_MOVE  # Move
+            
+            PLASMA_BREATH_OPERATIONS_LOOP_MOVE:
+            # Proper movement check
+            # a0 is already set
+            lw a1,0(tp)
+            call MOVE_PLASMA_BREATH
+            
+            lw a2,24(sp) # Getting Plasma Breath's number back (counter)
+            
+            # Checking which Plasma Breath we have moved (returning fa0 to its speed)
+            bnez a2,PLASMA_BREATH_OPERATIONS_LOOP_AFTER_CHECK_NOT_PLASMA_0
+            #    fs5 = PLASMA_0's Y speed  
+                fmv.s fs5,fa0   # Saves PLASMA_0's new Y speed from fa0 
+                j PLASMA_BREATH_OPERATIONS_AFTER_CHECK  # Finish move
+
+            PLASMA_BREATH_OPERATIONS_LOOP_AFTER_CHECK_NOT_PLASMA_0: li t0,1
+            bne a2,t0,PLASMA_BREATH_OPERATIONS_LOOP_AFTER_CHECK_NOT_PLASMA_1
+            #    fs6 = PLASMA_1's Y speed 
+                fmv.s fs6,fa0   # Saves PLASMA_1's new Y speed from fa0 
+                j PLASMA_BREATH_OPERATIONS_AFTER_CHECK  # Finish move
+
+            PLASMA_BREATH_OPERATIONS_LOOP_AFTER_CHECK_NOT_PLASMA_1: li t0,2
+            bne a2,t0,PLASMA_BREATH_OPERATIONS_LOOP_AFTER_CHECK_NOT_PLASMA_2
+            #    fs7 = PLASMA_2's Y speed 
+                fmv.s fs7,fa0   # Saves PLASMA_2's new Y speed from fa0 
+                j PLASMA_BREATH_OPERATIONS_AFTER_CHECK  # Finish move
+
+            PLASMA_BREATH_OPERATIONS_LOOP_AFTER_CHECK_NOT_PLASMA_2: li t0,3
+            bne a2,t0,PLASMA_BREATH_OPERATIONS_LOOP_AFTER_CHECK_NOT_PLASMA_3
+            #    fs8 = PLASMA_3's Y speed 
+                fmv.s fs8,fa0   # Saves PLASMA_3's new Y speed from fa0 
+                j PLASMA_BREATH_OPERATIONS_AFTER_CHECK  # Finish move
+
+            PLASMA_BREATH_OPERATIONS_LOOP_AFTER_CHECK_NOT_PLASMA_3: # li t0,4
+            #    fs9 = PLASMA_4's Y speed 
+                fmv.s fs9,fa0   # Saves PLASMA_0's new Y speed from fa0 
+                # j PLASMA_BREATH_OPERATIONS_AFTER_CHECK  # Finish move
+
+            PLASMA_BREATH_OPERATIONS_AFTER_CHECK:
+
+
+            # Calculating Plasma Breath's X related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+            lw a0,16(sp) # Gets a0 from stack again
+            lw tp,32(sp) # Gets tp from stack again
+            lbu a1,6(a0) # Loads plasma breath's current X
+            lbu t0,6(tp) # Loads map's current X
+            sub a1,a1,t0 # Gets the X matrix related to the map's X (a1 = plasma breath's X - map's X)
+            slli a1,a1,tile_size_shift # Multiplies a5 by 16 in order to get X related to screen
+            lbu t0,3(a0) # Loads plasma breath's X offset
+            add a1,a1,t0 # Adds offset to position
+            lbu t0,8(tp) # Loads map's X offset
+            sub a1,a1,t0 # and takes it from plasma breath's position
+
+# dislocation?
+        
+            # Calculating Plasma Breath's Y related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+            lbu a2,8(a0) # Loads plasma breath's current Y
+            lbu t1,7(tp) # Loads map's current Y
+            sub a2,a2,t1 # Gets the Y matrix related to the map's Y (a2 = plasma breath's Y - map's Y)
+            slli a2,a2,tile_size_shift # Multiplies a2 by 16 in order to get Y related to screen
+            lbu t0,4(a0) # Loads plasma breath's Y offset
+            add a2,a2,t0 # Adds offset to position
+            lbu t1,9(tp) # Loads map's Y offset
+            sub a2,a2,t1 # and takes it from plasma breath's position
+            
+            li a3,tile_size   # 16 = width of rendering area
+            li a4,tile_size   # 16 = height of rendering area
+            mv a5,s0          # gets frame to be rendered on
+
+            lbu a6,5(a0)      # Loads plasma breath's status
+            addi a6,a6,1      # adds 1 to it
+            li t0,3
+            bge t0,a6,PLASMA_BREATH_OPERATIONS_LOOP_SKIP_STATUS_CORRECTION  # If a6 <= 3, continue
+                li a6,0       # resets a6 to 0
+            PLASMA_BREATH_OPERATIONS_LOOP_SKIP_STATUS_CORRECTION:
+            sb a6,5(a0)       # and stores it back for using next time
+
+            la a0,Plasma_Breath
+            li a7,0             # Normal render
+            call RENDER_ENTITY  # Renders it
+            # j PLASMA_BREATH_OPERATIONS_LOOP_AFTER_OPERATIONS
+            
+        PLASMA_BREATH_OPERATIONS_LOOP_AFTER_OPERATIONS:
+        # Procedure finished: Loading Registers from Stack
+            lw s1,0(sp)
+            lw s2,4(sp)
+            lw s3,8(sp)
+            lw s4,12(sp)
+            lw a0,16(sp)
+            lw a1,20(sp)
+            lw a2,24(sp)
+            lw a3,28(sp)
+            lw tp,32(sp)
+            addi sp,sp,36
+        # End of Stack Operations
+
+
+                NEXT_IN_PLASMA_BREATH_OPERATIONS_LOOP:                    
+                    addi a0,a0,plasma_size  # Going to the next plasma breath's address                                  
+                    addi a2,a2,1            # Iterating counter by 1                                   
+                    bge a2,a1, END_PLASMA_BREATH_OPERATIONS_LOOP # If all of the plasma breaths were checked, end loop (don't attack)                                
+                    j PLASMA_BREATH_OPERATIONS_LOOP # otherwise, go back to the loop's beginning 
+
+    END_PLASMA_BREATH_OPERATIONS_LOOP:
+    # Procedure finished: Loading Registers from Stack
+        lw ra,0(sp)
+        addi sp,sp,4
+    # End of Stack Operations   
+        ret
+
+ 
+    

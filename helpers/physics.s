@@ -25,16 +25,27 @@ PHYSICS:
     lw a2, 0(a1) 	       # a2 has the current map's address 
     la a3, PLYR_POS        # Loads Player Position
     
+    la t1, PLYR_INFO_2	   # Loads address of the second part of PLYR_INFO
+    lb t1,4(t1)            # Gets the DAMAGE_MOVE_X value
+
     bnez t0, MOVE_PLAYER_X # If there's X movement, go to MOVE_PLAYER_X
+    bnez t1, MOVE_PLAYER_X # Otherwise, if there's damaging X movement, go to MOVE_PLAYER_X
+    NO_MOVE_PLAYER_X:
+    # Otherwise, don't move player in X axis
     lh t1, 0(a3)  # Loads Player's X related to screen
     sh t1, 2(a3)  # Stores Player's X related to screen on old X
-    lbu t1, 8(a3)  # Loads Player's X related to screen
+    lbu t1, 8(a3) # Loads Player's X related to screen
     sb t1, 9(a3)  # Stores Player's X related to screen on old X
     j CHECK_MOVE_Y         # Otherwise, go check Y movement
     
     MOVE_PLAYER_X:
-        slli a4, t0, 2  # Multiplies the value stored on MOVE_X by 4. a0 will store the movement of the player (+/- 4 pixels)
+        slli a4, t0, 2  # Multiplies the value stored on MOVE_X by 4. a4 will store the movement of the player (+/- 4 pixels)
         
+        beqz t1,CONTINUE_MOVE_PLAYER_X  # If there's no damage knockback
+        # If damage knockback was set, it'll be the movement
+            mv a4,t1    # Adds value from DAMAGE_MOVE_X (if any)
+
+        CONTINUE_MOVE_PLAYER_X:
         lbu t1, 13(a3)  # Loads Player's Facing direction (0 = Right, 1 = Left)
         add t0,t0,t1    # Adds Facing direction with MOVE_X (if the result t0 = -1 or 2, the direction has changed)
         li t2,2         # t1 = 2
@@ -42,6 +53,7 @@ PHYSICS:
             j KEEP_X_DIRECTION 
         CHANGE_X_DIRECTION:
         # If the direction has changed, no movement will happen, and only the facing direction will be altered
+        # Damaging move x does not apply to this
             xori t1,t1,1   # Inverts direction (0 -> 1; 1 -> 0)
             sb t1, 13(a3)  # Loads Player's Facing direction (0 = Right, 1 = Left)
             j CHECK_MOVE_Y
@@ -154,7 +166,9 @@ PHYSICS:
             # Updating map's X offset
             lbu t2, 6(a1)  # Loads Map X postition on Matrix
             lbu a6, 8(a1)  # Loads map's X offset
+            
             add a6,a6,a4  # Adds the X Movement to the map's Offset
+            
             li t1,0  # Right now, the map's X won't be updated 
             bge a6, zero, NO_X_OFFSET_NEGATIVE_CORRECTION 
             # If y offset is currently negative
@@ -233,6 +247,9 @@ CHECK_MOVE_Y:
         j ITERATE_JUMP
         
         MOVE_PLAYER_UP:
+            la t1, PLYR_INFO_2	       # Loads address of the second part of PLYR_INFO
+            lb t1,3(t1)                # Gets the taking damage byte
+            bnez t1,SKIP_INPUT_CHECK   # If taking damage, only do a small hop
             li t1, min_jump # minimum height of jump required for the movement 
             blt t2, t1, SKIP_INPUT_CHECK
             lbu t1, 2(a0)   # Loads PLYR_INPUT
@@ -242,7 +259,7 @@ CHECK_MOVE_Y:
             SKIP_INPUT_CHECK:
                 fcvt.w.s t1,fs2 
                 bge t1,zero, SWITCH_DOWN
-                li t1, max_jump # minimum height of jump required for the movement 
+                li t1, max_jump # maximum height of jump required for the movement 
                 blt t2, t1, ITERATE_JUMP   # 
                         
             SWITCH_DOWN: 
@@ -250,7 +267,7 @@ CHECK_MOVE_Y:
                 li t1, 1              # Sets t1 to 1 (there's player input, and can move)
                 sb t1, 0(t0)          # and stores it in PLYR_INPUT 
                 
-                sb t1, 1(a0)        # reset jump information
+                sb t1, 1(a0)          # reset jump information
                 sb t1,0(a0)           # Switches MOVE_Y to 1 (Down)    
 
                 li t1, 2
@@ -329,8 +346,11 @@ CHECK_MOVE_Y:
                 fcvt.s.w fs2,zero # Resets player's jump speed
                 
                 lb t0, 0(a0) # Gets MOVE_Y info
-                blt t0,zero, STOP_JUMP # If t1 <= -1 (aka, player would start jumping), reset
-                    # If t0 = 0 (not jumping) or t1 = 1 (freefall), reset MOVE_Y and JUMP
+                blt t0,zero, STOP_JUMP # If t0 <= -1 (aka, player would start jumping), reset
+                    # If t0 = 0 (not jumping) or t0 = 1 (freefall), reset MOVE_Y and JUMP
+                    la t1, PLYR_INFO_2	   # Loads address of the second part of PLYR_INFO
+                    sb zero,4(t1)          # If player hit the ground, stop damage knockback
+
                     lbu t0, 7(a3)  # Loads player's Y offset
                     beqz t0,SKIP_ADJUST_Y_DOWN # If player is on ground and Y offset = 0, don't reajust position
                     # Otherwise, 
@@ -361,6 +381,12 @@ CHECK_MOVE_Y:
                 
                 STOP_JUMP:
                     # if t0 = -1 (jumping) check if player is already jumping or not
+                    la t1, PLYR_INFO_2	   # Loads address of the second part of PLYR_INFO
+                    lbu t0,6(t1)          # If player hit the ground, there's no damage knockback anymore
+                    addi t0,t0,-10
+                    sb t0,6(t1)          # If player hit the ground, there's no damage knockback anymore
+                    
+
                     li t0,8
                     lbu t1,1(a0) # Gets JUMP info
                     slt t0,t0,t1 # t1 > 8 ? t0 = 1 : t0 = 0
