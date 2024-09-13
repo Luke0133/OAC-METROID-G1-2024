@@ -3,6 +3,7 @@
 UPDATE_STATUS:
 # 1 - UPDATE_PLAYER_SPRITE (Updates Player's sprite)   
 # 2 - UPDATE_PLAYER_STATUS (Updates other statuses from player)  
+# 3 - UPDATE_MARU_MARI (Updates MaruMari's sprite)  
 
 # Updating Player's sprite
 UPDATE_PLAYER_SPRITE:
@@ -104,6 +105,14 @@ UPDATE_PLAYER_STATUS:
     UPDATE_PLAYER_STATUS_ATTACK_COOLDOWN:
         la t1, BEAMS_ARRAY     # Loads BEAMS array
         lbu t0,0(t1)           # And the attack cooldown byte
+        beqz t0,UPDATE_PLAYER_STATUS_BOMB_COOLDOWN  # If it's on 0, don't update it
+        # Otherwise, 
+            addi t0,t0,-1    # decrements it
+            sb t0,0(t1)      # and stores it back
+
+    UPDATE_PLAYER_STATUS_BOMB_COOLDOWN:
+        la t1, BOMBS_ARRAY     # Loads BOMBS array
+        lbu t0,0(t1)           # And the attack cooldown byte
         beqz t0,END_UPDATE_PLAYER_STATUS  # If it's on 0, don't update it
         # Otherwise, 
             addi t0,t0,-1    # decrements it
@@ -158,6 +167,40 @@ UPDATE_MARU_MARI:
 # Finished all status related procedures
 END_UPDATE_STATUS:
     ret    
+
+
+#######################        INTO/OUT OF MORPH BALL        ########################
+
+INTO_MORPH_BALL:
+        li t1, 1      # Loads morph ball mode (1 = enabled)
+        sb t1, 4(a0)  # Stores new direction on PLYR_STATUS
+        ret
+
+OUT_OF_MORPH_BALL:
+    li t1, -1     # Loads direction for MOVE_Y (-1 = up)
+    sb t1, 7(a0)  # Stores new direction on MOVE_Y
+
+    # Setting arguments for COLLISION CHECK
+    la a0, MOVE_Y
+    la a1, CURRENT_MAP
+    lw a1, 0(a1)
+    la a2, PLYR_POS
+    li a3, 0
+
+    # MOVE_Y will return to 0 afterwards
+    mv s11, ra # storing return address in s11
+    call CHECK_VERTICAL_COLLISION
+    mv ra, s11 # loading return address from s11
+
+    la t0, PLYR_STATUS      # Loads Player Status
+    beqz a0, END_OUT_OF_MORPH_BALL
+        sb zero, 4(t0) # key = up ? ball = 0 
+    END_OUT_OF_MORPH_BALL: 
+        li t1,1       # Sets MOVE_Y to 1 (falling) so that player is placed on the ground correctly
+        sb t0, 7(t0)  # Stores new direction on MOVE_Y
+        ret
+
+
 
 #######################        DAMAGE PLAYER        ########################
 #         Plasma breaths move in a "zig-zag" way, kicking on the ground         #

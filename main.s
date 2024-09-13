@@ -45,6 +45,10 @@ main:
 #    fs8 = PLASMA_3's Y speed (same logic as the others)            #
 #    fs9 = PLASMA_4's Y speed (same logic as the others)            #
 #                                                                   #
+#    fs10 = BOMB_0's Y speed (same logic as the others)             #
+#    fs11 = BOMB_1's Y speed (same logic as the others)             #
+#    ft8  = BOMB_2's Y speed (same logic as the others)             #
+#                                                                   #
 #####################################################################
 
 GAME_LOOP:
@@ -68,6 +72,8 @@ GAME_LOOP:
 	call ENEMY_OPERATIONS
 
 	call BEAMS_OPERATIONS
+	
+	call BOMBS_OPERATIONS
 	
 	call UPDATE_STATUS      # Updates player's sprite status
 

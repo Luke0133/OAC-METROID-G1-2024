@@ -130,8 +130,7 @@ INPUT_CHECK:
         j END_INPUT_CHECK    
 	
     INPUT.S:
-        la t0, PLYR_INFO
-        lbu t1, 1(t0) # Loads player's abilities
+        lbu t1, -1(a2) # Loads player's abilities
         lb t2, 7(a0)  # Loads direction on MOVE_Y
         slt t1, zero, t1 # t1 > 0 ? t1=1 : t1=0 --> if t1 = 1 or 2 (morph ball ability aquired) then go into morph ball
         
@@ -281,35 +280,6 @@ INPUT_CHECK:
         li a1,10
         j DAMAGE_PLAYER
         j END_INPUT_CHECK
-    
-
-    INTO_MORPH_BALL:
-        li t1, 1      # Loads morph ball mode (1 = enabled)
-        sb t1, 4(a0)  # Stores new direction on PLYR_STATUS
-        j END_INPUT_CHECK
-
-    OUT_OF_MORPH_BALL:
-        li t1, -1     # Loads direction for MOVE_Y (-1 = up)
-        sb t1, 7(a0)  # Stores new direction on MOVE_Y
-
-        # Setting arguments for COLLISION CHECK
-        la a0, MOVE_Y
-        la a1, CURRENT_MAP
-        lw a1, 0(a1)
-        la a2, PLYR_POS
-        li a3, 0
-
-        # MOVE_Y will return to 0 afterwards
-        mv s11, ra # storing return address in s11
-        call CHECK_VERTICAL_COLLISION
-        mv ra, s11 # loading return address from s11
-
-        la t0, PLYR_STATUS      # Loads Player Status
-        beqz a0, SKIP_OUT_OF_MORPH_BALL
-            sb zero, 4(t0) # key = up ? ball = 0 
-        SKIP_OUT_OF_MORPH_BALL: 
-        li t1,1       # Sets MOVE_Y to 1 (falling) so that player is placed on the ground correctly
-        sb t0, 7(t0)  # Stores new direction on MOVE_Y
 
 	END_INPUT_CHECK:
 		ret	
