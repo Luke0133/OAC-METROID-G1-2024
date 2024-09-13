@@ -15,7 +15,6 @@
 
 # Tabela de caracteres desenhados segundo a fonte 8x8 pixels do ZX-Spectrum
 LabelTabChar:
-LabelTabCharMetroid:
 .word 	0x00000000, 0x00000000, 0x10101010, 0x00100010, 0x00002828, 0x00000000, 0x28FE2828, 0x002828FE, 
 	0x38503C10, 0x00107814, 0x10686400, 0x00004C2C, 0x28102818, 0x003A4446, 0x00001010, 0x00000000, 
 	0x20201008, 0x00081020, 0x08081020, 0x00201008, 0x38549210, 0x00109254, 0xFE101010, 0x00101010, 
@@ -41,6 +40,9 @@ LabelTabCharMetroid:
 	0x28440000, 0x00442810, 0x24240000, 0x38041C24, 0x043C0000, 0x003C1008, 0x2010100C, 0x000C1010, 
 	0x10101010, 0x00101010, 0x04080830, 0x00300808, 0x92600000, 0x0000000C, 0x243C1818, 0xA55A7E3C, 
 	0x99FF5A81, 0x99663CFF, 0x10280000, 0x00000028, 0x10081020, 0x00081020
+LabelTabCharMetroid:
+.word 	0x00000000, 0x00000000,
+
 
 # scancode -> ascii
 LabelScanCode:
@@ -1619,8 +1621,12 @@ Random2:	DE1(s8,Random2.DE1)
 	
 Random2.DE1: 	li 	t0, LFSR	# carrega endereco do LFSR
 		lw 	a0, 0(t0)	# le a word em a0
+		addi sp,sp,-4
+		sw ra,0(sp)
 		jal 	__umodsi3
 		#remu 	a0,a0,a1	# numero entre 0 e a1
+		lw ra,0(sp)
+		addi sp,sp,4
 		ret			# retorna
 
 

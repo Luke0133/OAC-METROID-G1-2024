@@ -230,7 +230,7 @@ NO_CHEAT_INPUT:
 
     INPUT.W:  # Looking Up
         li a6,1         # Sets a6 to 1 (a key was pressed)
-        lbu t4, -1(a1) # Loads player's abilities
+        lbu t4, 4(a0) # Loads player's abilities
         beqz t4, W.NOT_MORPH_BALL # t4 != 0 ? BALL = OFF : BALL = ON (If on ball mode, deactivate it)
         # Storing Registers on Stack
             addi sp,sp,-4
@@ -253,7 +253,7 @@ NO_CHEAT_INPUT:
     sll t4,tp,t4    # (1<<(28))
     and t4,t4,a2    # will be !=0 if A is being pressed
     bnez t4,INPUT.A # if pressing A
-        j CHECK_INPUT.S # Otherwise, check if S was pressed
+        j CHECK_INPUT.D # Otherwise, check if D was pressed
 	
     INPUT.A: # Moves player left
         li a6,1         # Sets a6 to 1 (a key was pressed)
@@ -384,14 +384,14 @@ NO_CHEAT_INPUT:
                 lw ra,0(sp)
                 addi sp,sp,32
             # End of Stack Operations  
-                j CHECK_INPUT.J     
+            #    j CHECK_INPUT.J     
 
     CHECK_INPUT.J:
     # Checking J
-    li t4,0x42      # J sanscode  
-    addi t4,t4,-64  # adjusts it for comparision      
+    li t4,0x3B      # J sanscode  
+    addi t4,t4,-32  # adjusts it for comparision      
     sll t4,tp,t4    # (1<<(0x23 - 64))
-    and t4,t4,a4    # will be !=0 if J is being pressed
+    and t4,t4,a3    # will be !=0 if J is being pressed
     bnez t4,INPUT.J # if pressing J
         j NO_INPUT  # There's no input
 

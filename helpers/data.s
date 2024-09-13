@@ -99,17 +99,19 @@ MOVE_Y: .byte 0 # -1 up, 1 down, 0 not moving on Y axis
 JUMP: .byte 0 # counter of current height
 PLYR_INPUT: .byte 0  # 0 If no input, 1 if input, 2 if input but can't move horizontally
 
+.eqv damage_jump -3
+.eqv damage_iframes 14
+PLYR_INFO_2: .byte 0,0,0    # Missile mode (0 - disabled, 1 - enabled), cooldown to switch, number of missiles
+                   0,0,0  # Taking damage (0 - no, 1 - yes), DAMAGE_MOVE_X (+-4), damage cooldown, 
+                   0,0    # reset move_x (3 -> 0), render status (0 - don't, 1 - render normally)
+                   
 .eqv max_jump 80      # Maximum dislocation in jump
 .eqv min_jump 32      # Minimum dislocation for a jump
 .eqv max_speed 8      # Maximum downwards speed
 GRAVITY_FACTOR: .float 0.4   # Calculated beforhand: gravity x delta time -> (gravity = 8; delta time = 0.05s = frame_rate)  
 JUMP_SPEED: .float -9
 
-.eqv damage_jump -3
-.eqv damage_iframes 14
-PLYR_INFO_2: .byte 0,0,0    # Missile mode (0 - disabled, 1 - enabled), cooldown to switch, number of missiles
-                   0,0,0  # Taking damage (0 - no, 1 - yes), DAMAGE_MOVE_X (+-4), damage cooldown, 
-                   0,0    # reset move_x (3 -> 0), render status (0 - don't, 1 - render normally)
+
 
 ####### Power-Ups Info #########
 .eqv power_up_delay 2000

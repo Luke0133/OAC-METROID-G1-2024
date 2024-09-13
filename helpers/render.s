@@ -614,17 +614,9 @@ RENDER_LIFE_POINTS:
 	li a1,32 # a1 = column
 	li a2,28 # a2 = row 
 	li a3,0xc7ff # a3 = colors 
-	li a4,1 # a4 = frame
+	mv a4,s0 # a4 = frame
+	li a5,0
 	li a7,101 # syscal for 'print integer'
-	ecall
-		
-	lbu a0, 0(t0)
-	
-	li a1,32 # a1 = column
-	li a2,28 # a2 = row 
-	li a3,0xc7ff # a3 = colors 
-	li a4,0 # a4 = frame
-	li a7,101 #syscal for 'print integer'
 	ecall
 
 	ret
@@ -834,8 +826,6 @@ RENDER_ENTITY_TRAIL:
 
 END_RENDER_ENTITY:	
 	ret
-
-
 
 
 ###############          RENDER DOOR UPDATE          ###############
