@@ -615,7 +615,7 @@ RENDER_LIFE_POINTS:
 	li a2,28 # a2 = row 
 	li a3,0xc7ff # a3 = colors 
 	mv a4,s0 # a4 = frame
-	li a5,0
+	li a5,1
 	li a7,101 # syscal for 'print integer'
 	ecall
 

@@ -6,6 +6,9 @@
 # 4 - BEAMS OPERATIONS 
 # 5 - BOMBS OPERATIONS 
 # 
+# 7 - EXPLOSION SPAWN
+# 8 - EXPLOSION OPERATIONS
+#
 
 ###################        BEAM SPAWN        ####################
 #      Spawns a beam if available, otherwise end procedure      #
@@ -160,6 +163,9 @@ BOMB_SPAWN:
             li t1, bombs_attack_cooldown  # gets cooldown value
             sb t1,0(t0)                   # stores it
 
+            li t0,1          # Loads 1 (Enabled) 
+            sb t0,0(a0)      # stores in beam's enable byte
+
             # Storing offset (the bomb's offset will be the same as the player's)
             lbu t0, 6(a1)    # Loads player's X offset
             sb t0, 3(a0)     # and stores it on bomb's X offset
@@ -167,67 +173,33 @@ BOMB_SPAWN:
             lbu t0, 7(a1)    # Loads player's Y offset
             sb t0, 4(a0)     # and stores it on bomb's Y offset
 
-            li t0,1          # Loads 1 (Enabled) 
-            sb t0,0(a0)      # stores in bomb's enable byte
+            # X is the same as the player
+            lbu t0, 8(a1)    # Loads player's X
+            sb t0, 5(a0)     # and stores it on bomb's X
+            sb t0, 6(a0)     # and on bomb's old X
 
-            # Checking vertical direction player is facing
-            lbu t0, 14(a1)   # Loads vertical direction
-            beqz t0, BOMB_SPAWN_LOOP_ACTIVATE_CHECK_X_AXIS # If looking foward
-            # Otherwise, player is looking up --> spawn bomb above player
-                # X is the same as the player
-                lbu t0, 8(a1)    # Loads player's X
-                sb t0, 5(a0)     # and stores it on bomb's X
-                sb t0, 6(a0)     # and on bomb's old X
+            # Y is one tile bellow Player's Y (will be on the same Y as the player in morph ball)
+            lbu t0, 10(a1)   # Loads player's Y
+            addi t0,t0,1     # goes down 1 tile
+            sb t0, 7(a0)     # and stores it on bomb's Y
+            sb t0, 8(a0)     # and on bomb's old Y
 
-                # Y is one tile up from player
-                lbu t0, 10(a1)   # Loads player's Y
-                addi t0,t0,-1    # goes up 1 tile
-                sb t0, 7(a0)     # and stores it on bomb's Y
-                sb t0, 8(a0)     # and on bomb's old Y
+            # Checking which Bomb we are moving
+            bnez a3,BOMB_SPAWN_LOOP_NOT_BOMB_0
+            #    fs10 = BOMB_0's Y speed  
+                fcvt.s.w fs10,zero # Resets Bomb's jump speed
+                j END_BOMB_SPAWN_LOOP # break loop   
 
-                # Getting direction of bomb
-                li t0,0          # Loads 0 (Up)
-                sb t0,1(a0)      # and stores it on the direction byte
-                j END_BOMB_SPAWN_LOOP # break loop
+            BOMB_SPAWN_LOOP_NOT_BOMB_0: li t0,1
+            bne a3,t0,BOMB_SPAWN_LOOP_NOT_BOMB_1
+            #    fs11 = BOMB_1's Y speed 
+                fcvt.s.w fs11,zero # Resets Bomb's jump speed
+                j END_BOMB_SPAWN_LOOP # break loop   
 
-            BOMB_SPAWN_LOOP_ACTIVATE_CHECK_X_AXIS:
-            # If player is looking foward --> check horizontal direction
-            lbu t0, 13(a1)   # Loads horizontal direction
-            bnez t0,BOMB_SPAWN_LOOP_ACTIVATE_LEFT_AXIS   # If player is looking left
-            # Otherwise, they're facing right
-                # X is one tile to the right of player
-                lbu t0, 8(a1)    # Loads player's X
-                addi t0,t0,1     # goes 1 tile to the right
-                sb t0, 5(a0)     # and stores it on bomb's X
-                sb t0, 6(a0)     # and on bomb's old X
-
-                # Y is the same as the player
-                lbu t0, 10(a1)   # Loads player's Y
-                sb t0, 7(a0)     # and stores it on bomb's Y
-                sb t0, 8(a0)     # and on bomb's old Y
-
-                # Getting direction of bomb
-                li t0,1          # Loads 1 (Right)
-                sb t0,1(a0)      # and stores it on the direction byte
-                j END_BOMB_SPAWN_LOOP # break loop
-
-            BOMB_SPAWN_LOOP_ACTIVATE_LEFT_AXIS: 
-            # If player is looking left
-                # X is one tile to the left of player
-                lbu t0, 8(a1)    # Loads player's X
-                addi t0,t0,-1    # goes 1 tile to the left
-                sb t0, 5(a0)     # and stores it on bomb's X
-                sb t0, 6(a0)     # and on bomb's old X
-
-                # Y is the same as the player
-                lbu t0, 10(a1)   # Loads player's Y
-                sb t0, 7(a0)     # and stores it on bomb's Y
-                sb t0, 8(a0)     # and on bomb's old Y
-
-                # Getting direction of bomb
-                li t0,-1         # Loads -1 (Left)
-                sb t0,1(a0)      # and stores it on the direction byte
-                j END_BOMB_SPAWN_LOOP # break loop
+            BOMB_SPAWN_LOOP_NOT_BOMB_1: # li t0,2
+            #    fa7 = BOMB_2's Y speed 
+                fcvt.s.w fa7,zero # Resets Bomb's jump speed
+                # j END_BOMB_SPAWN_LOOP # break loop              
 
         NEXT_IN_BOMB_SPAWN_LOOP:
             addi a0,a0,bombs_size          # Going to the next bombs address                                  
@@ -418,7 +390,7 @@ BEAMS_OPERATIONS:
                 sb t1,0(a0)    # and stores it on enable byte
                 sb zero,2(a0)  # Resets render counter
                 # This loop will continue normally and even the collision will work. Only
-                # when arriving on the next loop's PLASMA_BREATH_OPERATIONS will it be disabled
+                # when arriving on the next loop's BEAMS_OPERATIONS will it be disabled
                 # j BEAMS_OPERATIONS_LOOP_AFTER_OPERATIONS
             
         BEAMS_OPERATIONS_LOOP_AFTER_OPERATIONS:
@@ -461,7 +433,6 @@ BEAMS_OPERATIONS:
 #                                                          #
 ############################################################
 
-
 BOMBS_OPERATIONS:
 # Storing Registers on Stack
     addi sp,sp,-4
@@ -475,25 +446,45 @@ BOMBS_OPERATIONS:
     li a2,0             # resets counter
     li a1,bombs_number  # gets number of bombs in game
     BOMBS_OPERATIONS_LOOP:
-        li a6,0      # Default sprite (normal bomb, and not exploding)
         lbu t2,0(a0) # Loads enable byte
         bnez t2,BOMBS_OPERATIONS_LOOP_CONTINUE    # If enabled,
             j NEXT_IN_BOMBS_OPERATIONS_LOOP       # Otherwise, check other bombs
+
         BOMBS_OPERATIONS_LOOP_CONTINUE:  
             li t0,2  # Loads "To be Disabled" 
             bne t0,t2, BOMBS_OPERATIONS_LOOP_CONTINUE_2 # If state isn't "To be Disabled" 
             # Otherwise, bomb was set to be disabled
                 sb zero,0(a0) # Disables bomb
+
+            # Storing Registers on Stack
+                addi sp,sp,-20
+                sw a0,0(sp)
+                sw a1,4(sp)
+                sw a2,8(sp)
+                sw a3,12(sp)
+                sw tp,16(sp)
+            # End of Stack Operations  
+                
+                lbu a1,3(a0) # Loads bomb's X offset
+                lbu a2,4(a0) # Loads bomb's Y offset
+                lbu a3,5(a0) # Loads bomb's current X
+                lbu a4,7(a0) # Loads bomb's current Y
+            
+                li a0, 1   # 1 - Big  
+                call EXPLOSION_SPAWN
+
+            # Procedure finished: Loading Registers from Stack
+                lw a0,0(sp)
+                lw a1,4(sp)
+                lw a2,8(sp)
+                lw a3,12(sp)
+                lw tp,16(sp)
+                addi sp,sp,20
+            # End of Stack Operations
+                
                 j NEXT_IN_BOMBS_OPERATIONS_LOOP  # Check other bombs
 
-        BOMBS_OPERATIONS_LOOP_CONTINUE_2:    
-            li t0,3  # Loads "Hit, to be Disabled" 
-            bne t0,t2, BOMBS_OPERATIONS_LOOP_CONTINUE_3   # If bomb is trully enabled,
-            # Otherwise, bomb was set to be disabled from a hit
-                li a6,1       # Beam will be rendered again, but exploding 
-                # j BOMBS_OPERATIONS_LOOP_CONTINUE_3  # Only render, don't move it
-            
-        BOMBS_OPERATIONS_LOOP_CONTINUE_3:
+        BOMBS_OPERATIONS_LOOP_CONTINUE_2:
         # If procedure arrived here, move current bomb and render it
         # Storing Registers on Stack
             addi sp,sp,-36
@@ -508,6 +499,53 @@ BOMBS_OPERATIONS:
             sw tp,32(sp)
         # End of Stack Operations           
             
+            # Checking which bomb we are moving
+            bnez a2,BOMBS_OPERATIONS_LOOP_NOT_BOMB_0
+            #    fs10 = BOMB_0's Y speed  
+                fmv.s fa0,fs10   # Moves BOMB_0's current Y speed to fa0 
+                j BOMBS_OPERATIONS_LOOP_MOVE  # Move
+
+            BOMBS_OPERATIONS_LOOP_NOT_BOMB_0: li t0,1
+            bne a2,t0,BOMBS_OPERATIONS_LOOP_NOT_BOMB_1
+            #    fs11 = BOMB_1's Y speed 
+                fmv.s fa0,fs11   # Moves BOMB_1's current Y speed to fa0
+                j BOMBS_OPERATIONS_LOOP_MOVE  # Move
+
+            BOMBS_OPERATIONS_LOOP_NOT_BOMB_1: # li t0,2
+            #    fa7 = BOMB_2's Y speed 
+                fmv.s fa0,fa7   # Moves BOMB_2's current Y speed to fa0
+                # j BOMBS_OPERATIONS_LOOP_MOVE  # Move
+            
+            BOMBS_OPERATIONS_LOOP_MOVE:
+            # Proper movement check
+            # a0 is already set
+            lw a1,0(tp)
+            call MOVE_BOMB
+            
+            lw a2,24(sp) # Getting Bomb's number back (counter)
+            
+            # Checking which bomb we have moved (returning fa0 to its speed)
+            bnez a2,BOMBS_OPERATIONS_AFTER_CHECK_NOT_BOMB_0
+            #    fs10 = BOMB_0's Y speed  
+                fmv.s fs10,fa0   # Saves BOMB_0's new Y speed from fa0 
+                j BOMBS_OPERATIONS_AFTER_CHECK  # Finish move
+
+            BOMBS_OPERATIONS_AFTER_CHECK_NOT_BOMB_0: li t0,1
+            bne a2,t0,BOMBS_OPERATIONS_AFTER_CHECK_NOT_BOMB_1
+            #    fs11 = BOMB_1's Y speed 
+                fmv.s fs11,fa0   # Saves BOMB_1's new Y speed from fa0 
+                j BOMBS_OPERATIONS_AFTER_CHECK  # Finish move
+
+            BOMBS_OPERATIONS_AFTER_CHECK_NOT_BOMB_1: #li t0,2
+            #    fa7 = BOMB_2's Y speed 
+                fmv.s fa7,fa0   # Saves BOMB_2's new Y speed from fa0 
+                # j BOMBS_OPERATIONS_AFTER_CHECK  # Finish move
+
+            BOMBS_OPERATIONS_AFTER_CHECK:
+
+            lw a0,16(sp)    # Restores a0
+            lw tp,32(sp)    # Restores a0
+
             # Starting rendering procedure:
             # Calculating Bomb's X related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
             lbu a1,5(a0) # Loads bomb's current X
@@ -529,95 +567,23 @@ BOMBS_OPERATIONS:
             add a2,a2,t0 # Adds offset to position
             lbu t1,9(tp) # Loads map's Y offset
             sub a2,a2,t1 # and takes it from bomb's position
+            addi a2,a2,4 # Offsets sprite a little bit
             
             li a3,tile_size   # 16 = width of rendering area
             li a4,tile_size   # 16 = height of rendering area
             mv a5,s0          # gets frame to be rendered on
 
-            lb t0,1(a0)       # Loads direction byte
-            beqz t0,BOMBS_OPERATIONS_LOOP_RENDER_UP   # If bomb is going up
-                la a0,Beam_Horizontal   # If bomb is moving horizontally
-                j BOMBS_OPERATIONS_LOOP_RENDER_START  # Render
-
-            BOMBS_OPERATIONS_LOOP_RENDER_UP:
-                la a0,Beam_Vertical     # If bomb is moving vertically
-                # j BOMBS_OPERATIONS_LOOP_RENDER_START  # Render
-
-            BOMBS_OPERATIONS_LOOP_RENDER_START:
-                li a7,0             # Normal render
-                call RENDER_ENTITY  # Renders it
-
-            lw a0,16(sp)    # Restores a0
-            lbu t2,0(a0)    # Loads enable byte
-            li t0,3         # Loads "Hit, to be Disabled" 
-            bne t0,t2, BOMBS_OPERATIONS_LOOP_MOVE   # If it wasn't in the "Hit" state
-            # Otherwise, bomb was set to be disabled from a hit
-                sb zero,0(a0) # Disables bomb
-                j BOMBS_OPERATIONS_LOOP_AFTER_OPERATIONS  # Check other bombs
-
-            BOMBS_OPERATIONS_LOOP_MOVE:
-            # Moving bomb
-            lb t0, 1(a0) # loads direction
-            beqz t0,BOMBS_OPERATIONS_LOOP_MOVE_Y  # If direction is 0 (Up) 
-                    j BOMBS_OPERATIONS_LOOP_MOVE_X
-                    
-            BOMBS_OPERATIONS_LOOP_MOVE_Y:
-                lbu t1, 7(a0)    # Loads bomb's current Y
-                sb t1, 8(a0)     # and stores it on bomb's old Y
-
-                lbu t0,4(a0)   # Loads bomb's current Y offset
-                addi t0,t0,-8  # moves it up
-
-                bge t0,zero,BOMBS_OPERATIONS_LOOP_MOVE_Y_STORE_BOMB # If no correction is needed
-                # Correcting offset
-                    addi t1,t1,-1          # Moves Y up one tile
-                    addi t0,t0,tile_size   # adds 16 to offset
-                    sb t1, 7(a0)     # Stores bomb's new Y
-
-                BOMBS_OPERATIONS_LOOP_MOVE_Y_STORE_BOMB:
-                    sb t0, 4(a0)     # Stores new Y offset
-                    j BOMBS_OPERATIONS_LOOP_AFTER_MOVE # Goes to render
-                    
-            BOMBS_OPERATIONS_LOOP_MOVE_X:
-                lbu t1, 5(a0)    # Loads bomb's current X
-                sb t1, 6(a0)     # and stores it on bomb's old X
-
-                la t3,MOVE_X     # Loads MOVE_X
-                lb t3,0(t3)      # and gets player's movement speed
-                li t4,0          # X momentum
-                beqz t3,BOMBS_OPERATIONS_LOOP_MOVE_X_SKIP_ADD
-                    slli t4,t0,2     # Multiplies t0 by 4 (so that bomb moves +-4)
-                BOMBS_OPERATIONS_LOOP_MOVE_X_SKIP_ADD:
-                    slli t2,t0,3     # Multiplies t0 by 8 (so that bomb moves +-8)
-                    
-                    lbu t0,3(a0)     # Loads bomb's current X offset
-                    add t0,t0,t2     # moves it
-                    add t0,t0,t4     # and adds player's momentum
-
-                bge t0,zero,BOMBS_OPERATIONS_LOOP_MOVE_X_SKIP_NEGATIVE_CORRECTION
-                # If resulting offset < 0, correct it
-                    addi t1,t1,-1          # Moves X one tile to the left
-                    addi t0,t0,tile_size   # adds 16 to offset
-                    sb t1, 5(a0)           # Stores bomb's new X
-                    j BOMBS_OPERATIONS_LOOP_MOVE_X_STORE_BOMB
-
-                BOMBS_OPERATIONS_LOOP_MOVE_X_SKIP_NEGATIVE_CORRECTION:
-                # If resulting offset >= 0
-                    li t2,tile_size
-                    blt t0,t2,BOMBS_OPERATIONS_LOOP_MOVE_X_STORE_BOMB  # If  0 <= resulting offset < 16, don't change X
-                    # If resulting offset >= 16
-                        addi t1,t1,1           # Moves X one tile to the right
-                        sub t0,t0,t2           # subtracts 16 from offset
-                        sb t1, 5(a0)           # Stores bomb's new X
-                        j BOMBS_OPERATIONS_LOOP_MOVE_X_STORE_BOMB
-                
-                BOMBS_OPERATIONS_LOOP_MOVE_X_STORE_BOMB:
-                    sb t0, 3(a0)     # Stores new X offset
-                    #j BOMBS_OPERATIONS_LOOP_AFTER_MOVE # Goes to render                    
+            lb a6,1(a0)       # Loads status byte
+            xori a6,a6,1      # Inverts it
+            sb a6,1(a0)       # and stores it
             
-            BOMBS_OPERATIONS_LOOP_AFTER_MOVE:
+            la a0,Bomb   
+            li a7,0             # Normal render
+            call RENDER_ENTITY  # Renders it
 
-            lbu t0,2(a0)    # Gets number of times that it was rendered
+            
+            lw a0,16(sp)    # Restores a0
+            lbu t0,2(a0)    # Gets number of times that it was rendered (counter for exploding)
             addi t0,t0,1    # iterates it
             sb t0,2(a0)     # and stores it back
             li t1,bombs_explosion_countdown  # Loads number of times bomb should render/move before being disabled
@@ -625,9 +591,10 @@ BOMBS_OPERATIONS:
             # Otherwise, set it to be disabled
                 li t1,2        # Loads "To be Disabled" 
                 sb t1,0(a0)    # and stores it on enable byte
+                sb zero,1(a0)  # Sets status to 0
                 sb zero,2(a0)  # Resets render counter
                 # This loop will continue normally and even the collision will work. Only
-                # when arriving on the next loop's PLASMA_BREATH_OPERATIONS will it be disabled
+                # when arriving on the next loop's BOMBS_OPERATIONS will it be disabled
                 # j BOMBS_OPERATIONS_LOOP_AFTER_OPERATIONS
             
         BOMBS_OPERATIONS_LOOP_AFTER_OPERATIONS:
@@ -651,6 +618,283 @@ BOMBS_OPERATIONS:
             j BOMBS_OPERATIONS_LOOP # otherwise, go back to the loop's beginning 
 
     END_BOMBS_OPERATIONS_LOOP:
+    # Procedure finished: Loading Registers from Stack
+        lw ra,0(sp)
+        addi sp,sp,4
+    # End of Stack Operations   
+        ret
+
+#################        EXPLOSION SPAWN        #################
+#          Spawns an explosion animation if available,          #
+#                    otherwise end procedure.                   #
+#                                                               #
+#  ----------          argument registers           ----------  #
+#    a0 = Explosion type (0 - Small, 1 - Big)                   #
+#    a1 = X offset                                              #
+#    a2 = Y offset                                              #
+#    a3 = X (matrix)                                            #
+#    a4 = Y (matrix)                                            #
+#                                                               #
+#  ----------            registers used             ----------  #
+#    a0 = EXPLOSION_ARRAY address                               #
+#    a1 = Number of bombs                                       #
+#    a2 = Loop counter                                          # 
+#                                                               #
+#  ----------         temporary registers           ----------  #
+#    t0 --> temporary register                                  #
+#    t3 = Explosion type (moved from a0)                        #
+#    t4 = X offset (moved from a1)                              #
+#    t5 = Y offset (moved from a2)                              #
+#                                                               #    
+#################################################################
+
+EXPLOSION_SPAWN:
+    mv t3, a0  # Moves explosion type to t3
+    mv t4, a1  # Moves X offset to t4
+    mv t5, a2  # Moves Y offset to t5
+
+    la a0, EXPLOSION_ARRAY      # Loads EXPLOSION array
+    
+    li a1, explosion_number     # Loads total number of explosions
+    li a2,0                     # Resets counter
+    EXPLOSION_SPAWN_LOOP:
+        lbu t0, 0(a0)       # Loads enable byte
+        beqz t0, EXPLOSION_SPAWN_LOOP_ACTIVATE # If current explosion is disabled, activate it
+            j NEXT_IN_EXPLOSION_SPAWN_LOOP     # Otherwise, go to next one in loop
+
+        EXPLOSION_SPAWN_LOOP_ACTIVATE:
+            li t0,1          # Loads 1 (Enabled) 
+            sb t0,0(a0)      # stores in explosion's enable byte
+
+            sb t3,1(a0)      # Stores explosion's type (0 - Small, 1 - Big)
+
+            sb t4, 3(a0)     # Stores explosion's X offset
+            sb t5, 4(a0)     # Stores explosion's Y offset
+
+            sb a3, 5(a0)     # Stores explosion's X 
+            sb a3, 6(a0)     # Stores explosion's old X 
+
+            sb a4, 7(a0)     # Stores explosion's Y 
+            sb a4, 8(a0)     # Stores explosion's old Y   
+
+            j END_EXPLOSION_SPAWN_LOOP # Break Loop       
+
+        NEXT_IN_EXPLOSION_SPAWN_LOOP:
+            addi a0,a0,explosion_size      # Going to the next explosion address                                  
+            addi a2,a2,1                   # Iterating counter by 1                                   
+            bge a2,a1, END_EXPLOSION_SPAWN_LOOP # If all of the explosions were checked, end loop (don't spawn explosion)                                
+            j EXPLOSION_SPAWN_LOOP # otherwise, go back to the loop's beginning 
+
+    END_EXPLOSION_SPAWN_LOOP:
+    # Procedure finished, return
+        ret        
+
+##############        EXPLOSIONS OPERATIONS        ##############
+#           Renders enabled bombs and moves them           #
+#                                                          #		
+#  ------------        registers used        ------------  #
+#    a0 = EXPLOSIONS ARRAY address                              #
+#    a1 = Number of bombs in current map                   #
+#    a2 = Loop counter                                     #
+#    tp = CURRENT_MAP's address                            #
+#    t0 -- t6 = Temporary Registers                        #
+#    a0 -- a7 => used as arguments                         #
+#                                                          #
+############################################################
+
+
+EXPLOSIONS_OPERATIONS:
+# Storing Registers on Stack
+    addi sp,sp,-4
+    sw ra,0(sp)
+# End of Stack Operations
+    la tp, CURRENT_MAP  # Loads CURRENT_MAP address
+
+    la a0,EXPLOSION_ARRAY   # Loads explosions array
+    addi a0,a0,1            # skips cooldown byte
+
+    li a2,0                 # resets counter
+    li a1,explosion_number  # gets number of explosions in game
+    EXPLOSIONS_OPERATIONS_LOOP:
+        lbu t2,0(a0) # Loads enable byte
+        bnez t2,EXPLOSIONS_OPERATIONS_LOOP_CONTINUE    # If enabled,
+            j NEXT_IN_EXPLOSIONS_OPERATIONS_LOOP       # Otherwise, check other explosions
+
+        EXPLOSIONS_OPERATIONS_LOOP_CONTINUE:
+        # If procedure arrived here, render current explosion
+        # Storing Registers on Stack
+            addi sp,sp,-36
+            sw s1,0(sp)
+            sw s2,4(sp)
+            sw s3,8(sp)
+            sw s4,12(sp)
+            sw a0,16(sp)
+            sw a1,20(sp)
+            sw a2,24(sp)
+            sw a3,28(sp)
+            sw tp,32(sp)
+        # End of Stack Operations           
+
+            # Starting rendering procedure:
+            # Calculating explosion's X related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+            lbu a1,5(a0) # Loads explosion's current X
+            lbu t0,6(tp) # Loads map's current X
+            sub a1,a1,t0 # Gets the X matrix related to the map's X (a1 = explosion's X - map's X)
+            slli a1,a1,tile_size_shift # Multiplies a5 by 16 in order to get X related to screen
+            lbu t0,3(a0) # Loads explosion's X offset
+            add a1,a1,t0 # Adds offset to position
+            lbu t0,8(tp) # Loads map's X offset
+            sub a1,a1,t0 # and takes it from explosion's position
+# dislocation?
+            
+            # Calculating Bomb's Y related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+            lbu a2,7(a0) # Loads explosion's current Y
+            lbu t1,7(tp) # Loads map's current Y
+            sub a2,a2,t1 # Gets the Y matrix related to the map's Y (a2 = explosion's Y - map's Y)
+            slli a2,a2,tile_size_shift # Multiplies a2 by 16 in order to get Y related to screen
+            lbu t0,4(a0) # Loads explosion's Y offset
+            add a2,a2,t0 # Adds offset to position
+            lbu t1,9(tp) # Loads map's Y offset
+            sub a2,a2,t1 # and takes it from explosion's position
+            addi a2,a2,4 # Offsets sprite a little bit
+            
+            mv a5,s0          # gets frame to be rendered on
+            li a7,0             # Normal render
+            
+            lbu t0,1(a0)      # Loads explosion type
+            bnez t0,EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG  # If it's a big explosion
+            # Otherwise it's a small explosion
+                lbu t0,2(a0)      # Gets number of times that it was rendered (counter)
+                bnez t0,EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL_NOT_0  # If not on state 0
+                # If it's the first time rendering, get small explosion sprite
+                    la a0, Explosions_1   # Small explosion sprite
+                    li a3,tile_size      # 16 = width of rendering area
+                    li a4,tile_size      # 16 = height of rendering area
+                    li a6, 1             # Small explosion section
+                    j START_EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL # Render
+
+                EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL_NOT_0:  li t1,1
+                bne t0,t1,EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL_NOT_1  # If not on state 1
+                # If it's in the second state, don't render it 
+                    j AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL # Skip render
+
+                EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL_NOT_1: # li t1,2
+                # If it's in the last state, get big explosion sprite
+                    la a0, Explosions_2   # Big explosion sprite
+                    addi a1,a1,-8        # Offsetting sprite
+                    addi a2,a2,-8        # Offsetting sprite
+                    li a3,32             # 32 = width of rendering area
+                    li a4,32             # 32 = height of rendering area
+                    li a6, 0             # There's only one sprite for it
+                    #j START_EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL # Render
+
+                START_EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL:
+                    call RENDER_ENTITY  # Renders it
+
+                AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL:    
+                    lw a0,16(sp)    # Restores a0
+                    lbu t0,2(a0)    # Gets number of times that it was rendered (counter)
+                    addi t0,t0,1    # iterates it
+                    sb t0,2(a0)     # and stores it back
+                    li t1,small_explosion  # Loads number of times small explosion should render before being disabled
+                    blt t0,t1,EXPLOSIONS_OPERATIONS_LOOP_AFTER_OPERATIONS  # If it didn't surpass the threshold, finish this part of loop
+                    # Otherwise, set it to be disabled
+                        sb zero,0(a0)  # Disables explosion
+                        sb zero,2(a0)  # Resets render counter
+                        j EXPLOSIONS_OPERATIONS_LOOP_AFTER_OPERATIONS
+
+            EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG:
+            # If it's a big explosion
+                lbu t0,2(a0)      # Gets number of times that it was rendered (counter)
+                bnez t0,EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_0  # If not on state 0
+                # If it's the first time rendering, get bomb exploding sprite
+                    la a0, Explosions_1   # Small explosion sprite
+                    li a3, tile_size     # 16 = width of rendering area
+                    li a4, tile_size     # 16 = height of rendering area
+                    li a6, 0             # Bomb exploding section
+                    j START_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG # Render
+
+                EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_0:  li t1,1
+                bne t0,t1,EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_1  # If not on state 1
+                # If it's in the second state, don't render it 
+                    j AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG # Skips render
+
+                EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_1: li t1,2
+                bne t0,t1,EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_2  # If not on state 2
+                # If it's in the third state, get small explosion sprite
+                    la a0, Explosions_1   # Small explosion sprite
+                    li a3, tile_size     # 16 = width of rendering area
+                    li a4, tile_size     # 16 = height of rendering area
+                    li a6, 1             # Small explosion section
+                    j START_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG # Render
+
+                EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_2:  li t1,3
+                bne t0,t1,EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_3  # If not on state 3
+                # If it's in the fourth state, don't render it 
+                    j AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG # Skips render
+
+                EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_3: li t1,4
+                bne t0,t1,EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_4  # If not on state 4
+                # If it's in the fith state, get big explosion sprite
+                    la a0, Explosions_2   # Big explosion sprite
+                    addi a1,a1,-8        # Offsetting sprite
+                    addi a2,a2,-8        # Offsetting sprite
+                    li a3,32             # 32 = width of rendering area
+                    li a4,32             # 32 = height of rendering area
+                    li a6, 0             # There's only one sprite for it
+                    j START_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG # Render
+
+                EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_4:  li t1,5
+                bne t0,t1,EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_5  # If not on state 5
+                # If it's in the sixth state, don't render it 
+                    j AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG # Skips render
+
+                EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_5: # li t1,6
+                # If it's in the last state, get big explosion sprite
+                    la a0, Explosions_2   # Big explosion sprite
+                    addi a1,a1,-8        # Offsetting sprite
+                    addi a2,a2,-8        # Offsetting sprite
+                    li a3,32             # 32 = width of rendering area
+                    li a4,32             # 32 = height of rendering area
+                    li a6, 0             # There's only one sprite for it
+                    #j START_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG # Render
+
+                START_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG:
+                    call RENDER_ENTITY  # Renders it
+
+                AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG:    
+                    lw a0,16(sp)    # Restores a0
+                    lbu t0,2(a0)    # Gets number of times that it was rendered (counter)
+                    addi t0,t0,1    # iterates it
+                    sb t0,2(a0)     # and stores it back
+                    li t1,big_explosion  # Loads number of times big explosion should render before being disabled
+                    blt t0,t1,EXPLOSIONS_OPERATIONS_LOOP_AFTER_OPERATIONS  # If it didn't surpass the threshold, finish this part of loop
+                    # Otherwise, set it to be disabled
+                        sb zero,0(a0)  # Disables explosion
+                        sb zero,2(a0)  # Resets render counter
+                        # j EXPLOSIONS_OPERATIONS_LOOP_AFTER_OPERATIONS
+         
+        EXPLOSIONS_OPERATIONS_LOOP_AFTER_OPERATIONS:
+        # Procedure finished: Loading Registers from Stack
+            lw s1,0(sp)
+            lw s2,4(sp)
+            lw s3,8(sp)
+            lw s4,12(sp)
+            lw a0,16(sp)
+            lw a1,20(sp)
+            lw a2,24(sp)
+            lw a3,28(sp)
+            lw tp,32(sp)
+            addi sp,sp,36
+        # End of Stack Operations
+
+        NEXT_IN_EXPLOSIONS_OPERATIONS_LOOP:                    
+            addi a0,a0,explosion_size  # Going to the next bomb's address                                  
+            addi a2,a2,1               # Iterating counter by 1                                   
+            bge a2,a1, END_EXPLOSIONS_OPERATIONS_LOOP # If all of the bombs were checked, end loop (don't attack)                                
+            j EXPLOSIONS_OPERATIONS_LOOP # otherwise, go back to the loop's beginning 
+
+    END_EXPLOSIONS_OPERATIONS_LOOP:
     # Procedure finished: Loading Registers from Stack
         lw ra,0(sp)
         addi sp,sp,4

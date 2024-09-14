@@ -166,8 +166,15 @@ INPUT_CHECK:
 	
     INPUT.K: # Shoots
         beqz t3, K.SHOOT
-        j END_INPUT_CHECK
-        K.SHOOT:    
+        lbu t3,-1(a2)
+        li t1,3            # Number where bomb ability is aquired
+        bge t3,t1,K.PLACE_BOMB
+            j END_INPUT_CHECK
+        
+        K.PLACE_BOMB: # If in ball mode and has bomb hability
+            j BOMB_SPAWN
+
+        K.SHOOT:    # If standing
             li t1, 1     # Loads attacking status (1 = attacking)
             sb t1, 5(a0) # Stores new attack status on PLYR_STATUS
             #j END_INPUT_CHECK

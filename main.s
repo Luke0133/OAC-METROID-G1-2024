@@ -9,6 +9,7 @@ DEBUG2: .string " x "
 DEBUG1: .string "rarara\n"
 DEBUG12: .string "rarara -> "
 DEBUG11: .string "pasou\n"
+
 		
 .text
 main:
@@ -47,7 +48,7 @@ main:
 #                                                                   #
 #    fs10 = BOMB_0's Y speed (same logic as the others)             #
 #    fs11 = BOMB_1's Y speed (same logic as the others)             #
-#    ft8  = BOMB_2's Y speed (same logic as the others)             #
+#    fa7  = BOMB_2's Y speed (same logic as the others)             #
 #                                                                   #
 #####################################################################
 
@@ -73,13 +74,13 @@ GAME_LOOP:
 
 	call BEAMS_OPERATIONS
 	
-	call BOMBS_OPERATIONS
-	
 	call UPDATE_STATUS      # Updates player's sprite status
 
 	li a0, 0     # Rendering player operation
 	li a1, 0     # Rendering full player
 	call RENDER_PLAYER	
+
+	call BOMBS_OPERATIONS
 
 	li a0, 0     # Rendering UI operation
 	call RENDER_UI	

@@ -65,13 +65,13 @@ INPUT_CHECK:
 
     CHECK_INPUT.O:
     li t1, 'o'
-    bne t0,t1, CHECK_INPUT.DEL
+    bne t0,t1, CHECK_INPUT.0
     j INPUT.O
 
-    CHECK_INPUT.DEL:
-    li t1, 127	# Loads ascii value of del key
+    CHECK_INPUT.0:
+    li t1, "0"	
     bne t0,t1, GOTO_NO_CHEAT_INPUT
-    j INPUT.DEL 	# If del key was pressed
+    j INPUT.0 	
 
     GOTO_NO_CHEAT_INPUT: 
         j NO_CHEAT_INPUT
@@ -165,7 +165,7 @@ INPUT_CHECK:
         # li a1, 0  # won't be needed, since a0 = 0
         j CHANGE_DOORS_STATE
 
-    INPUT.DEL: # Kills Player
+    INPUT.0: # Deals damage to player
         li a0,2
         li a1,10
         j DAMAGE_PLAYER
@@ -354,10 +354,40 @@ NO_CHEAT_INPUT:
         j CHECK_INPUT.J # Otherwise, check if J was pressed
 
     INPUT.K: # Shoots
-        li a6,1         # Sets a6 to 1 (a key was pressed)
-        lb t4, 4(a0) # loads ball mode 
-        beqz t4, K.SHOOT
-        j CHECK_INPUT.J
+        li a6,1            # Sets a6 to 1 (a key was pressed)
+        lb t4, 4(a0)       # loads ball mode 
+        beqz t4, K.SHOOT   # If standing
+            lbu t3,-1(a2)  # Loads number of abilities
+            li t1,3        # Number where bomb ability is aquired
+            bge t3,t1,K.PLACE_BOMB   # If player can place bombs
+                j CHECK_INPUT.J      # otherwise, skip it
+        
+        K.PLACE_BOMB: # If in ball mode and has bomb hability
+            # Storing Registers on Stack
+                addi sp,sp,-32
+                sw a6,28(sp)
+                sw a5,24(sp)
+                sw a4,20(sp)
+                sw a3,16(sp)
+                sw a2,12(sp)
+                sw a1,8(sp)
+                sw a0,4(sp)
+                sw ra,0(sp)
+            # End of Stack Operations
+                call BOMB_SPAWN
+            # Procedure finished: Loading Registers from Stack
+                lw a6,28(sp)
+                lw a5,24(sp)
+                lw a4,20(sp)
+                lw a3,16(sp)
+                lw a2,12(sp)
+                lw a1,8(sp)
+                lw a0,4(sp)
+                lw ra,0(sp)
+                addi sp,sp,32
+            # End of Stack Operations  
+                j CHECK_INPUT.J    
+   
         K.SHOOT:    
             li t4, 1     # Loads attacking status (1 = attacking)
             sb t4, 5(a0) # Stores new attack status on PLYR_STATUS

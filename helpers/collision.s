@@ -2,6 +2,9 @@
 # ----> Summary: collisions.s stores collision related procedures, including the movement of enemies and projectiles
 # 1 - CHECK HORIZONTAL COLLISION (Checks player's horizontal collision)
 # 2 - CHECK VERTICAL COLLISION (Checks player's vertical collision)
+# 3 - PLY
+# 4 - MOVE BOMB
+
 # 3 - MOVE ZOOMER
 # 4 - MOVE RIPPER
 # 5 - MOVE RIDLEY
@@ -215,8 +218,8 @@ CHECK_VERTICAL_COLLISION:
         beqz t3 CONTINUE_CHECK_Y_DOWN    # If player's Y offset = 0, continue checking
         # Othewise:
         # 1 - set up t4 and t5, in case branch is correct
-        mv t4,a5  # If Y offset = 14
-        li t5,1   # If Y offset = 14
+        mv t4,a5  
+        li t5,1   
         # 2 - check if current offset + offset modifier will be greater than or equal to 16
         li t1,tile_size  # Loads 16
         add t3,t3,tp     # current offset + offset modifier
@@ -231,8 +234,8 @@ CHECK_VERTICAL_COLLISION:
             add a1,a1,t0     # Updates Y 2 tiles down (+2 matrix Y) 
             addi a7,a7,2     # Increments current Y on matrix (+2 Y)
 
-            add a1,a1,t4     # If Y offset = 14, update Y another tile down (+1 matrix Y)
-            add a7,a7,t5    # If Y offset = 14, increment current Y on matrix once more (+1 Y)
+            add a1,a1,t4     # If current offset + offset modifier >= 16, update Y another tile down (+1 matrix Y)
+            add a7,a7,t5    # If Y current offset + offset modifier >= 16, increment current Y on matrix once more (+1 Y)
             # Checking player's X for checking collision
             lbu t3, 6(t2)    # t3 = Player's X offset
             beqz t3 CHECK_Y_DOWN_BOTH_DOORS # If X offset = 0, just check one tile bellow, and consider both doors
@@ -266,6 +269,168 @@ CHECK_VERTICAL_COLLISION:
     # If no check is to be made, return a0 = 1 (player can move)
         li a0,1  
         ret 
+
+#######################        MOVE BOMB        ########################
+#         Plasma breaths move in a "zig-zag" way, kicking on the ground         #
+#   (it follows an oblique motion). It must consider all vertical collisions    #
+#              (up and down), ignoring horizontal collision checks              #
+#                       (unless it passes an X threshold)                       #
+#                                                                               #
+#  ------------------           argument registers          ------------------  #
+#    a0 = Plasma Breath's address                                               #
+#	 a1 = Current map's address                                                 #
+#    fa0 = Current Plasma Breath's Y speed (will be returned afterwards)        #
+#                                                                               #
+#  ------------------             registers used            ------------------  #
+#    a2 = Bomb's matrix Y that will be modified and possibly stored             #
+#    a3 = Bomb's Y offset that will be modified and possibly stored             #
+#    a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK                   #      
+#                                                                               #
+#  ------------------          temporary registers          ------------------  #
+#    t0, t1 --> temporary registers                                             #
+#    t2 = PLYR_POS address (stores from a2 to let it be modified)               #
+#    t3 = Player's X/Y offset                                                   #
+#    tp = offset modifier (stores from a3 to let it be modified)                #
+#                                                                               #    
+#################################################################################  
+
+MOVE_BOMB:
+    # X doesn't change
+    
+    # Altering Y and doing a collision check afterwards
+    lbu a2,7(a0)    # Loads bomb's current Y
+    sb a2,8(a0)     # And stores it on old Y
+    lbu a3,4(a0)    # Loads bomb's current Y offset
+
+    # Proper movement calculations 
+    # Bomb will always be trying to move dow     
+    fadd.s fa0,fa0,fs0    # fa0 = Bomb's current Y speed + gravity factor       
+    fcvt.w.s t3,fa0       # Sets t3 = floor(fa0)
+
+    li t0,max_speed                    # Loads max speed (8, when falling)
+    blt t3,t0, SKIP_BOMB_MAX_SPEED   # If t3 < 8, skip this part
+    # Otherwise, set offset modifier to 8
+        li t3,max_speed
+        fcvt.s.w fa0,t0
+
+    SKIP_BOMB_MAX_SPEED: 
+        add a3,a3,t3	# Adds the Y Movement to the Bomb's Offset      
+        # a3 will never be negative, since bomb will always try to move down
+        li t0, tile_size
+        blt a3,t0, SKIP_DOWN_Y_BOMB
+        # If a3 >= 16, Bomb is moving to the lower tile
+        addi a2,a2, 1	 # Bomb's Y on matrix += 1 (goes to the right)
+        sub a3,a3,t0	 # Offset gets corrected (relative to new Y on matrix coordinate)
+        
+    SKIP_DOWN_Y_BOMB:  
+        # Preparations for check        
+        lbu a5,1(a1)     # Loads map's matrix width
+        lbu a6,5(a0)     # Loads Bomb's current X
+        lbu a7,7(a0)     # Loads Bomb's current Y
+
+        addi a1,a1,3     # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
+        mul t0,a7,a5     # (Bomb's matrix Y + 3)  * Map Matrix's width
+        add t0,a6,t0     # t0 = Bomb's X related to matrix + (Bomb's matrix Y + 3)  * Map Matrix's width
+        add a1,a1,t0     # a1 = Map Matrix's address adjusted for Bomb's X and Y (+3) related to matrix       
+
+        # Will always check down 
+        lbu t0,4(a0)     # Loads Bomb's Y offset    
+        add a1,a1,a5  # Moves matrix one tile down
+        addi a7,a7,1  # Moves Y one tile down
+        beqz t0 CONTINUE_CHECK_Y_DOWN_BOMB   # If Bomb's Y offset == 0, continue checking
+        # Othewise:
+        # 1 - Go another tile down, in case branch condition is met
+        add a1,a1,a5  # If Y offset != 0
+        addi a7,a7,1  # If Y offset != 0
+        # 2 - check if current offset + offset modifier will be greater than or equal to 16
+        li t1,tile_size  # Loads 16
+        add t0,t0,t3     # Current Y offset + Y offset modifier
+        bge t0,t1 CONTINUE_CHECK_Y_DOWN_BOMB  # If current offset + offset modifier >= 16, continue checking (but check one tile bellow)
+            j MOVE_BOMB_PROPERLY              # Othewise, just move the bomb
+
+        CONTINUE_CHECK_Y_DOWN_BOMB:
+        # If it arrived here, but Y offset != 0, it'll check 2 two tiles down
+        # Otherwise, it'll check only one tile down
+            li a4, 1  # Base case: Consider doors      
+            li t2, 1  # Base case: Check only one tile  
+            # Checking Bomb's X for checking collision
+            lbu t3,3(a0)     # Loads Bomb's X offset
+            beqz t3 CHECK_BOMB_Y_DOWN_BOTH_DOORS # If X offset = 0, just check one tile bellow, and consider both doors
+            li t0, 8   # Loads number 8 for comparing with X offset 
+            blt t3,t0, CHECK_BOMB_Y_DOWN_RIGHT_DOOR # If X offset < 8, just check one tile bellow, and consider right doors
+            blt t0,t3, CHECK_BOMB_Y_DOWN_LEFT_DOOR # If X offset > 8, check one tile bellow to the right , and consider left doors
+            # If Bomb's X offset = 8:
+                li t2,2   # Check 2 tiles bellow bomb (one bellow, the other bellow to the right)  
+                li a4,0   # Ignore doors
+                j START_BOMB_COLLISION
+
+            CHECK_BOMB_Y_DOWN_BOTH_DOORS:
+                # If Bomb's X offset = 0, check for ground and for any type of door
+                li t1, 2 # Consider both doors on the left and on the right sides of the map
+                j START_BOMB_COLLISION
+
+            CHECK_BOMB_Y_DOWN_RIGHT_DOOR:
+                # If 0 < Bomb's X offset < 8, check for ground and for doors on the map's right side
+                li t1, 0 # Only consider doors on the right side of the map
+                j START_BOMB_COLLISION
+
+            CHECK_BOMB_Y_DOWN_LEFT_DOOR:
+                # If Bomb's X offset > 8, for ground on the tile to the Bomb's bottom right and for doors on the map's left side 
+                li t1, 1 # Only consider doors on the left side of the map
+                addi a1,a1, 1 # Looks to the tile on the right of Bomb's current tile
+                addi a6,a6,1  # Increments current X on matrix (+1 X)
+                # j START_BOMB_COLLISION 
+
+            START_BOMB_COLLISION:
+            # Storing Registers on Stack
+                addi sp,sp,-20
+                sw a3,16(sp)
+                sw a2,12(sp)
+                sw a1,8(sp)
+                sw a0,4(sp)
+                sw ra,0(sp)
+            # End of Stack Operations
+
+                mv a0,t1  # Doesn't matter, since no doors will be checked
+                # a1 is already defined
+                mv a2,t2  # Only check one tile
+                li a3,1   # Vertical check
+                # a5 is already defined
+                # a6 is already defined
+                # a7 is already defined
+                li tp, 1  # Entity collision
+                call CHECK_MAP_COLLISION
+                mv t0,a0
+
+            # Procedure finished: Loading Registers from Stack
+                lw a3,16(sp)
+                lw a2,12(sp)
+                lw a1,8(sp)
+                lw a0,4(sp)
+                lw ra,0(sp)
+                addi sp,sp,20
+            # End of Stack Operations
+            
+            # After checking collision
+            bnez t0, MOVE_BOMB_PROPERLY   # If returning anything but 0, Plasma Breath can move
+            # Otherwise (in theory) the only time Ridley should face a collision is when moving down           
+                fcvt.s.w fa0,zero # Resets Bomb's jump speed
+
+                lbu t0,4(a0)   # Loads Bomb's current Y offset  
+                beqz t0,MOVE_BOMB_SKIP_ADJUST_Y  
+                    sb zero, 4(a0) # Sets Bomb's Y offset to 0 
+                    sb a2,7(a0)    # Stores new Y 
+                MOVE_BOMB_SKIP_ADJUST_Y: 
+                # If Y offset was 0, everything was already set
+                    j END_MOVE_BOMB   # Finish procedure               
+        
+        MOVE_BOMB_PROPERLY:         
+            sb a2,7(a0)     # Stores Bomb's new Y 
+            sb a3,4(a0)     # Stores new Y offset
+            #j END_MOVE_BOMB   
+    
+    END_MOVE_BOMB:
+        ret
 
 ###########################        MOVE ZOOMER        ###########################
 #      This procedure checks the tiles in front and at the base of a Zoomer     #
@@ -1207,10 +1372,11 @@ MOVE_RIDLEY:
 #  ------------------           argument registers          ------------------  #
 #    a0 = Plasma Breath's address                                               #
 #	 a1 = Current map's address                                                 #
+#    fa0 = Current Plasma Breath's Y speed (will be returned afterwards)        #
 #                                                                               #
 #  ------------------             registers used            ------------------  #
-#    a2 = Ridley's matrix Y that will be modified and possibly stored           #
-#    a3 = Ridley's Y offset that will be modified and possibly stored           #
+#    a2 = Plasma Breath's matrix Y that will be modified and possibly stored    #
+#    a3 = Plasma Breath's Y offset that will be modified and possibly stored    #
 #    a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK                   #      
 #                                                                               #
 #  ------------------          temporary registers          ------------------  #
@@ -1254,7 +1420,7 @@ MOVE_PLASMA_BREATH:
     # Altering Y and doing a collision check afterwards
     lbu a2,8(a0)    # Loads plasma breath's current Y
     sb a2,9(a0)     # And stores it on old Y
-    lbu a3,4(a0)    # Loads plasma breath's current Y
+    lbu a3,4(a0)    # Loads plasma breath's current Y offset
 
     # Proper movement calculations 
     lb t0,2(a0)   # Loads Plasma Breath's MOVE_Y

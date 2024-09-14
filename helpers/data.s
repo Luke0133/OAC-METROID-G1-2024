@@ -16,21 +16,16 @@
 # deppending on where you're running the game, in order to execute it properly  ;D            #
 #                                                                                             #
 #  For RARS:                                                                                  #
-#      .eqv KDMMIO_ADDRESS 0xFF200000                                                         #
-#      .eqv RandIntEcall 41                                                                   #
-#      .eqv RandIntRangeEcall 42                                                              #
+      .eqv KDMMIO_ADDRESS 0xFF200000                                                         #
 #                                                                                             #
 #  For FPGRARS:                                                                               #
-      .eqv KDMMIO_ADDRESS 0xFF210000                                                         #
-      .eqv RandIntEcall 141                                                                  #
-      .eqv RandIntRangeEcall 142                                                             #
+ #     .eqv KDMMIO_ADDRESS 0xFF210000                                                         #
 #                                                                                             #
 #  For FPGA (DE1, using custom processor RISCV-V24):                                          #
-#      .eqv KDMMIO_ADDRESS 0xFF200000     # USE KDMMIO_Ctrl                                                    #
-#      .eqv RandIntEcall 141                                                                  #
-#      .eqv RandIntRangeEcall 142                                                             #
+#      --> go to helpers.s, comment "input.s" and uncomment"input_fpga.s                      # 
 #                                                                                             #
 ###############################################################################################
+.eqv RandIntRangeEcall 142
 
 #MUSIC.INFO:  .byte 31,0
 MUSIC.NOTES: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60,397,62,3573,62,397,60,397,62,397,64,2382,59,1191,59,397,64,397,65,397,67,4764,65,2382,64,2382,65,3573,69,397,67,397,65,397,67,2382,64,1191,64,397,67,397,71,397,73,9528
@@ -85,7 +80,7 @@ NEXT_MAP_INFO: .byte 0, 0 # Next Map's Number, Number of iterations on switch
 
 
 ####### Player informations #########
-PLYR_INFO: .byte 100, 0 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
+PLYR_INFO: .byte 30, 3 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
 PLYR_POS:  .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
            .byte 160, 0  # Stores Player's current and old top left Y respectively, both related to the screen 
 		     0, 0    # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
@@ -140,22 +135,63 @@ BEAM_2_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new a
 
 ## BOMB_ARRAY ##
 BOMBS_ARRAY: .byte 0   # Attack cooldown 
-BOMB_0_INFO: .byte 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled, 2 - To be disabled, 3 - Hit, to be disabled), MOVE_Y (0 - no mov, 1 - down), Number of times that has been rendered
-BOMB_0_POS:  .byte 0, 0         # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-BOMB_0_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
+BOMB_0_INFO: .byte 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled, 2 - To be disabled, 3 - Hit, to be disabled), sprite status, Number of times that has been rendered
+BOMB_0_POS:  .byte 0, 0         # Stores bomb's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+BOMB_0_MATRIX: .byte 0, 0, 0, 0 # Stores bomb's top left new and old X and new and old Y respectively, all related to the map matrix 
 
-BOMB_1_INFO: .byte 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled, 2 - To be disabled, 3 - Hit, to be disabled), MOVE_Y (0 - no mov, 1 - down), Number of times that has been rendered
-BOMB_1_POS:  .byte 0, 0         # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-BOMB_1_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
+BOMB_1_INFO: .byte 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled, 2 - To be disabled, 3 - Hit, to be disabled), sprite status, Number of times that has been rendered
+BOMB_1_POS:  .byte 0, 0         # Stores bomb's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+BOMB_1_MATRIX: .byte 0, 0, 0, 0 # Stores bomb's top left new and old X and new and old Y respectively, all related to the map matrix 
 
 BOMB_2_INFO: .byte 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled, 2 - To be disabled, 3 - Hit, to be disabled), MOVE_Y (0 - no mov, 1 - down), Number of times that has been rendered
-BOMB_2_POS:  .byte 0, 0         # Stores beam's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
-BOMB_2_MATRIX: .byte 0, 0, 0, 0 # Stores beam's top left new and old X and new and old Y respectively, all related to the map matrix 
+BOMB_2_POS:  .byte 0, 0         # Stores bomb's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+BOMB_2_MATRIX: .byte 0, 0, 0, 0 # Stores bomb's top left new and old X and new and old Y respectively, all related to the map matrix 
 
 .eqv bombs_number 3
-.eqv bombs_size 9             # number of bytes per beam
-.eqv bombs_explosion_countdown  10
-.eqv bombs_attack_cooldown 5
+.eqv bombs_size 9             # number of bytes per bomb
+.eqv bombs_explosion_countdown  20
+.eqv bombs_attack_cooldown 8
+
+
+EXPLOSION_ARRAY: .byte
+Explosion_0: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion type (small/big), Number of times that has been rendered
+             0, 0         # Stores explosion's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+             0, 0, 0, 0   # Stores explosion's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Explosion_1: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion type (small/big), Number of times that has been rendered
+             0, 0         # Stores explosion's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+             0, 0, 0, 0   # Stores explosion's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Explosion_2: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion type (small/big), Number of times that has been rendered
+             0, 0         # Stores explosion's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+             0, 0, 0, 0   # Stores explosion's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Explosion_3: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion type (small/big), Number of times that has been rendered
+             0, 0         # Stores explosion's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+             0, 0, 0, 0   # Stores explosion's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Explosion_4: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion type (small/big), Number of times that has been rendered
+             0, 0         # Stores explosion's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+             0, 0, 0, 0   # Stores explosion's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Explosion_5: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion type (small/big), Number of times that has been rendered
+             0, 0         # Stores explosion's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+             0, 0, 0, 0   # Stores explosion's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Explosion_6: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion type (small/big), Number of times that has been rendered
+             0, 0         # Stores explosion's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+             0, 0, 0, 0   # Stores explosion's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Explosion_7: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion type (small/big), Number of times that has been rendered
+             0, 0         # Stores explosion's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+             0, 0, 0, 0   # Stores explosion's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+.eqv explosion_number 8   # total number of explosions 
+.eqv explosion_size 9     # number of bytes per explosion
+.eqv big_explosion 7      # Number of loops before freeing big explosion
+.eqv small_explosion 3    # Number of loops before freeing small explosion
+
+
 
 ##############           Zoomer            ##############
 
@@ -3554,7 +3590,7 @@ Bomb: # 16 x 32, Height per sprite: 16
 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
 
-Explosion_1: # 16 x 32, Height per sprite: 16
+Explosions_1: # 16 x 32, Height per sprite: 16
 # 512 bytes
 .byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
@@ -3589,7 +3625,7 @@ Explosion_1: # 16 x 32, Height per sprite: 16
 199,14,199,199,14,32,199,199,199,199,32,14,199,199,14,199,
 199,199,199,199,199,199,14,199,199,14,199,199,199,199,199,199,
 
-Explosion_2: # 32 x 32, Height per sprite: 32
+Explosions_2: # 32 x 32, Height per sprite: 32
 # 1024 bytes -- 1 KiB 
 .byte 199,199,199,199,199,199,199,199,199,199,199,14,199,199,103,199,199,103,199,199,14,199,199,199,199,199,199,199,199,199,199,199,
 199,199,199,199,199,199,199,199,14,199,199,199,199,14,199,14,14,199,14,199,199,199,199,14,199,199,199,199,199,199,199,199,
