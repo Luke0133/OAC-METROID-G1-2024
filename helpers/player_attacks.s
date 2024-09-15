@@ -320,63 +320,9 @@ BEAMS_OPERATIONS:
 
             BEAMS_OPERATIONS_LOOP_MOVE:
             # Moving beam
-            lb t0, 1(a0) # loads direction
-            beqz t0,BEAMS_OPERATIONS_LOOP_MOVE_Y  # If direction is 0 (Up) 
-                    j BEAMS_OPERATIONS_LOOP_MOVE_X
-                    
-            BEAMS_OPERATIONS_LOOP_MOVE_Y:
-                lbu t1, 7(a0)    # Loads beam's current Y
-                sb t1, 8(a0)     # and stores it on beam's old Y
-
-                lbu t0,4(a0)   # Loads beam's current Y offset
-                addi t0,t0,-8  # moves it up
-
-                bge t0,zero,BEAMS_OPERATIONS_LOOP_MOVE_Y_STORE_BEAM # If no correction is needed
-                # Correcting offset
-                    addi t1,t1,-1          # Moves Y up one tile
-                    addi t0,t0,tile_size   # adds 16 to offset
-                    sb t1, 7(a0)     # Stores beam's new Y
-
-                BEAMS_OPERATIONS_LOOP_MOVE_Y_STORE_BEAM:
-                    sb t0, 4(a0)     # Stores new Y offset
-                    j BEAMS_OPERATIONS_LOOP_AFTER_MOVE # Goes to render
-                    
-            BEAMS_OPERATIONS_LOOP_MOVE_X:
-                lbu t1, 5(a0)    # Loads beam's current X
-                sb t1, 6(a0)     # and stores it on beam's old X
-
-                la t3,MOVE_X     # Loads MOVE_X
-                lb t3,0(t3)      # and gets player's movement speed
-                li t4,0          # X momentum
-                beqz t3,BEAMS_OPERATIONS_LOOP_MOVE_X_SKIP_ADD
-                    slli t4,t0,2     # Multiplies t0 by 4 (so that beam moves +-4)
-                BEAMS_OPERATIONS_LOOP_MOVE_X_SKIP_ADD:
-                    slli t2,t0,3     # Multiplies t0 by 8 (so that beam moves +-8)
-                    
-                    lbu t0,3(a0)     # Loads beam's current X offset
-                    add t0,t0,t2     # moves it
-                    add t0,t0,t4     # and adds player's momentum
-
-                bge t0,zero,BEAMS_OPERATIONS_LOOP_MOVE_X_SKIP_NEGATIVE_CORRECTION
-                # If resulting offset < 0, correct it
-                    addi t1,t1,-1          # Moves X one tile to the left
-                    addi t0,t0,tile_size   # adds 16 to offset
-                    sb t1, 5(a0)           # Stores beam's new X
-                    j BEAMS_OPERATIONS_LOOP_MOVE_X_STORE_BEAM
-
-                BEAMS_OPERATIONS_LOOP_MOVE_X_SKIP_NEGATIVE_CORRECTION:
-                # If resulting offset >= 0
-                    li t2,tile_size
-                    blt t0,t2,BEAMS_OPERATIONS_LOOP_MOVE_X_STORE_BEAM  # If  0 <= resulting offset < 16, don't change X
-                    # If resulting offset >= 16
-                        addi t1,t1,1           # Moves X one tile to the right
-                        sub t0,t0,t2           # subtracts 16 from offset
-                        sb t1, 5(a0)           # Stores beam's new X
-                        j BEAMS_OPERATIONS_LOOP_MOVE_X_STORE_BEAM
-                
-                BEAMS_OPERATIONS_LOOP_MOVE_X_STORE_BEAM:
-                    sb t0, 3(a0)     # Stores new X offset
-                    #j BEAMS_OPERATIONS_LOOP_AFTER_MOVE # Goes to render                    
+            # a0 is already set
+            lw a1,0(tp)
+            call MOVE_BEAM               
             
             BEAMS_OPERATIONS_LOOP_AFTER_MOVE:
 
@@ -544,7 +490,7 @@ BOMBS_OPERATIONS:
             BOMBS_OPERATIONS_AFTER_CHECK:
 
             lw a0,16(sp)    # Restores a0
-            lw tp,32(sp)    # Restores a0
+            lw tp,32(sp)    # Restores tp
 
             # Starting rendering procedure:
             # Calculating Bomb's X related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
@@ -711,7 +657,6 @@ EXPLOSIONS_OPERATIONS:
     la tp, CURRENT_MAP  # Loads CURRENT_MAP address
 
     la a0,EXPLOSION_ARRAY   # Loads explosions array
-    addi a0,a0,1            # skips cooldown byte
 
     li a2,0                 # resets counter
     li a1,explosion_number  # gets number of explosions in game

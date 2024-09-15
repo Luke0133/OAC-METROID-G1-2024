@@ -353,7 +353,6 @@ CHECK_MOVE_Y:
 
                     lbu t0, 7(a3)  # Loads player's Y offset
                     beqz t0,SKIP_ADJUST_Y_DOWN # If player is on ground and Y offset = 0, don't reajust position
-                    # Otherwise, 
                         sb a7, 10(a3)   # Stores new Y coordinate on matrix
                         lbu t0, 0(a2)   # Loads first byte to check what type of map it is (0 - Fixed, 1 - Horizontal, 2 - Vertical)
                         li t3, 2        # Loads 2 and 
@@ -498,7 +497,7 @@ CHECK_MOVE_Y:
                 sub t4,t4,t3     # t4 = Map Matrix Height - Screen Matrix Height (t1 = Map's Y when it's on lowermost part of the map)
                 addi t5,t2,1     # Maximum Y on map
 
-                bne t5,t4,NO_Y_OFFSET_CORRECTION    # If t5 != maximum Y on map, skip this next correction
+                blt t5,t4,NO_Y_OFFSET_CORRECTION    # If t5 != maximum Y on map, skip this next correction
                 # Otherwise, if t5 = maximum Y on map
                 li a6,0    # set offset to 0               
                 
@@ -506,6 +505,14 @@ CHECK_MOVE_Y:
                 sb a6, 9(a1)   # Stores Map new Y offset that is equal to player's Y offset
                 add t2,t2,t1  # adds to the Y -1, 0 or 1 (moves map horizontally)
                 sb t2, 7(a1)   # Stores Map Y postition on Matrix
+                
+                lbu t0,2(a2)  # Loads map's height
+                li t1,m_screen_height # and the screen's height
+                sub t0,t0,t1  # Subtracts from map's height the screen height
+                blt t2,t0,END_PHYSICS # If the new Y passes the limit of map
+                    sb zero, 9(a1)
+                    sb t0, 7(a1)   # Stores Map Y postition on Matrix
+                
 
     END_PHYSICS:
       ret

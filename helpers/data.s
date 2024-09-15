@@ -16,10 +16,10 @@
 # deppending on where you're running the game, in order to execute it properly  ;D            #
 #                                                                                             #
 #  For RARS:                                                                                  #
-      .eqv KDMMIO_ADDRESS 0xFF200000                                                         #
+#      .eqv KDMMIO_ADDRESS 0xFF200000                                                         #
 #                                                                                             #
 #  For FPGRARS:                                                                               #
- #     .eqv KDMMIO_ADDRESS 0xFF210000                                                         #
+      .eqv KDMMIO_ADDRESS 0xFF210000                                                         #
 #                                                                                             #
 #  For FPGA (DE1, using custom processor RISCV-V24):                                          #
 #      --> go to helpers.s, comment "input.s" and uncomment"input_fpga.s                      # 
@@ -28,8 +28,8 @@
 .eqv RandIntRangeEcall 142
 
 #MUSIC.INFO:  .byte 31,0
-MUSIC.NOTES: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60,397,62,3573,62,397,60,397,62,397,64,2382,59,1191,59,397,64,397,65,397,67,4764,65,2382,64,2382,65,3573,69,397,67,397,65,397,67,2382,64,1191,64,397,67,397,71,397,73,9528
-MUSIC.STATUS:  .word 0,0
+MUSIC_NOTAS: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60,397,62,3573,62,397,60,397,62,397,64,2382,59,1191,59,397,64,397,65,397,67,4764,65,2382,64,2382,65,3573,69,397,67,397,65,397,67,2382,64,1191,64,397,67,397,71,397,73,9528
+MUSIC_STATUS:  .word 0,0
 
 
 
@@ -95,7 +95,7 @@ JUMP: .byte 0 # counter of current height
 PLYR_INPUT: .byte 0  # 0 If no input, 1 if input, 2 if input but can't move horizontally
 
 .eqv damage_jump -3
-.eqv damage_iframes 14
+.eqv damage_iframes 20
 PLYR_INFO_2: .byte 0,0,0    # Missile mode (0 - disabled, 1 - enabled), cooldown to switch, number of missiles
                    0,0,0  # Taking damage (0 - no, 1 - yes), DAMAGE_MOVE_X (+-4), damage cooldown, 
                    0,0    # reset move_x (3 -> 0), render status (0 - don't, 1 - render normally)
@@ -398,7 +398,7 @@ Ripper4_4: 1, 1, 0        # Type, direction, X offset
 .eqv ridley_X_Offset 6 # Ridley doesn't move arround the X axis
 .eqv ridley_original_Y 5
 .eqv ridley_jump_cooldown 20
-.eqv ridley_attack_cooldown 5
+.eqv ridley_attack_cooldown 8
 .eqv ridley_jump_animation 80
 .byte
 RIDLEY_INFO:  ridley_health, 0, 10 # Stores Ridley's health points, type (0 - Normal, 1 - Damage), Y offset

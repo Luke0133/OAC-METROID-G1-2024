@@ -9,7 +9,6 @@ DEBUG2: .string " x "
 DEBUG1: .string "rarara\n"
 DEBUG12: .string "rarara -> "
 DEBUG11: .string "pasou\n"
-
 		
 .text
 main:
@@ -61,11 +60,13 @@ GAME_LOOP:
 
 ### Game operations
     xori s0,s0,1		    # Switches frame value (register)
- 
+
+	#call MUSIC.PLAY
+
 	call INPUT_CHECK	    # Checks player's input
 
 	call PHYSICS            # Physics operations
- 
+
 	call UPDATE_DOORS       # Updates doors
 	call MAP_MOVE_RENDER    # Renders map when necessary
 	
@@ -81,37 +82,22 @@ GAME_LOOP:
 	call RENDER_PLAYER	
 
 	call BOMBS_OPERATIONS
+	call EXPLOSIONS_OPERATIONS
 
 	li a0, 0     # Rendering UI operation
 	call RENDER_UI	
 
-#	call RENDER_DOOR_UPDATE         - probably not using :D
 	call RENDER_DOOR_FRAMES
 
-	# Switching Frame on Bitmap Display											
+	call PLAYER_COLLISION  # Will see if player was hit by an enemy
+
+	# Switching Frame on Bitmap Display and getting current time to finish loop											
 	li t0,0xFF200604	# Loads Bitmap Display address
 	sw s0,0(t0)         # Stores new frame value (from s0) on Bitmap Display
 
-	# li a0,1
-	# call ENEMY_OPERATIONS
+	csrr s1,3073        # New time is stored in s1, in order to be compared later		
 	
-	# li a0, 1     # Rendering player's trail operation
-	# li a1, 0     # Rendering full player (a1 doesn't really matter when a0 = 1)
-	# call RENDER_PLAYER
-
-
-	#call RENDER_LIFE
-
-	#la a0, Beam
-	
-	
-	#call ENEMY_OPERATIONS
-
-	csrr s1,3073    # new time is stored in s1, in order to be compared later		
-
-	#call MUSIC.PLAY
-	
-	j GAME_LOOP	# Volta para ENGINE_LOOP
+	j GAME_LOOP	        # Returns to loop's beginning
 
 
 

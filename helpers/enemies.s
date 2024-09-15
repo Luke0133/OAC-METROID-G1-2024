@@ -9,11 +9,7 @@ ENEMY_OPERATIONS:
 # Storing Registers on Stack
     addi sp,sp,-4
     sw ra,0(sp)
-# End of Stack Operations
-    call ZOOMER_OPERATIONS        # Checks zoomers
-    
-    call RIPPER_OPERATIONS        # Checks rippers
-    
+# End of Stack Operations   
     la t0,CURRENT_MAP             # Loads map address
     lbu t0,4(t0)                  # and from it, loads map's number
     li t1,7                       # Loads 7 to compare with map's number
@@ -21,7 +17,15 @@ ENEMY_OPERATIONS:
         call RIDLEY_OPERATIONS    # Checks Ridley
 
         call PLASMA_BREATH_OPERATIONS  # Checks Plasma Breaths (ITS.TEDIOUS.TO.KEEP.WRITING.PLASMA.BREATH.EVERY.TIME.I.CANT.TAKE.IT.ANYMOREEEE)
+        # Procedure finished: Loading Registers from Stack
+            lw ra,0(sp)
+            addi sp,sp,4
+        # End of Stack Operations  
+        ret
     SKIP_RIDLEY:
+    call ZOOMER_OPERATIONS        # Checks zoomers
+    
+    call RIPPER_OPERATIONS        # Checks rippers
 # Procedure finished: Loading Registers from Stack
     lw ra,0(sp)
     addi sp,sp,4
@@ -547,11 +551,11 @@ RIDLEY_OPERATIONS:
                     sb t2,2(a2)    # Stores it on MOVE_Y (Up)
 
                     # Setting Random Y speed
-                    li a1,4                  # Range
+                    li a1,3                  # Range
                     li a7,RandIntRangeEcall  # random integer within range ecall
                     ecall
 
-                    li t2,-8                 # Loads -8 (base speed)
+                    li t2,-6                 # Loads -8 (base speed)
                     add t2,t2,a0             # Speed will be between -8 and -4
 
                     # Checking which Plasma Breath we are activating in order to set Y speed

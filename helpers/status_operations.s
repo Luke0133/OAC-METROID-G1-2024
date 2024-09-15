@@ -202,29 +202,20 @@ OUT_OF_MORPH_BALL:
 
 
 
-#######################        DAMAGE PLAYER        ########################
-#         Plasma breaths move in a "zig-zag" way, kicking on the ground         #
-#   (it follows an oblique motion). It must consider all vertical collisions    #
-#              (up and down), ignoring horizontal collision checks              #
-#                       (unless it passes an X threshold)                       #
+########################          DAMAGE PLAYER          ########################
 #                                                                               #
 #  ------------------           argument registers          ------------------  #
 #    a0 = origin of damage (0 - natural causes, 1 - lava                        #
 #                           2 - through cheat command)                          #
 #	 a1 = damage ammount                                                        #
-#	 a2 = damage direction (if a0 == 1, it'll be randomized)                    #
+#	 a2 = damage direction (if a0 == 2 or a2 == 3, it'll be randomized)         #
 #       (otherwise, 0 from the right, 1 from the left, 2 if from same X axis)   #
-#                                                                               #
-#  ------------------             registers used            ------------------  #
-#    a2 = Ridley's matrix Y that will be modified and possibly stored           #
-#    a3 = Ridley's Y offset that will be modified and possibly stored           #
-#    a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK                   #      
 #                                                                               #
 #  ------------------          temporary registers          ------------------  #
 #    t0, t1 --> temporary registers                                             #
-#    t2 = PLYR_POS address (stores from a2 to let it be modified)               #
-#    t3 = Player's X/Y offset                                                   #
-#    tp = offset modifier (stores from a3 to let it be modified)                #
+#    tp = origin of damage (0 - natural causes, 1 - lava   -->> stores from a0  #
+#                           2 - through cheat command)                          #
+#    t5 = damage ammount  -->> stores from a1                                   #
 #                                                                               #    
 ################################################################################# 
 
@@ -256,8 +247,11 @@ DAMAGE_PLAYER:
         li t0,damage_jump # Jumping value for damage
         fcvt.s.w fs2,t0   # Sets fs2 (player's Y speed) to -3
 
+        li t0,3
+        beq a2,t0,DAMAGE_PLAYER_RANDOMIZE
         li t0,2
         bne t0,tp,DAMAGE_PLAYER_CHECK_DIRECTION
+        DAMAGE_PLAYER_RANDOMIZE:
         # Randomizing damage direction
             li a1,2                  # Range
             li a7,RandIntRangeEcall  # random integer within range ecall
