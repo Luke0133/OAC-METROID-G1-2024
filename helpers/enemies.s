@@ -827,4 +827,35 @@ PLASMA_BREATH_OPERATIONS:
         ret
 
  
-    
+##############              RESET ENEMIES             ##############
+#         Renders enabled plasma breaths and moves them :D         #
+#                                                                  #		
+#  ----------------        registers used        ----------------  #
+#    a0 = PLASMA BREATH ARRAY address                              #
+#    a1 = Number of plasma breaths in current map                  #
+#    a2 = Loop counter                                             #
+#    tp = CURRENT_MAP's address                                    #
+#    t0 -- t6 = Temporary Registers                                #
+#    a0 -- a7 => used as arguments                                 #
+#                                                                  #
+####################################################################    
+RESET_ENEMIES:
+ret
+    la t0,CURRENT_MAP
+    lbu a7,4(t0)       # Loads current map's number
+
+    la t1,NEXT_MAP
+	lbu t2,10(t1)      # Loads render Next Map's Door
+    #beqz t2,
+
+    la a0,PLASMA_BREATH_ARRAY  # Loads Plasma breath array
+    li a2,0 # resets counter
+    li a1,plasma_number # gets number of plasma breaths in game
+    #RESET_PLASMA_BREATH_LOOP:
+        sb zero,0(a0)   # Disables it
+
+        #NEXT_IN_RESET_PLASMA_BREATH_LOOP:                    
+            addi a0,a0,plasma_size  # Going to the next plasma breath's address                                  
+            addi a2,a2,1            # Iterating counter by 1                                   
+        #    bge a2,a1, END_RESET_PLASMA_BREATH_LOOP # If all of the plasma breaths were checked, end loop (don't attack)                                
+        #W    j RESET_PLASMA_BREATH_LOOP # otherwise, go back to the loop's beginning 

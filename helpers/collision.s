@@ -78,7 +78,13 @@ CHECK_HORIZONTAL_COLLISION:
                 la t1, PLYR_POS    # Loads PLYR_POS address
                 lb t1, 7(t1)       # Loads Y offset
                 beqz t1 CONTINUE_CHECK_X_DIRECTION # If Y offset is zero, there's no need to check 3 tiles
+                li t4,14
+                bge t1,t4,DONWARDS_CHECK_2_BELLOW  # Instead of checking the two in front of samus, check two, but 1 tile bellow
                     addi a2,a2, 1  # Checks 3 tiles horizontally (or 2 if on morph ball)
+                    j CONTINUE_CHECK_X_DIRECTION
+                DONWARDS_CHECK_2_BELLOW:
+                    addi a7,a7,1
+                    add a1,a5, a1
                     j CONTINUE_CHECK_X_DIRECTION
             UPWARDS_THIRD_CHECK: # If MOVE_Y = -1 (up)
                 la t1, PLYR_POS # Loads PLYR_POS address
@@ -305,6 +311,163 @@ PLAYER_COLLISION: # ebreak
     lbu a3, 7(t0)      # Loads Player's current Y offset
     lbu a4, 16(t0)     # Loads Player's ball mode (0 - Disabled, 1 - Enabled)
 
+
+    # Checking for MaruMari
+    la t0,CURRENT_MAP             # Loads map address
+    lbu t0,4(t0)                  # and from it, loads map's number
+    li t1,1                       # Loads 1 to compare with map's number
+    beq t0,t1,PLAYER_COLLISION_MARU_MARI      # If on map 1, continue checking for MARU MARI
+        j PLAYER_COLLISION_LOOT   # Otherwise, skip this check
+
+    PLAYER_COLLISION_MARU_MARI:
+        la t3,PLYR_INFO  # Loads Maru Mari's info address
+        lbu t4,1(t3)     # Loads player's abilities
+        beqz t4, CONTINUE_PLAYER_COLLISION_MARU_MARI
+            j PLAYER_COLLISION_LOOT   # Otherwise, skip this check
+
+        CONTINUE_PLAYER_COLLISION_MARU_MARI:
+        li t3,maru_mari_x   # Loads MaruMari's current X
+        beq t3,a0,PLAYER_COLLISION_MARU_MARI_SAME_X   # If MaruMari's X is the same as the player's
+        addi t4,a0,1   # Checks player's tile to the right
+        beq t3,t4,PLAYER_COLLISION_MARU_MARI_RIGHT_X  # If MaruMari's X is to the right of player
+            j PLAYER_COLLISION_LOOT   # Otherwise, MaruMari isn't near player enough to be collected, check next
+        
+        PLAYER_COLLISION_MARU_MARI_SAME_X:
+            li t4,12
+            blt a2,t4,PLAYER_COLLISION_MARU_MARI_CHECK_Y # If player's X offset < 12, continue
+                j PLAYER_COLLISION_LOOT # Otherwise, MaruMari isn't near player enough to be collected, check next
+
+        PLAYER_COLLISION_MARU_MARI_RIGHT_X:
+            li t3,4 
+            blt t3,a2,PLAYER_COLLISION_MARU_MARI_CHECK_Y # If t3 < player offset, continue
+                j PLAYER_COLLISION_LOOT     # Otherwise, MaruMari isn't near player enough to be collected, check next
+
+        PLAYER_COLLISION_MARU_MARI_CHECK_Y:
+            li t3,maru_mari_y   # Loads MaruMari's current Y
+            addi t4,a1,1        # Checks player's base tile (Y + 1)
+            beq t3,t4,PLAYER_COLLISION_MARU_MARI_HIT  # If MaruMari's Y on player's base, it's collected
+            # If MaruMari is above/bellow player, nothing happens
+                j PLAYER_COLLISION_LOOT     # Otherwise, MaruMari isn't near player enough to be collected, check next
+
+            PLAYER_COLLISION_MARU_MARI_BELLOW:
+                li t3,2
+                blt t3,a3,PLAYER_COLLISION_MARU_MARI_HIT # If MaruMari's "Y offset" is less than the player's Y offset deal damage
+                    j PLAYER_COLLISION_LOOT     # Otherwise, MaruMari isn't near player enough to be collected, check next
+
+            PLAYER_COLLISION_MARU_MARI_HIT:
+            # Player gets Maru Mari
+                la t3,PLYR_INFO  # Loads Maru Mari's info address
+                li t4,1          # Loads 1 (1 - ball)
+                sb t4,1(t3)      # Loads player's abilities
+                    
+                csrr t1,3073                       # Gets current time for loop
+                COLLISION_SPECIAL_1_GET_LOOP:
+                    csrr t0,3073                              # Gets current time
+                    sub t0, t0, t1                            # t0 = current time - last frame's time
+                    li t2, power_up_delay                     # Loads power_up_delay
+                    bltu t0,t2, COLLISION_SPECIAL_1_GET_LOOP  # While t0 < minimum time for a frame, keep looping
+                    # j PLAYER_COLLISION_LOOT
+                
+    # Checking for loot
+    PLAYER_COLLISION_LOOT:
+    la t0,LOOT_ARRAY   # Loads loot array
+
+    li t2,0                 # resets counter
+    li t1,loot_number       # gets number of loot in game
+    PLAYER_COLLISION_LOOT_LOOP:
+        lbu t3,2(t0) # Loads enable byte
+        bnez t3,PLAYER_COLLISION_LOOT_LOOP_CONTINUE    # If enabled,
+            j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP       # Otherwise, check other loot
+
+    PLAYER_COLLISION_LOOT_LOOP_CONTINUE:
+        lbu t3,6(t0)   # Loads loot's current X
+        beq t3,a0,PLAYER_COLLISION_LOOT_LOOP_SAME_X   # If loot's X is the same as the player's
+        addi t4,a0,1   # Checks player's tile to the right
+        beq t3,t4,PLAYER_COLLISION_LOOT_LOOP_RIGHT_X  # If loot's X is to the right of player
+        addi t4,a0,-1  # Checks player's tile to the left
+        beq t3,t4,PLAYER_COLLISION_LOOT_LOOP_LEFT_X   # If loot's X is to the left of player
+        j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP # Otherwise, loot isn't near player enough to be collected, check next
+        
+        PLAYER_COLLISION_LOOT_LOOP_SAME_X:
+            lbu t3,4(t0)   # Loads loot's X offset
+            li t4,12
+            ble t3,t4,PLAYER_COLLISION_LOOT_LOOP_CHECK_Y # If t3 <= 12, continue
+                j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP # Otherwise, loot isn't near player enough to be collected, check next
+
+        PLAYER_COLLISION_LOOT_LOOP_LEFT_X: 
+            lbu t3,4(t0)   # Loads loot's X offset
+            addi t3,t3,-4  # subtracts 4 from it
+            blt t3,a2,PLAYER_COLLISION_LOOT_LOOP_CHECK_Y # If t3 < player offset, continue
+                j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP     # Otherwise, loot isn't near player enough to be collected, check next
+
+        PLAYER_COLLISION_LOOT_LOOP_RIGHT_X:
+            lbu t3,4(t0)   # Loads loot's X offset
+            addi t3,t3,4   # adds 4 to it
+            blt t3,a2,PLAYER_COLLISION_LOOT_LOOP_CHECK_Y # If t3 < player offset, continue
+                j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP     # Otherwise, loot isn't near player enough to be collected, check next
+
+        PLAYER_COLLISION_LOOT_LOOP_CHECK_Y:
+            lbu t3,8(t0)   # Loads loot's current Y
+            beq t3,a1,PLAYER_COLLISION_LOOT_LOOP_SAME_Y    # If loot's Y is the same as the player's
+            addi t4,a1,1   # Checks player's base tile (Y + 1)
+            beq t3,t4,PLAYER_COLLISION_LOOT_LOOP_HIT  # If loot's Y on player's base
+            addi t4,a1,2   # Checks bellow player's base tile (Y + 2)
+            beq t3,t4,PLAYER_COLLISION_LOOT_LOOP_BELLOW  # If loot's X is bellow player
+            # If loot is above player, nothing happens
+            j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP     # Otherwise, loot isn't near player enough to be collected, check next
+
+            PLAYER_COLLISION_LOOT_LOOP_BELLOW:
+                lbu t3,4(t0)  # Loads loot's Y offset
+                addi t4,t3,7 
+                blt t3,a3,PLAYER_COLLISION_LOOT_LOOP_HIT # If loot's "Y offset" is less than the player's Y offset deal damage
+                    j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP     # Otherwise, loot isn't near player enough to be collected, check next
+
+            PLAYER_COLLISION_LOOT_LOOP_SAME_Y:
+                beqz a4,CONTINUE_PLAYER_COLLISION_LOOT_LOOP_SAME_Y  # If not on morph ball, check it was a hit
+                # Otherwise, if on morph ball, loot won't damage from above                
+                    j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP     # Otherwise, loot isn't near player enough to be collected, check next
+
+                CONTINUE_PLAYER_COLLISION_LOOT_LOOP_SAME_Y:
+                    lbu t3,4(t0)      # Loads loot's Y offset
+                    addi t3,t3, 12 
+                    bgt t3,a3,PLAYER_COLLISION_LOOT_LOOP_HIT # If loot's "Y offset" is greater than the player's Y offset deal damage
+                        j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP # Otherwise, loot isn't near player enough to be collected, check next
+
+            PLAYER_COLLISION_LOOT_LOOP_HIT:
+            # Player gets hit (if player was hit from the same X by a ripper, it'll end in this part of the code)
+                sb zero,2(t0)     # Disables loot
+                lbu t3,3(t0)      # Loads loot's type
+                beqz t3, PLAYER_COLLISION_LOOT_LOOP_HIT_ENERGY  # If it's energy
+                # Otherwise it is missile loot
+                    la t3,PLYR_INFO_2
+                    lbu t4,2(t3)       # Loads number of missiles
+                    addi t4,t4,5
+                    li t5,100
+                    blt t4,t5,STORE_NEW_MISSILE
+                        li t4,100      # Sets missile number to maximum
+                    STORE_NEW_MISSILE:
+                        sb t4,2(t3)    # Stores updated number of missiles
+                        j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP # Go to next loot       
+
+                PLAYER_COLLISION_LOOT_LOOP_HIT_ENERGY:
+                # Otherwise it is missile loot
+                    la t3,PLYR_INFO
+                    lbu t4,0(t3)       # Loads health
+                    addi t4,t4,5
+                    li t5,99
+                    blt t4,t5,STORE_NEW_ENERGY
+                        li t4,99       # Sets missile number to maximum
+                    STORE_NEW_ENERGY:
+                        sb t4,0(t3)    # Stores updated number of missiles
+                        j NEXT_IN_PLAYER_COLLISION_LOOT_LOOP # Go to next loot           
+
+        NEXT_IN_PLAYER_COLLISION_LOOT_LOOP: 
+            addi t0,t0,ripper_size   # Going to the next ripper's address                                  
+            addi t2,t2,1             # Iterating counter by 1                                   
+            bge t2,t1, PLAYER_COLLISION_ENEMIES # If all of the rippers were checked, end loop                                  
+            j PLAYER_COLLISION_LOOT_LOOP # otherwise, go back to the loop's beginning         
+
+    PLAYER_COLLISION_ENEMIES:
     la t0,CURRENT_MAP             # Loads map address
     lbu t0,4(t0)                  # and from it, loads map's number
     li t1,7                       # Loads 7 to compare with map's number
@@ -830,17 +993,27 @@ BEAM_COLLISION: # ebreak
                         lbu a4,6(t0)   # Loads zoomer's Y
                         li a5,0        # No Delay
                         # Storing Registers on Stack
-                            addi sp,sp,-4
+                            addi sp,sp,-8
                             sw a0,0(sp)
+                            sw t0,4(sp)
                         # End of Stack Operations
+
                             li a0, 0       # Small explosion
                             call EXPLOSION_SPAWN   # Summons explosion
+
+                            lw t0,4(sp)    # Restores zoomer's address
+                            lbu a0,11(t0)  # Loads zoomer's loot value
+                            lbu a1,2(t0)   # Loads zoomer's X offset
+                            lbu a2,3(t0)   # Loads zoomer's Y offset
+                            lbu a3,4(t0)   # Loads zoomer's X 
+                            lbu a4,6(t0)   # Loads zoomer's Y
+                            call LOOT_SPAWN   # Summons explosion
+
                         # Procedure finished: Loading Registers from Stack
                             lw a0,0(sp)
-                            addi sp,sp,4
+                            # lw t0,4(sp)   -- won't need
+                            addi sp,sp,8
                         # End of Stack Operations  
-                        
-                        # LOOT SPAWN
                         # j BEAM_COLLISION_ZOOMER_LOOP_HIT_DISABLE_BEAM
 
                     BEAM_COLLISION_ZOOMER_LOOP_HIT_DISABLE_BEAM:
@@ -1336,17 +1509,29 @@ BOMB_COLLISION:
                     lbu a4,6(t0)   # Loads zoomer's Y
                     li a5,4        # Delay
                     # Storing Registers on Stack
-                        addi sp,sp,-4
+                        addi sp,sp,-8
                         sw a0,0(sp)
+                        sw t0,4(sp)
                     # End of Stack Operations
+
                         li a0, 0       # Small explosion
                         call EXPLOSION_SPAWN   # Summons explosion
+
+                        lw t0,4(sp)    # Restores zoomer's address
+                        lbu a0,11(t0)  # Loads zoomer's loot value
+                        lbu a1,2(t0)   # Loads zoomer's X offset
+                        lbu a2,3(t0)   # Loads zoomer's Y offset
+                        lbu a3,4(t0)   # Loads zoomer's X 
+                        lbu a4,6(t0)   # Loads zoomer's Y
+                        call LOOT_SPAWN   # Summons explosion
+
                     # Procedure finished: Loading Registers from Stack
                         lw a0,0(sp)
-                        addi sp,sp,4
+                        # lw t0,4(sp)   -- won't need
+                        addi sp,sp,8
                     # End of Stack Operations  
                     
-                        j END_BOMB_COLLISION  # Beam was deactivated, end procedure here   
+                    j END_BOMB_COLLISION  # Beam was deactivated, end procedure here   
           
 
         NEXT_IN_BOMB_COLLISION_ZOOMER_LOOP: 
@@ -3061,10 +3246,6 @@ li t6,0  # Sets t6 to 0 (no doors detected)
 
         CONTINUE_CHECK_MAP_COLLISION_2:
             lbu t1, 0(a1) # Loads tile from current map
-########### CHECK THIS OUT #######################################
-		    li t0, 251     # Value where special tiles start 
-		    bge t1, t0, COLLISION_SPECIAL_1 # If it's a special tile
-#####################################################################
             beqz a4, SKIP_DOOR_CHECK_MAP_COLLISION  # If a4 = 0 (don't consider door), skip door check 
                 li t0,40   # Tile where doors start
                 blt t1,t0, NOT_DOOR_CHECK_MAP_COLLISION # If current tile isn't a door   
@@ -3080,40 +3261,6 @@ li t6,0  # Sets t6 to 0 (no doors detected)
                     li t0,1
                     beq t0,t1, COLLISION_BREAKABLE   # If tile is breakable, there needs to be a check if it was broken
                     j CONTINUE_CHECK_MAP_COLLISION_3 # Otherwise, continue checking collision
-
-            COLLISION_SPECIAL_1:
-                bnez a3,CONTINUE_COLLISION_SPECIAL_1 # If on vertical check, continue
-                # Otherwise, only if on last iteration of horizontal check should you continue
-                addi t2,a2,-1
-                beqz t2,CONTINUE_COLLISION_SPECIAL_1
-                    j CONTINUE_CHECK_MAP_COLLISION_3
-                CONTINUE_COLLISION_SPECIAL_1:    
-                    bnez t5,COLLISION_SPECIAL_1_NOT_MARU_MARI
-                    li t0,255
-                    bne t0,t1,COLLISION_SPECIAL_1_NOT_MARU_MARI
-                        la t1,MARU_MARI_INFO # Loads Maru Mari's info address
-                        lbu t0, 0(t1)        # Loads enable byte
-                        beqz t0,COLLISION_SPECIAL_1_BACKGROUND # If disabled, skip
-                        # Otherwise, pick up MaruMari
-                            sb zero, 0(t1)   # disables Maru Mari
-                            li t0,1          # Loads 1 (1- ball)
-                            la t1,PLYR_INFO  # Loads Maru Mari's info address
-                            sb t0,1(t1)      # New ability
-                            j COLLISION_SPECIAL_1_GET
-                    
-                    COLLISION_SPECIAL_1_GET:  # Will go to a loop and play a tune
-                        csrr t1,3073                       # Gets current time for loop
-                        COLLISION_SPECIAL_1_GET_LOOP:
-                            csrr t0,3073                              # Gets current time
-                            sub t0, t0, t1                            # t0 = current time - last frame's time
-                            li t2, power_up_delay                     # Loads power_up_delay
-                            bltu t0,t2, COLLISION_SPECIAL_1_GET_LOOP  # While t0 < minimum time for a frame, keep looping
-                            j CONTINUE_CHECK_MAP_COLLISION_3
-                    COLLISION_SPECIAL_1_NOT_MARU_MARI:
-                    COLLISION_SPECIAL_1_BACKGROUND:
-                        # This is only reached if there was an error or tile is disabled
-                        # a0 should still be 1, otherwise procedure would've ended before
-                        j CONTINUE_CHECK_MAP_COLLISION_3
 
             COLLISION_BREAKABLE:
                 la t0,NEXT_MAP # Loads NEXT_MAP address

@@ -17,9 +17,28 @@
 SETUP:
     call MUSIC.SETUP
 
+    # Checking scente
+    li t1,1                # Menu 2 scene number
+    beq t1,s2,SETUP_MENU2  # If on game menu 2
+
+    li t1,2                # Game scene number
+    beq t1,s2,SETUP_GAME   # If on game
+
+    li t1,3                     # Game over scene number
+    beq t1,s2,SETUP_GAME_OVER   # If on game over
+
+    SETUP_MENU2:
+        j MENU2_LOOP
+
+    SETUP_GAME_OVER:
+        #j GAME_OVER_LOOP
+        j GAME_OVER_LOOP_PREP
+
+    SETUP_GAME:
+
     # Setting Render Next Map Door to zero
     la t0, NEXT_MAP   # Loads NEXT_MAP address
-    sb zero,10(t1)    # Stores 0 on Render Next Map Door (in order to render current map's doors properly)
+    sb zero,10(t0)    # Stores 0 on Render Next Map Door (in order to render current map's doors properly)
 
     # Getting informations about Current Map
     la t0, MAP_INFO # Loads Map Info address
@@ -679,13 +698,28 @@ SETUP:
 
         j END_SETUP
 
-END_SETUP:    
+END_SETUP:
     la t0, CURRENT_MAP   # Loads CURRENT_MAP address
     lbu t1,5(t0)         # Loads rendering byte     
     li t2, 3             # Loads 3 (switch map through door) to be compared with
     bne t1,t2, END_SETUP_NORMAL # If rendering byte != 3, return to game loop
         j LEAVE_DOOR_ANIMATION_PREP # Otherwise, finish map switch
+    
     END_SETUP_NORMAL:
+        # Resetting information  --  player coordinates have already been reset
+        bnez s3,SKIP_ABILITY_RESET   # If clicking on continue, habilities will be kept
+            la t0,PLYR_INFO
+            sb zero,1(t0)     # Resets ability information
+        SKIP_ABILITY_RESET:
+            la t0,MOVE_X
+            sw zero,0(t0)  # Resets MOVE_X, MOVE_Y,JUMP byte and Player input byte
+
+            la t0,PLYR_INFO_2
+            sw zero,0(t0)
+            sw zero,4(t0)
+                
+            call RESET_ENEMIES
+
     j GAME_LOOP
 
 

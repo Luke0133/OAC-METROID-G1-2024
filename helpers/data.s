@@ -19,7 +19,7 @@
 #      .eqv KDMMIO_ADDRESS 0xFF200000                                                         #
 #                                                                                             #
 #  For FPGRARS:                                                                               #
-      .eqv KDMMIO_ADDRESS 0xFF210000                                                         #
+     .eqv KDMMIO_ADDRESS 0xFF210000                                                         #
 #                                                                                             #
 #  For FPGA (DE1, using custom processor RISCV-V24):                                          #
 #      --> go to helpers.s, comment "input.s" and uncomment"input_fpga.s                      # 
@@ -28,7 +28,7 @@
 .eqv RandIntRangeEcall 142
 
 #MUSIC.INFO:  .byte 31,0
-MUSIC_NOTAS: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60,397,62,3573,62,397,60,397,62,397,64,2382,59,1191,59,397,64,397,65,397,67,4764,65,2382,64,2382,65,3573,69,397,67,397,65,397,67,2382,64,1191,64,397,67,397,71,397,73,9528
+MUSIC_NOTAS: .word 62,3573,62,397,60,397,62,397,64,2382,59,1191,53,397,59,397,60,397,62,3573,62,397,60,397,62,397,64,2382,59,1191,59,397,64,397,65,397,67,4764,65,2382,64,2382,65,3573,69,397,67,397,65,397,67,2382,64,1191,64,397,67,397,71,397,73,9528,0,0
 MUSIC_STATUS:  .word 0,0
 
 
@@ -63,7 +63,10 @@ MUSIC_STATUS:  .word 0,0
 ####### .eqv for player's sprite #######
 .eqv green 32
 .eqv cyan 240
-					   
+START_TXT: .string "START"
+CONTINUE_TXT: .string "CONTINUE"
+GAME_OVER_TXT: .string "GAME  OVER"			
+
 ####### Map informations ####### 
 CURRENT_MAP: .word 0  # Stores the address of current map
 MAP_INFO: .byte 1, 0, # Current Map's Number, render byte (0 - don't render, 1 - render once, 2 - render twice, 3 - switch map (through door), 4 - switch map (through cheat input))
@@ -76,14 +79,15 @@ NEXT_MAP: .word 0    # Stores the address of next map
 NEXT_MAP_INFO: .byte 0, 0 # Next Map's Number, Number of iterations on switch
                      0, 0 # x of matrix, y of matrix
                      0, 0 # X dislocation, next door number
-			   0, 0 # Render Next Map Door, Player's MOVE_X for switch
+			      0, 0 # Render Next Map Door, Player's MOVE_X for switch
 
 
 ####### Player informations #########
-PLYR_INFO: .byte 30, 3 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
+.eqv initial_player_health 30
+PLYR_INFO: .byte initial_player_health, 3 # Stores player's health points, number of habilities (0 - none, 1 - ball, 2 - ball + bomb)
 PLYR_POS:  .half 152, 0  # Stores Player's current and old top left X respectively, both related to the screen  
            .byte 160, 0  # Stores Player's current and old top left Y respectively, both related to the screen 
-		     0, 0    # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+		       0, 0    # Stores Player's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
 
 PLYR_MATRIX: .byte 33, 0, 10, 0 # Stores Player's top left new and old X and new and old Y respectively, all related to the map matrix 
 PLYR_STATUS: .byte 0,0,0,0 # Sprite's Number, Horizontal Direction (0 = Right, 1 = Left), Vertical Direciton (0 - Normal, 1 - Facing Up), Ground Postition (0 - On Ground, 1 - Freefall)
@@ -96,7 +100,7 @@ PLYR_INPUT: .byte 0  # 0 If no input, 1 if input, 2 if input but can't move hori
 
 .eqv damage_jump -3
 .eqv damage_iframes 20
-PLYR_INFO_2: .byte 0,0,0    # Missile mode (0 - disabled, 1 - enabled), cooldown to switch, number of missiles
+PLYR_INFO_2: .byte 0,0,0  # Missile mode (0 - disabled, 1 - enabled), cooldown to switch, number of missiles
                    0,0,0  # Taking damage (0 - no, 1 - yes), DAMAGE_MOVE_X (+-4), damage cooldown, 
                    0,0    # reset move_x (3 -> 0), render status (0 - don't, 1 - render normally)
                    
@@ -112,7 +116,7 @@ JUMP_SPEED: .float -9
 .eqv power_up_delay 2000
 .eqv maru_mari_x 15
 .eqv maru_mari_y 9
-MARU_MARI_INFO: 1,0 # Whether power up is enabled or not, sprite status (0 -> 1 -> 2 -> 3 -> 0)
+MARU_MARI_INFO: 0 # Sprite status (0 -> 1 -> 2 -> 3 -> 0)
 
 ## BEAM_ARRAY ##
 BEAMS_ARRAY: .byte 0   # Attack cooldown 
@@ -191,6 +195,34 @@ Explosion_7: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion typ
 .eqv big_explosion 7      # Number of loops before freeing big explosion
 .eqv small_explosion 3    # Number of loops before freeing small explosion
 
+LOOT_ARRAY:
+Loot_0: .half  0            # Times Loot has been rendered (lifetime)
+        .byte  0, 0,        # Rendering (0 - Disabled, 1 - Enabled), loot type (0 - energy, 1 - missile), 
+               0, 0         # Stores Loot's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+               0, 0, 0, 0   # Stores Loot's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Loot_1: .half  0            # Times Loot has been rendered (lifetime)
+        .byte  0, 0,        # Rendering (0 - Disabled, 1 - Enabled), loot type (0 - energy, 1 - missile), 
+               0, 0         # Stores Loot's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+               0, 0, 0, 0   # Stores Loot's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Loot_2: .half  0            # Times Loot has been rendered (lifetime)
+        .byte  0, 0,        # Rendering (0 - Disabled, 1 - Enabled), loot type (0 - energy, 1 - missile), 
+               0, 0         # Stores Loot's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+               0, 0, 0, 0   # Stores Loot's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+Loot_3: .half  0            # Times Loot has been rendered (lifetime)
+        .byte  0, 0,        # Rendering (0 - Disabled, 1 - Enabled), loot type (0 - energy, 1 - missile), 
+               0, 0         # Stores Loot's X and Y offset (0, 4, 8 or 12), respectively (one of them is always 0 in this game)
+               0, 0, 0, 0   # Stores Loot's top left new and old X and new and old Y respectively, all related to the map matrix 
+
+
+.eqv loot_number 4   # total number of explosions 
+.eqv loot_size 10    # number of bytes per explosion
+.eqv loot_time 100   # 5 seconds for loot to despawn
+
+
+
 #####     Breakable block   ######
 Blocks: .word 0 # Holds the current "BlocksA" label based on the current map (0 if none exist in current map)
 Blocks_Next: .word 0 # Holds the current "BlocksA" label based on next map (0 if none exist on next map)
@@ -226,7 +258,7 @@ Zoomer1_1: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer1_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            9, 0, 7, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 1, 1, 0   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+           0, 1, 1, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer1_3: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            55, 0, 2, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
@@ -611,6 +643,29 @@ Frame7_0: 19,5,2,2,0,30
 .eqv resetmap7plyrY 6
 .eqv resetmap7plyrXoff 0
 .eqv resetmap7plyrYoff 0
+
+
+################################################        UI elements        ################################################
+
+Energy_UI: # 24 x 8
+.byte 234,234,234,234,234,234,234,199,234,234,199,199,199,234,234,199,199,199,199,199,199,199,199,199,
+234,234,209,209,209,209,209,199,234,234,234,199,199,234,234,199,199,199,199,199,199,199,199,199,
+234,234,199,199,199,199,199,199,234,234,234,234,199,234,234,199,199,199,199,199,199,199,199,199,
+234,234,234,234,234,234,199,199,234,234,234,234,234,234,234,199,199,103,103,199,199,103,103,199,
+234,234,209,209,209,209,199,199,234,234,209,234,234,234,234,199,199,103,103,199,199,103,103,199,
+234,234,199,199,199,199,199,199,234,234,199,209,234,234,234,199,199,14,14,199,199,14,14,199,
+234,234,234,234,234,234,234,199,234,234,199,199,209,234,234,199,199,199,199,199,199,199,199,199,
+209,209,209,209,209,209,209,199,209,209,199,199,199,209,209,199,199,199,199,199,199,199,199,199,
+
+Select_UI: # 8 x 8
+.byte 234,234,234,234,234,234,234,78,
+234,78,78,78,78,78,234,78,
+234,78,0,0,0,0,234,78,
+234,78,0,0,0,0,234,78,
+234,78,0,0,0,0,234,78,
+234,78,0,0,0,0,234,78,
+234,234,234,234,234,234,234,78,
+78,78,78,78,78,78,78,78,
 
 ################################################        Tiles        ################################################
 # Stores all tiles used in the game, that can be rendered by checking the value on the map matrixes (search "Matrixes")
@@ -1617,7 +1672,7 @@ Map1: # 60 x 15 (Horizontal Map) -- 900 bytes
 5,5,5,7,5,12,5,5,5,0,0,0,0,0,0,0,0,0,0,12,5,11,5,5,0,0,0,0,0,0,7,5,0,0,0,7,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,48,4,
 5,5,11,5,5,5,5,7,5,0,0,0,0,0,0,0,0,0,0,5,5,7,5,12,0,0,0,0,0,0,5,12,0,0,0,5,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,50,4,
 12,5,7,5,12,5,11,5,5,0,0,0,0,0,0,0,0,0,0,0,12,5,11,5,5,0,0,0,0,0,12,12,0,0,0,12,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,11,11,5,9,9,
-5,12,5,5,5,5,7,5,12,0,0,0,0,0,0,255,0,0,0,0,5,5,7,5,12,0,0,0,0,0,5,5,0,0,0,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,5,
+5,12,5,5,5,5,7,5,12,0,0,0,0,0,0,0,0,0,0,0,5,5,7,5,12,0,0,0,0,0,5,5,0,0,0,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,5,
 5,5,5,7,5,12,5,5,5,0,0,0,0,0,0,18,0,0,0,0,0,12,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,12,
 5,5,11,5,5,5,5,7,5,0,0,0,10,0,0,18,0,0,10,0,0,5,5,7,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,12,
 12,5,7,5,12,5,11,5,5,0,0,0,18,18,0,20,0,18,18,0,0,0,0,0,0,0,0,0,0,0,18,18,18,18,18,18,18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,
@@ -3713,6 +3768,73 @@ Explosions_2: # 32 x 32, Height per sprite: 32
 # --> Total ammount of data: 1024 bytes
 #
 ######################################################################################################################
+Energy: # 16 x 32, Height per sprite: 16
+.byte 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,14,14,14,14,199,199,199,199,199,199,
+199,199,199,199,199,14,14,14,14,14,14,199,199,199,199,199,
+199,199,199,199,14,14,14,199,199,14,14,14,199,199,199,199,
+199,199,199,199,14,14,199,103,103,199,14,14,199,199,199,199,
+199,199,199,199,14,14,199,103,103,199,14,14,199,199,199,199,
+199,199,199,199,14,14,14,199,199,14,14,14,199,199,199,199,
+199,199,199,199,199,14,14,14,14,14,14,199,199,199,199,199,
+199,199,199,199,199,199,14,14,14,14,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,209,209,209,209,199,199,199,199,199,199,
+199,199,199,199,199,209,209,209,209,209,209,199,199,199,199,199,
+199,199,199,199,209,209,209,199,199,209,209,209,199,199,199,199,
+199,199,199,199,209,209,199,234,234,199,209,209,199,199,199,199,
+199,199,199,199,209,209,199,234,234,199,209,209,199,199,199,199,
+199,199,199,199,209,209,209,199,199,209,209,209,199,199,199,199,
+199,199,199,199,199,209,209,209,209,209,209,199,199,199,199,199,
+199,199,199,199,199,199,209,209,209,209,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+
+Missile_Collectable: # 16 x 32, Height per sprite: 16
+.byte 199,199,199,199,199,199,199,103,103,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,14,14,199,199,199,199,199,199,199,
+199,199,199,199,199,199,103,14,14,103,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,103,103,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,14,14,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,14,14,199,199,199,199,199,199,199,
+199,199,199,199,103,199,14,103,14,14,199,103,199,199,199,199,
+199,199,199,199,103,199,32,103,14,32,199,103,199,199,199,199,
+199,199,199,199,103,103,103,103,14,103,103,103,199,199,199,199,
+199,199,199,199,103,199,14,103,14,14,199,103,199,199,199,199,
+199,199,199,199,199,199,199,103,14,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,234,234,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,209,209,199,199,199,199,199,199,199,
+199,199,199,199,199,199,234,209,209,234,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,234,234,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,209,209,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,209,209,199,199,199,199,199,199,199,
+199,199,199,199,234,199,209,234,209,209,199,234,199,199,199,199,
+199,199,199,199,234,199,255,234,209,255,199,234,199,199,199,199,
+199,199,199,199,234,234,234,234,209,234,234,234,199,199,199,199,
+199,199,199,199,234,199,209,234,209,209,199,234,199,199,199,199,
+199,199,199,199,199,199,199,234,209,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
 
 MaruMari: # 16 x 64, Height per sprite: 16
 # 1024 bytes -- 1 KiB 

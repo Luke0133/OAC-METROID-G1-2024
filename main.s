@@ -12,8 +12,10 @@ DEBUG11: .string "pasou\n"
 		
 .text
 main:
+	li s0, 0  # Initial frame
 	li s1, 0  # Reseting time
-	li s2, 0  # Game loop state 
+	li s2, 1  # Game loop state 
+	li s3, 0  # Select state
 
 	la t0, GRAVITY_FACTOR
 	flw fs0,0(t0)
@@ -30,6 +32,9 @@ main:
 #  --------------          saved registers          --------------  #
 #       s0 = current frame                                          #
 #       s1 = last frame time                                        #
+#       s2 = scene player's at (0 - menu1, 1 - menu2, 2 - game,     #
+#            3 - game over)                                         #
+#       s3 = menu select (for menu2)                                #
 #       s11 = stores return address in some procedures              #
 #                                                                   #
 #  --------------          float registers          --------------  #
@@ -69,6 +74,8 @@ GAME_LOOP:
 
 	call UPDATE_DOORS       # Updates doors
 	call MAP_MOVE_RENDER    # Renders map when necessary
+
+	call MARU_MARI_OPERATIONS
 	
 	li a0,0
 	call ENEMY_OPERATIONS
@@ -81,17 +88,19 @@ GAME_LOOP:
 	li a1, 0     # Rendering full player
 	call RENDER_PLAYER	
 
+	call LOOT_OPERATIONS
+
 	call BOMBS_OPERATIONS
 	call EXPLOSIONS_OPERATIONS
-
-	li a0, 0     # Rendering UI operation
-	call RENDER_UI	
 
 	call RENDER_DOOR_FRAMES
 
 	call PLAYER_COLLISION  # Will see if player was hit by an enemy
 
 	call BEAM_COLLISION  # Will see if beam hit an enemy
+
+	li a0, 0     # Rendering UI operation
+	call RENDER_UI	
 
 	# Switching Frame on Bitmap Display and getting current time to finish loop											
 	li t0,0xFF200604	# Loads Bitmap Display address
@@ -102,9 +111,112 @@ GAME_LOOP:
 	j GAME_LOOP	        # Returns to loop's beginning
 
 
+MENU2_LOOP:
+### Frame rate check
+    csrr a0,3073
+    sub a0, a0, s1 				# a0 = current time - last frame's time
+    li t0, frame_rate			# Loads frame rate (time (in ms) per frame)
+    bltu a0,t0, MENU2_LOOP  # While a0 < minimum time for a frame, keep looping 
+
+### Game operations
+    xori s0,s0,1		    # Switches frame value (register)
+
+	call INPUT_CHECK	    # Checks player's input
+
+	li a0,0               # Black
+	li a1,0               # Starting X (0)
+	li a2,0               # Starting Y (0)
+	li a3,screen_width    # Gets width
+	li a4,screen_height   # Gets height
+	mv a5,s0              # Gets frame
+	li a6,0               # Render per word
+	call RENDER_COLOR
+
+	la a0,Select_UI
+	li a1,112             # Starting X (0)
+	li a2,97              # Starting Y (0)
+	beqz s3,SKIP_SELECT_CONTINUE
+		addi a2,a2,24     # If selecting continue, render further down
+	SKIP_SELECT_CONTINUE:
+	li a3,8               # Gets width
+	li a4,8               # Gets height
+	mv a5,s0              # Gets frame
+	li a6,0               # Only one sprite, so status is 0
+	li a7,0               # Normal render
+	call RENDER_WORD
+
+	la a0,START_TXT
+	li a1,128             # a1 = column
+	li a2,96              # a2 = row 
+	li a3,0x00EA          # a3 = colors 
+	mv a4,s0              # a4 = frame
+	li a5,1               # Font
+	li a7,104 # syscal for 'print integer'
+	ecall
+
+	la a0,CONTINUE_TXT
+	li a1,128             # a1 = column
+	li a2,120             # a2 = row 
+	li a3,0x00EA          # a3 = colors 
+	mv a4,s0              # a4 = frame
+	li a5,1               # Font
+	li a7,104 # syscal for 'print integer'
+	ecall
+
+	# Switching Frame on Bitmap Display and getting current time to finish loop											
+	li t0,0xFF200604	# Loads Bitmap Display address
+	sw s0,0(t0)         # Stores new frame value (from s0) on Bitmap Display
+
+	csrr s1,3073        # New time is stored in s1, in order to be compared later		
+	
+	j MENU2_LOOP	# Returns to loop's beginning
 
 
 
+GAME_OVER_LOOP_PREP:
+### Frame rate check
+    csrr a0,3073
+    sub a0, a0, s1 				# a0 = current time - last frame's time
+    li t0, 1000			# Loads frame rate (time (in ms) per frame)
+    bltu a0,t0, GAME_OVER_LOOP_PREP  # While a0 < minimum time for a frame, keep looping 
+
+GAME_OVER_LOOP:
+### Frame rate check
+    csrr a0,3073
+    sub a0, a0, s1 				# a0 = current time - last frame's time
+    li t0, frame_rate			# Loads frame rate (time (in ms) per frame)
+    bltu a0,t0, GAME_OVER_LOOP  # While a0 < minimum time for a frame, keep looping 
+
+### Game operations
+    xori s0,s0,1		    # Switches frame value (register)
+
+	call INPUT_CHECK	    # Checks player's input
+
+	li a0,0               # Black
+	li a1,0               # Starting X (0)
+	li a2,0               # Starting Y (0)
+	li a3,screen_width    # Gets width
+	li a4,screen_height   # Gets height
+	mv a5,s0              # Gets frame
+	li a6,0               # Render per word
+	call RENDER_COLOR
+
+	la a0,GAME_OVER_TXT
+	li a1,120             # a1 = column
+	li a2,116             # a2 = row 
+	li a3,0x00ff          # a3 = colors 
+	mv a4,s0              # a4 = frame
+	li a5,1               # Font
+	li a7,104 # syscal for 'print integer'
+	ecall
+
+	# Switching Frame on Bitmap Display and getting current time to finish loop											
+	li t0,0xFF200604	# Loads Bitmap Display address
+	sw s0,0(t0)         # Stores new frame value (from s0) on Bitmap Display
+
+	csrr s1,3073        # New time is stored in s1, in order to be compared later		
+	
+	j GAME_OVER_LOOP	# Returns to loop's beginning
 .include "helpers/helpers.s"
 
 

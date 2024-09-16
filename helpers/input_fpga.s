@@ -20,12 +20,64 @@ INPUT_CHECK:
     # Uses normal KDMMIO_Ctrl address and the KDMMIO_Data (KDMMIO_Ctrl + 4) to detect cheat inputs
     li t1,KDMMIO_Ctrl  	  # KDMMIO Address
     lw t0, 0(t1)	      # Reads the Keyboard Control bit
-    andi t0, t0, 0x0001	  # Masks the least significant bit
+    andi t0, t0, 0x0001	  # Masks the least significant bit  
 
-    bnez t0, CONTINUE_CHECK    # if an input is detected, continue checking
-    j NO_CHEAT_INPUT 		   # otherwise no input was detected, but check for other non-cheat inputs 
+    
+    # Checking scene   
+    li t2,1                # Menu2 number
+    beq t2,s2,MENU2_CHECK  # If on menu2
 
-    CONTINUE_CHECK:
+    li t2,2                # Game scene number
+    beq t2,s2,GAME_CHECK   # If on game
+
+    li t2,3                     # Game over scene number
+    beq t2,s2,GAME_OVER_CHECK   # If on game over
+
+    GAME_CHECK:
+        bnez t0, CONTINUE_GAME_CHECK    # If an input is detected, continue checking
+        j NO_CHEAT_INPUT 		        # otherwise no input was detected, but check for other non-cheat inputs 
+
+    GAME_OVER_CHECK:
+        beqz t0, END_GAME_OVER_CHECK   # If no input is detected, end procedure
+        # If there was any input at all, change scene to menu
+            li s3,0
+            li s2,1   
+        END_GAME_OVER_CHECK:
+            j END_INPUT_CHECK          # end procedure
+
+    MENU2_CHECK:
+        bnez t0, CONTINUE_MENU2_CHECK       # If any input is detected, continue
+        MENU2_NO_INPUT:
+            j END_INPUT_CHECK               # end procedure
+
+        CONTINUE_MENU2_CHECK:
+            lw t0, 4(t1)   # Reads key value
+
+            li t1, 'w'	   # Loads ascii value of 'w' key
+            bne t0, t1, CHECK_INPUT.MENU2_S
+                li s3,0
+                j END_INPUT_CHECK               # end procedure
+
+            CHECK_INPUT.MENU2_S:
+            li t1, 's'	# Loads ascii value of 's' key
+            bne t0, t1, CHECK_INPUT.MENU2_ENTER
+                li s3,1
+                j END_INPUT_CHECK               # end procedure
+
+            CHECK_INPUT.MENU2_ENTER:
+            li t1, '\n'	# Loads ascii value of ENTER key
+            bne t0, t1, MENU2_NO_INPUT
+                la t0,PLYR_INFO
+                li t1, initial_player_health
+                sb t1,0(t0)     # Map 1
+                la t0, MAP_INFO # Loads Map Info address
+                li t1,1         # Map 1
+                sb t1, 0 (t0)   # Stores map 1 number
+                li s2,2   
+                j SETUP                         # end procedure by going to setup
+
+
+    CONTINUE_GAME_CHECK:
     lw t0, 4(t1)   # Reads key value
     # CHEAT INPUTS:
     CHECK_INPUT.1:
@@ -69,7 +121,7 @@ INPUT_CHECK:
     j INPUT.O
 
     CHECK_INPUT.0:
-    li t1, "0"	
+    li t1, '0'	
     bne t0,t1, GOTO_NO_CHEAT_INPUT
     j INPUT.0 	
 
@@ -357,7 +409,7 @@ NO_CHEAT_INPUT:
         li a6,1            # Sets a6 to 1 (a key was pressed)
         lb t4, 4(a0)       # loads ball mode 
         beqz t4, K.SHOOT   # If standing
-            lbu t3,-1(a2)  # Loads number of abilities
+            lbu t3,-1(a1)  # Loads number of abilities
             li t1,3        # Number where bomb ability is aquired
             bge t3,t1,K.PLACE_BOMB   # If player can place bombs
                 j CHECK_INPUT.J      # otherwise, skip it

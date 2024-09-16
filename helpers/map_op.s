@@ -477,6 +477,7 @@ SWITCH_MAP:
 		la t1, NEXT_MAP         # Gets NEXT_MAP address
 		li t2,1                 # Loads 1 in order to render Next Map's Door
 		sb t2,10(t1)            # Stores 1 on Render Next Map Door
+		
 		lw a0,0(t1)	            # Loads Next Map's address
 		lbu a2, 7(t1)           # Loads current Y on Map (starting Y on Matrix (top left))	
 		lbu a3, 8(t0)           # Loads current X offset on Map

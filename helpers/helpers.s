@@ -6,6 +6,7 @@
 .include "render.s"		
 #.include "renderold.s"	
 .include "player_attacks.s"
+.include "entities_op.s"
 .include "enemies.s"							
 .include "SYSTEMv24.s"
 .include "map_op.s"

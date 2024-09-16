@@ -601,23 +601,38 @@ RENDER_PLAYER:
 #########################################################################	
 
 RENDER_UI: 
-	mv s11, ra	# Moves ra to s11 -- so that we don't need to use the stack
-	call RENDER_LIFE_POINTS
-	mv ra, s11
-	ret
-	
-RENDER_LIFE_POINTS:
+# Storing Registers on Stack
+    addi sp,sp,-4
+    sw ra,0(sp)
+# End of Stack Operations
+
+	la a0, Energy_UI    # Image address
+	li a1,24            # Starting X (24)
+	li a2,32            # Starting Y (32)
+	li a3,24            # Gets width
+	li a4,8             # Gets height
+	mv a5,s0            # Gets frame
+	li a6,0             # Only one sprite, so there's no status
+	li a7,0             # Normal render
+	call RENDER_WORD
+
 	la t0, PLYR_INFO
-	lbu a0, 0(t0)
-	#a3 = bgr fundo e bgr frente no a4
-	li a1,32 # a1 = column
-	li a2,28 # a2 = row 
-	li a3,0xc7ff # a3 = colors 
-	mv a4,s0 # a4 = frame
-	li a5,1
+	lb a0, 0(t0)          # Loads player's health
+	bge a0,zero,SKIP_LIFE_CORRECTION
+		li a0,0
+	SKIP_LIFE_CORRECTION:
+	li a1,48              # a1 = column
+	li a2,32              # a2 = row 
+	li a3,0xc7ff          # a3 = colors 
+	mv a4,s0              # a4 = frame
+	li a5,1               # Font
 	li a7,101 # syscal for 'print integer'
 	ecall
 
+# Procedure finished: Loading Registers from Stack
+	lw ra,0(sp)
+	addi sp,sp,4
+# End of Stack Operations   
 	ret
 
 ##################            RENDER ENTITY             ##################
@@ -1160,11 +1175,6 @@ RENDER_MAP_LOOP:
 	j CONTINUE_RENDER_MAP
 
 	NotBackground:
-########### CHECK THIS OUT #######################################
-		li t0, 251     # Value where special tiles start 
-		bge t1, t0, RENDER_SPECIAL # If it's a special tile
-#####################################################################
-
 		li t0, 40      # Value where doors start
 		bge t1, t0, RENDER_DOOR # If it's a door
 		li t0,1
@@ -1175,22 +1185,6 @@ RENDER_MAP_LOOP:
 		add t0,t0,t1   # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles)
 		mv t4,zero     # t4 will hold the tile's sprite status (which will be zero)
 		j CONTINUE_RENDER_MAP
-	
-	RENDER_SPECIAL:
-		li t0,255
-		bne t0,t1,NOT_MARU_MARI
-			la t1,MARU_MARI_INFO # Loads Maru Mari's info address
-			lbu t0, 0(t1)        # Loads enable byte
-			beqz t0,RENDER_BACKGROUND # If disabled, skip
-			# Otherwise, render MaruMari
-				la t0,MaruMari  # Loads MaruMari tile address
-				lbu t4, 1(t1)   # Loads status sprite
-				j CONTINUE_RENDER_MAP
-		NOT_MARU_MARI:
-		RENDER_BACKGROUND:
-			# This is only reached if there was an error or tile is disabled
-			mv t1,zero # so background color will be rendered
-			j CONTINUE_RENDER_MAP
 
 	RENDER_BREAK_BLOCK:
 		la t4,NEXT_MAP # Loads NEXT_MAP address

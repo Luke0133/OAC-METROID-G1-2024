@@ -5,12 +5,71 @@ INPUT_CHECK:
     lw t0, 0(t1)	      # Reads the Keyboard Control bit
     andi t0, t0, 0x0001	  # Masks the least significant bit
 
-    la a0, PLYR_STATUS      # Loads Player Status
-    la a2, PLYR_POS # Loads Player Pos
-    bnez t0, CONTINUE_CHECK # if an input is detected, continue checking
-    j NO_INPUT 		    # otherwise no input was detected 
     
-    CONTINUE_CHECK:
+
+    # Checking scene   
+    li t2,1                # Menu2 number
+    beq t2,s2,MENU2_CHECK  # If on menu2
+
+    li t2,2                # Game scene number
+    beq t2,s2,GAME_CHECK   # If on game
+
+    li t2,3                     # Game over scene number
+    beq t2,s2,GAME_OVER_CHECK   # If on game over
+
+    GAME_CHECK:
+        la a0, PLYR_STATUS              # Loads Player Status
+        la a2, PLYR_POS                 # Loads Player Pos
+        bnez t0, CONTINUE_GAME_CHECK    # If an input is detected, continue checking
+        j NO_INPUT 		                # otherwise no input was detected 
+
+    GAME_OVER_CHECK:
+        bnez t0, CONTINUE_GAME_OVER_CHECK   # If any input is detected, continue
+            j END_INPUT_CHECK               # end procedure
+        
+        CONTINUE_GAME_OVER_CHECK:
+        # If there was any input at all, change scene to menu2
+            li s3,0
+            li s2,1  
+            j SETUP          # end procedure by going to setup
+   
+    MENU2_CHECK:
+        bnez t0, CONTINUE_MENU2_CHECK       # If any input is detected, continue
+        MENU2_NO_INPUT:
+            j END_INPUT_CHECK               # end procedure
+
+        CONTINUE_MENU2_CHECK:
+            lw t0, 4(t1)   # Reads key value
+
+            li t1, 'w'	   # Loads ascii value of 'w' key
+            bne t0, t1, CHECK_INPUT.MENU2_S
+                li s3,0
+                j END_INPUT_CHECK               # end procedure
+
+            CHECK_INPUT.MENU2_S:
+            li t1, 's'	# Loads ascii value of 's' key
+            bne t0, t1, CHECK_INPUT.MENU2_ENTER
+                li s3,1
+                j END_INPUT_CHECK               # end procedure
+
+            CHECK_INPUT.MENU2_ENTER:
+            li t1, '\n'	# Loads ascii value of ENTER key
+            bne t0, t1, MENU2_NO_INPUT
+                la t0,PLYR_INFO
+                li t1, initial_player_health
+                sb t1,0(t0)     # Map 1
+                la t0, MAP_INFO # Loads Map Info address
+                li t1,1         # Map 1
+                sb t1, 0(t0)    # Stores map 1 number
+                li t1,4         # 4 - Force switch
+                sb t1, 1(t0)    # Stores render byte
+                li s2,2  
+                j SETUP                         # end procedure by going to setup
+
+
+
+
+    CONTINUE_GAME_CHECK:
     lb t3, 4(a0) # loads ball mode
   
     la t0, PLYR_INPUT # Loads PLYR_INPUT address
