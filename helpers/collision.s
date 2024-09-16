@@ -273,15 +273,17 @@ CHECK_VERTICAL_COLLISION:
         li a0,1  
         ret 
 
-#######################     PLAYER COLLISION     ########################
-#   This procedure 
-#   It ends immediately if player takes damage                                  #
+##########################       PLAYER COLLISION      ##########################
+#              This procedure checks if player was hit by an enemy.             #
+#                  It ends immediately if player takes damage.                  # 
+#                              (takes no arguments)                             #     
+#                                                                               #
 #  ------------------             registers used            ------------------  #
 #    a0 = Player's matrix X                                                     #
 #    a1 = Player's matrix Y                                                     #
 #    a2 = Player's X offset                                                     #
 #    a3 = Player's Y offset                                                     #  
-#    a4 = Player's ball mode (0 - Disabled, 1 - Enabled)                                                     #     
+#    a4 = Player's ball mode (0 - Disabled, 1 - Enabled)                        #     
 #                                                                               #
 #  ------------------          temporary registers          ------------------  #
 #    t0, t1 --> temporary registers                                             #
@@ -325,6 +327,12 @@ PLAYER_COLLISION: # ebreak
     addi t0,t0,1   # Goes to next byte (where zoomers from current map start)
     
     PLAYER_COLLISION_ZOOMER_LOOP:
+        lb t3,0(t0) # Loads zoomer's health
+        blt zero,t3,CONTINUE_PLAYER_COLLISION_ZOOMER_LOOP # If zoomer is alive
+        # Otherwise, skip this zoomer
+            j NEXT_IN_PLAYER_COLLISION_ZOOMER_LOOP   # Zoomer is dead
+
+    CONTINUE_PLAYER_COLLISION_ZOOMER_LOOP:
         li tp, 3 # tp will start as 3 (random direction) 
         lbu t3,4(t0)   # Loads zoomer's current X
         beq t3,a0,PLAYER_COLLISION_ZOOMER_LOOP_SAME_X   # If zoomer's X is the same as the player's
@@ -357,10 +365,10 @@ PLAYER_COLLISION: # ebreak
         PLAYER_COLLISION_ZOOMER_LOOP_RIGHT_X:
             lbu t3,2(t0)   # Loads zoomer's X offset
             addi t3,t3,4   # adds 4 to it
-            bge t3,a2,STOP_PLAYER_COLLISION_ZOOMER_LOOP_LEFT_X # If t3 >= player offset, there wasn't a hit
+            bge t3,a2,STOP_PLAYER_COLLISION_ZOOMER_LOOP_RIGHT_X # If t3 >= player offset, there wasn't a hit
                 li tp,0    # Damage from the right
                 j PLAYER_COLLISION_ZOOMER_LOOP_CHECK_Y
-            STOP_PLAYER_COLLISION_ZOOMER_LOOP_LEFT_X:
+            STOP_PLAYER_COLLISION_ZOOMER_LOOP_RIGHT_X:
                 j NEXT_IN_PLAYER_COLLISION_ZOOMER_LOOP # Zoomer isn't near player enough to deal damage, check next
 
         PLAYER_COLLISION_ZOOMER_LOOP_CHECK_Y:
@@ -455,10 +463,10 @@ PLAYER_COLLISION: # ebreak
         PLAYER_COLLISION_RIPPER_LOOP_RIGHT_X:
             lbu t3,2(t0)   # Loads ripper's X offset
             addi t3,t3,4   # adds 4 to it
-            bge t3,a2,STOP_PLAYER_COLLISION_RIPPER_LOOP_LEFT_X # If t3 >= player offset, there wasn't a hit
+            bge t3,a2,STOP_PLAYER_COLLISION_RIPPER_LOOP_RIGHT_X # If t3 >= player offset, there wasn't a hit
                 li tp,0    # Damage from the right
                 j PLAYER_COLLISION_RIPPER_LOOP_CHECK_Y
-            STOP_PLAYER_COLLISION_RIPPER_LOOP_LEFT_X:
+            STOP_PLAYER_COLLISION_RIPPER_LOOP_RIGHT_X:
                 j NEXT_IN_PLAYER_COLLISION_RIPPER_LOOP # Ripper isn't near player enough to deal damage, check next
 
         PLAYER_COLLISION_RIPPER_LOOP_CHECK_Y:
@@ -505,6 +513,11 @@ PLAYER_COLLISION: # ebreak
     
     PLAYER_COLLISION_RIDLEY:
         la t0,RIDLEY_INFO
+        lb t1,0(t0) # Loads Ridley's health
+        blt zero,t1,CONTINUE_PLAYER_COLLISION_RIDLEY # If Ridley is alive
+            j END_PLAYER_COLLISION
+
+        CONTINUE_PLAYER_COLLISION_RIDLEY:
         li tp, 1 # tp will start as left
         li t3,ridley_X   # Loads Ridley's current X
         beq t3,a0,PLAYER_COLLISION_RIDLEY_CHECK_Y   # If Ridley's X is the same as the player's
@@ -612,10 +625,10 @@ PLAYER_COLLISION: # ebreak
             PLAYER_COLLISION_PLASMA_BREATH_LOOP_RIGHT_X:
                 lbu t3,3(t0)   # Loads plasma breath's X offset
                 addi t3,t3,4   # adds 4 to it
-                bge t3,a2,STOP_PLAYER_COLLISION_PLASMA_BREATH_LOOP_LEFT_X # If t3 >= player offset, there wasn't a hit
+                bge t3,a2,STOP_PLAYER_COLLISION_PLASMA_BREATH_LOOP_RIGHT_X # If t3 >= player offset, there wasn't a hit
                     li tp,0    # Damage from the right
                     j PLAYER_COLLISION_PLASMA_BREATH_LOOP_CHECK_Y
-                STOP_PLAYER_COLLISION_PLASMA_BREATH_LOOP_LEFT_X:
+                STOP_PLAYER_COLLISION_PLASMA_BREATH_LOOP_RIGHT_X:
                     j NEXT_IN_PLAYER_COLLISION_PLASMA_BREATH_LOOP # Zoomer isn't near player enough to deal damage, check next
 
             PLAYER_COLLISION_PLASMA_BREATH_LOOP_CHECK_Y:
@@ -659,6 +672,7 @@ PLAYER_COLLISION: # ebreak
 
                 PLAYER_COLLISION_PLASMA_BREATH_LOOP_HIT:
                 # Player gets hit (if player was hit from the same X by a plasma breath, it'll end in this part of the code)
+                    sb zero,0(t0)     # Disables plasma breath
                     li a0,0  # Hit was from same X
                     li a1,8  # Damage dealt
                     mv a2,tp # Gets direction
@@ -678,24 +692,791 @@ PLAYER_COLLISION: # ebreak
     # End of Stack Operations   
         ret 
 
-#######################        MOVE BEAM        #######################
-#                Tries to move beam in a new direction      #
-#    they are in the air, move them down until they hit the ground    #
-#                                                                               #
-#  ------------------           argument registers          ------------------  #
-#    a0 = Beam's address                                               #
-#	 a1 = Current map's address                                                 #
+###########################       BEAM COLLISION       ##########################
+#                This procedure checks if beam has hit an enemy.                #
+#                  It ends immediately if enemy takes damage.                   # 
+#                              (takes no arguments)                             #     
 #                                                                               #
 #  ------------------             registers used            ------------------  #
-#    a2 = Bomb's matrix Y that will be modified and possibly stored             #
-#    a3 = Bomb's Y offset that will be modified and possibly stored             #
-#    a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK                   #      
+#    a0 = BEAMS ARRAY address                                                   #
+#    a1 = Number of beams in current map                                        #
+#    a2 = Loop counter                                                          #
+#    a3 = Beam's matrix X                                                       #
+#    a4 = Beam's matrix Y                                                       #
+#    a5 = Beam's X offset                                                       #
+#    a6 = Beam's Y offset                                                       #  
+#    a4 = Player's ball mode (0 - Disabled, 1 - Enabled)                        #     
 #                                                                               #
 #  ------------------          temporary registers          ------------------  #
 #    t0, t1 --> temporary registers                                             #
-#    t2 = PLYR_POS address (stores from a2 to let it be modified)               #
+#    t2 = PLYR_POS address (stores from a5 to let it be modified)               #
 #    t3 = Player's X/Y offset                                                   #
 #    tp = offset modifier (stores from a3 to let it be modified)                #
+#                                                                               #    
+#################################################################################     
+
+BEAM_COLLISION: # ebreak
+# Storing Registers on Stack
+    addi sp,sp,-4
+    sw ra,0(sp)
+# End of Stack Operations
+    la a0,BEAMS_ARRAY   # Loads Beams array
+    addi a0,a0,1        # skips cooldown byte
+
+    li a2,0             # resets counter
+    li a1,beams_number  # gets number of beams in game
+    BEAM_COLLISION_LOOP:
+        lbu t0,0(a0) # Loads enable byte
+        bnez t0,BEAM_COLLISION_LOOP_CONTINUE    # If enabled,
+            j NEXT_IN_BEAM_COLLISION_LOOP       # Otherwise, check other beams
+
+    BEAM_COLLISION_LOOP_CONTINUE:
+        lbu a3, 5(a0)      # Loads Player's current X (matrix)
+        lbu a4, 7(a0)     # Loads Player's current Y (matrix)  
+        lbu a5, 3(a0)      # Loads Player's current X offset
+        lbu a6, 4(a0)      # Loads Player's current Y offset
+
+        la t0,CURRENT_MAP             # Loads map address
+        lbu t0,4(t0)                  # and from it, loads map's number
+        li t1,7                       # Loads 7 to compare with map's number
+        bne t0,t1,BEAM_COLLISION_SKIP_RIDLEY         # If not on map 7, skip Ridley and Plasma Breath >:D
+            j BEAM_COLLISION_RIDLEY # Otherwise, skip the rest of the checks
+        BEAM_COLLISION_SKIP_RIDLEY:
+
+        # Checking for zoomers
+        BEAM_COLLISION_ZOOMER:
+        la t0,Zoomers  # Loads Zoomers address
+        
+        lw t0,0(t0)    # Loads the ZoomersA address over the Zoomers address
+        bnez t0,CONTINUE_BEAM_COLLISION_ZOOMER  # If there are zoomers in this map
+            j BEAM_COLLISION_RIPPER             # If t0 = 0, there are no zoomers in this map
+
+        CONTINUE_BEAM_COLLISION_ZOOMER:
+        # Otherwise, continue
+        lbu t1,0(t0)   # Loads number of Zoomers in current map
+        li t2,0        # Counter for zoomers
+        addi t0,t0,1   # Goes to next byte (where zoomers from current map start)
+        
+        BEAM_COLLISION_ZOOMER_LOOP:
+            lb t3,0(t0) # Loads zoomer's health
+            blt zero,t3,CONTINUE_BEAM_COLLISION_ZOOMER_LOOP # If zoomer is alive
+            # Otherwise, skip this zoomer
+                j NEXT_IN_BEAM_COLLISION_ZOOMER_LOOP
+        
+        CONTINUE_BEAM_COLLISION_ZOOMER_LOOP:
+            lbu t3,4(t0)   # Loads zoomer's current X
+            beq t3,a3,BEAM_COLLISION_ZOOMER_LOOP_SAME_X   # If zoomer's X is the same as the beam
+            addi t4,a3,1   # Checks beam's tile to the right
+            beq t3,t4,BEAM_COLLISION_ZOOMER_LOOP_RIGHT_X  # If zoomer's X is to the right of beam
+            addi t4,a3,-1  # Checks beam's tile to the left
+            beq t3,t4,BEAM_COLLISION_ZOOMER_LOOP_LEFT_X   # If zoomer's X is to the left of beam
+            j NEXT_IN_BEAM_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+            
+                BEAM_COLLISION_ZOOMER_LOOP_SAME_X:
+                    lbu t3,2(t0)   # Loads zoomer's X offset
+                    beq t3,a5,BEAM_COLLISION_ZOOMER_LOOP_CHECK_Y # If offsets are the same, continue to check Y
+                    li t4,12       # to be compared with 
+                    sub t3,a5,t3   # t3 = zoomer's x offset - beam's x offset
+                    blt t3,t4,BEAM_COLLISION_ZOOMER_LOOP_CHECK_Y # If t3 < 12, continue
+                        j NEXT_IN_BEAM_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+                BEAM_COLLISION_ZOOMER_LOOP_LEFT_X: 
+                    lbu t3,2(t0)   # Loads zoomer's X offset
+                    addi t3,t3,-8  # subtracts 4 from it
+                    bge t3,a5,BEAM_COLLISION_ZOOMER_LOOP_CHECK_Y # If t3 - 8 >= beam's offset, continue to check Y
+                        j NEXT_IN_BEAM_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+                BEAM_COLLISION_ZOOMER_LOOP_RIGHT_X:
+                    lbu t3,2(t0)   # Loads zoomer's X offset
+                    addi t4,a5,-8  # Subtracts 8 from beam offset
+                    bge a5,t3,BEAM_COLLISION_ZOOMER_LOOP_CHECK_Y # If t3 <= beam's offset - 8, continue to check Y
+                        j NEXT_IN_BEAM_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+            BEAM_COLLISION_ZOOMER_LOOP_CHECK_Y:
+                lbu t3,6(t0)   # Loads zoomer's current Y
+                beq t3,a4,BEAM_COLLISION_ZOOMER_LOOP_SAME_Y    # If zoomer's Y is the same as the beam's
+                addi t4,a4,1   # Checks beam's base tile (Y + 1)
+                beq t3,t4,BEAM_COLLISION_ZOOMER_LOOP_BELLOW  # If zoomer's Y on beam's base
+                j NEXT_IN_BEAM_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+                BEAM_COLLISION_ZOOMER_LOOP_BELLOW:
+                    lbu t3,3(t0)   # Loads zoomer's Y offset
+                    blt t3,a6,BEAM_COLLISION_ZOOMER_LOOP_HIT # If zoomer's Y offset is less than the beam's Y offset deal damage
+                        j NEXT_IN_BEAM_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+                BEAM_COLLISION_ZOOMER_LOOP_SAME_Y:
+                    lbu t3,3(t0)   # Loads zoomer's Y 
+                    addi t3,t3,8   # 
+                    bge t3,a6,BEAM_COLLISION_ZOOMER_LOOP_HIT # If zoomer's Y offset + 8 is greater than the beam's Y offset deal damage
+                        j NEXT_IN_BEAM_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+                BEAM_COLLISION_ZOOMER_LOOP_HIT:
+                # Zoomer gets hit
+                    lbu t3,0(t0)   # Loads zoomer's health
+                    beqz t3,BEAM_COLLISION_ZOOMER_LOOP_HIT_DISABLE_BEAM    # Zoomer is already dead
+                    addi t3,t3,-1  # Takes 1 away from it
+                    beqz t3,BEAM_COLLISION_ZOOMER_LOOP_HIT_DESTROY_ZOOMER  # If zoomer is killed
+                        sb t3,0(t0)    # and stores it back
+                        lbu t3,1(t0)   # Loads zoomer's type
+                        addi t3,t3,2   # Adds 2 to it ( will go to damage state)
+                        sb t3,1(t0)    # and stores it back
+                        j BEAM_COLLISION_ZOOMER_LOOP_HIT_DISABLE_BEAM
+
+                    BEAM_COLLISION_ZOOMER_LOOP_HIT_DESTROY_ZOOMER:
+                        sb zero,0(t0)  # Stores 0 to zoomer's health
+                        lbu a1,2(t0)   # Loads zoomer's X offset
+                        lbu a2,3(t0)   # Loads zoomer's Y offset
+                        lbu a3,4(t0)   # Loads zoomer's X 
+                        lbu a4,6(t0)   # Loads zoomer's Y
+                        li a5,0        # No Delay
+                        # Storing Registers on Stack
+                            addi sp,sp,-4
+                            sw a0,0(sp)
+                        # End of Stack Operations
+                            li a0, 0       # Small explosion
+                            call EXPLOSION_SPAWN   # Summons explosion
+                        # Procedure finished: Loading Registers from Stack
+                            lw a0,0(sp)
+                            addi sp,sp,4
+                        # End of Stack Operations  
+                        
+                        # LOOT SPAWN
+                        # j BEAM_COLLISION_ZOOMER_LOOP_HIT_DISABLE_BEAM
+
+                    BEAM_COLLISION_ZOOMER_LOOP_HIT_DISABLE_BEAM:
+                        li t1,3           # Loads "Hit to be Disabled" 
+                        sb t1,0(a0)       # and stores it on enable byte
+                        sb zero,2(a0)     # Resets render counter
+                        j NEXT_IN_BEAM_COLLISION_LOOP  # Beam was deactivated, end procedure here               
+
+            NEXT_IN_BEAM_COLLISION_ZOOMER_LOOP: 
+                addi t0,t0,zoomer_size   # Going to the next zoomer's address                                  
+                addi t2,t2,1             # Iterating counter by 1                                   
+                bge t2,t1, BEAM_COLLISION_RIPPER # If all of the zoomers were checked, end loop                                  
+                j BEAM_COLLISION_ZOOMER_LOOP # otherwise, go back to the loop's beginning                     
+        
+        BEAM_COLLISION_RIPPER:   
+        la t0,Rippers  # Loads Rippers address
+        
+        lw t0,0(t0)    # Loads the RippersA address over the Rippers address
+        bnez t0,CONTINUE_BEAM_COLLISION_RIPPER  # If there are rippers in this map
+            j NEXT_IN_BEAM_COLLISION_LOOP             # If t0 = 0, there are no rippers in this map
+
+        CONTINUE_BEAM_COLLISION_RIPPER:
+        # Otherwise, continue
+        lbu t1,0(t0)   # Loads number of Rippers in current map
+        li t2,0        # Counter for rippers
+        addi t0,t0,1   # Goes to next byte (where rippers from current map start)
+        
+        BEAM_COLLISION_RIPPER_LOOP:
+            li tp, 3 # tp will start as 3 (random direction) 
+            lbu t3,3(t0)   # Loads ripper's current X
+            beq t3,a3,BEAM_COLLISION_RIPPER_LOOP_SAME_X   # If ripper's X is the same as the player's
+            addi t4,a3,1   # Checks player's tile to the right
+            beq t3,t4,BEAM_COLLISION_RIPPER_LOOP_RIGHT_X  # If ripper's X is to the right of player
+            addi t4,a3,-1  # Checks player's tile to the left
+            beq t3,t4,BEAM_COLLISION_RIPPER_LOOP_LEFT_X   # If ripper's X is to the left of player
+            j NEXT_IN_BEAM_COLLISION_RIPPER_LOOP # Otherwise, ripper isn't near player enough to deal damage, check next
+            
+            BEAM_COLLISION_RIPPER_LOOP_SAME_X:
+                lbu t3,2(t0)   # Loads ripper's X offset
+                beq t3,a5,BEAM_COLLISION_RIPPER_LOOP_CHECK_Y # If offsets are the same, continue to check Y
+                li t4,12       # to be compared with 
+                sub t3,a5,t3   # t3 = ripper's x offset - beam's x offset
+                blt t3,t4,BEAM_COLLISION_RIPPER_LOOP_CHECK_Y # If t3 < 12, continue
+                    j NEXT_IN_BEAM_COLLISION_RIPPER_LOOP # Otherwise, ripper isn't near beam enough be hit, check next
+
+            BEAM_COLLISION_RIPPER_LOOP_LEFT_X: 
+                lbu t3,2(t0)   # Loads ripper's X offset
+                addi t3,t3,-8  # subtracts 4 from it
+                bge t3,a5,BEAM_COLLISION_RIPPER_LOOP_CHECK_Y # If t3 - 8 >= beam's offset, continue to check Y
+                    j NEXT_IN_BEAM_COLLISION_RIPPER_LOOP # Otherwise, ripper isn't near beam enough be hit, check next
+
+            BEAM_COLLISION_RIPPER_LOOP_RIGHT_X:
+                lbu t3,2(t0)   # Loads ripper's X offset
+                addi t4,a5,-8  # Subtracts 8 from beam offset
+                bge a5,t3,BEAM_COLLISION_RIPPER_LOOP_CHECK_Y # If t3 <= beam's offset - 8, continue to check Y
+                    j NEXT_IN_BEAM_COLLISION_RIPPER_LOOP # Otherwise, ripper isn't near beam enough be hit, check next
+
+            BEAM_COLLISION_RIPPER_LOOP_CHECK_Y:
+                lbu t3,5(t0)   # Loads ripper's current Y
+                beq t3,a4,BEAM_COLLISION_RIPPER_LOOP_SAME_Y    # If ripper's Y is the same as the player's
+                addi t4,a4,1   # Checks bellow beam (Y + 1)
+                beq t3,t4,BEAM_COLLISION_RIPPER_LOOP_BELLOW  # If ripper's Y is bellow beam
+                # If ripper is above beam, nothing happens
+                j NEXT_IN_BEAM_COLLISION_RIPPER_LOOP # Otherwise, ripper isn't near beam enough be hit, check next
+
+                BEAM_COLLISION_RIPPER_LOOP_BELLOW:
+                    li t3, 7 # Ripper's Y offset is always 0, but we add 7 to it (sprite is 4 pixels bellow initial Y)
+                    blt t3,a6,BEAM_COLLISION_RIPPER_LOOP_HIT # If ripper's "Y offset" is less than the player's Y offset hit ripper
+                        j NEXT_IN_BEAM_COLLISION_RIPPER_LOOP # Otherwise, ripper isn't near beam enough be hit, check next
+
+                BEAM_COLLISION_RIPPER_LOOP_SAME_Y:
+                    li t3, 12 # Ripper's Y offset is always 0, but we add 12 to it (sprite end 4 lines befor its real end)
+                    bgt t3,a6,BEAM_COLLISION_RIPPER_LOOP_HIT # If ripper's "Y offset" is greater than the player's Y offset hit ripper
+                        j NEXT_IN_BEAM_COLLISION_RIPPER_LOOP # Otherwise, ripper isn't near beam enough be hit, check next
+
+                BEAM_COLLISION_RIPPER_LOOP_HIT:
+                # Ripper gets hit (but doesn't take damage --> only disable beam)
+                    li t1,3           # Loads "Hit to be Disabled" 
+                    sb t1,0(a0)       # and stores it on enable byte
+                    sb zero,2(a0)     # Resets render counter
+                    j NEXT_IN_BEAM_COLLISION_LOOP  # Beam was deactivated, end procedure here            
+
+            NEXT_IN_BEAM_COLLISION_RIPPER_LOOP: 
+                addi t0,t0,ripper_size   # Going to the next ripper's address                                  
+                addi t2,t2,1             # Iterating counter by 1                                   
+                bge t2,t1, BEAM_COLLISION_RIDLEY_SKIP # If all of the rippers were checked, end loop                                  
+                j BEAM_COLLISION_RIPPER_LOOP # otherwise, go back to the loop's beginning  
+
+        BEAM_COLLISION_RIDLEY_SKIP:   # If checking for normal enemies, skip ridley check
+            j NEXT_IN_BEAM_COLLISION_LOOP
+        
+        BEAM_COLLISION_RIDLEY:
+            la t0,RIDLEY_INFO
+            lb t1,0(t0) # Loads Ridley's health
+            blt zero,t1,CONTINUE_BEAM_COLLISION_RIDLEY # If Ridley is alive
+                j NEXT_IN_BEAM_COLLISION_LOOP
+
+            CONTINUE_BEAM_COLLISION_RIDLEY:
+            li tp, 1 # tp will start as left
+            li t3,ridley_X   # Loads Ridley's current X
+            beq t3,a3,BEAM_COLLISION_RIDLEY_CHECK_Y   # If Ridley's X is the same as the beam's
+            addi t4,a3,1   # Checks beam's tile to the right
+            beq t3,t4,BEAM_COLLISION_RIDLEY_RIGHT_X  # If Ridley's X is to the right of beam
+            addi t4,a3,-1  # Checks beam's tile to the left
+            beq t3,t4,BEAM_COLLISION_RIDLEY_LEFT_X   # If Ridley's X is to the left of beam
+            j BEAM_COLLISION_PLASMA_BREATH # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath
+
+            BEAM_COLLISION_RIDLEY_LEFT_X: 
+                li t3,ridley_X_Offset   # Loads Ridley's X offset
+                blt a5,t3,BEAM_COLLISION_RIDLEY_CHECK_Y # If t3 < beam offset, check Y
+                j BEAM_COLLISION_PLASMA_BREATH # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath
+
+            BEAM_COLLISION_RIDLEY_RIGHT_X:
+                li t3,ridley_X_Offset   # Loads Ridley's X offset
+                blt t3,a5,BEAM_COLLISION_RIDLEY_CHECK_Y # If t3 < beam offset, there wasn't a hit
+                j BEAM_COLLISION_PLASMA_BREATH # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath     
+
+            BEAM_COLLISION_RIDLEY_CHECK_Y:
+                lbu t3,3(t0)   # Loads Ridley's current Y
+                beq t3,a4,BEAM_COLLISION_RIDLEY_HIT    # If Ridley's Y is the same as the beam's (beam would basically be inside him)
+                addi t4,a4,1   # Checks beam's base tile (Y + 1)
+                beq t3,t4,BEAM_COLLISION_RIDLEY_BELLOW  # If Ridley's Y is bellow beam
+                
+                addi t3,t3,1   # Gets ridley's Y + 1
+                beq t3,a4,BEAM_COLLISION_RIDLEY_HIT    # If Ridley's Y + 1 is the same as the beam's, it's a hit (beam would basically be inside him)
+
+                addi t3,t3,1   # Gets ridley's Y + 2
+                beq t3,a4,BEAM_COLLISION_RIDLEY_SAME_Y    # If Ridley's Y + 2 is the same as the beam's
+
+                j BEAM_COLLISION_PLASMA_BREATH # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath   
+
+                BEAM_COLLISION_RIDLEY_BELLOW:
+                    lbu t3,2(t0)   # Loads Ridley's current Y offset
+                    blt t3,a6,BEAM_COLLISION_RIDLEY_HIT # If Ridley's "Y offset" is less than the beam's Y offset deal damage
+                        j BEAM_COLLISION_PLASMA_BREATH # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath   
+
+                BEAM_COLLISION_RIDLEY_SAME_Y:
+                    lbu t3,2(t0)   # Loads Ridley's current Y offset
+                    addi t3,t3,8   # 
+                    bge t3,a6,BEAM_COLLISION_RIDLEY_HIT # If ridley's Y offset + 8 is greater than the beam's Y offset deal damage
+                        j BEAM_COLLISION_PLASMA_BREATH # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath   
+
+                BEAM_COLLISION_RIDLEY_HIT:
+                # Ridley gets hit
+                    lbu t3,0(t0)   # Loads Ridley's health
+                    beqz t3,BEAM_COLLISION_RIDLEY_HIT_DISABLE_BEAM
+                    addi t3,t3,-1  # Takes 1 away from it
+                    beqz t3,BEAM_COLLISION_RIDLEY_HIT_DESTROY_RIDLEY  # If Ridley is killed
+                        sb t3,0(t0)    # and stores it back
+                        lbu t3,1(t0)   # Loads Ridley's type
+                        addi t3,t3,1   # Adds 1 to it ( will go to damage state)
+                        sb t3,1(t0)    # and stores it back
+                        j BEAM_COLLISION_RIDLEY_HIT_DISABLE_BEAM
+
+                    BEAM_COLLISION_RIDLEY_HIT_DESTROY_RIDLEY:
+                        sb zero,0(t0)  # Stores 0 to Ridley's health
+                        li a1,ridley_X_Offset   # Loads Ridley's X offset
+                        lbu a2,2(t0)            # Loads Ridley's Y offset
+                        li a3,ridley_X          # Loads Ridley's X 
+                        lbu a4,3(t0)            # Loads Ridley's Y
+                        li a5,0        # No Delay
+                        # Storing Registers on Stack
+                            addi sp,sp,-4
+                            sw a0,0(sp)
+                        # End of Stack Operations
+                            li a0, 1               # Big explosion
+                            call EXPLOSION_SPAWN   # Summons explosion
+
+                            la t0,RIDLEY_INFO
+                            li a1,ridley_X_Offset   # Loads Ridley's X offset
+                            lbu a2,2(t0)            # Loads Ridley's Y offset
+                            li a3,ridley_X          # Loads Ridley's X 
+                            addi a3,a3,1
+                            lbu a4,3(t0)            # Loads Ridley's Y
+                            addi a4,a4,1
+                            li a5,0        # No Delay
+                            li a0, 1               # Big explosion
+                            call EXPLOSION_SPAWN   # Summons explosion
+
+                            la t0,RIDLEY_INFO
+                            li a1,ridley_X_Offset   # Loads Ridley's X offset
+                            lbu a2,2(t0)            # Loads Ridley's Y offset
+                            li a3,ridley_X          # Loads Ridley's X 
+                            addi a3,a3,-1
+                            lbu a4,3(t0)            # Loads Ridley's Y
+                            addi a4,a4,2
+                            li a5,0        # No Delay
+                            li a0, 1               # Big explosion
+                            call EXPLOSION_SPAWN   # Summons explosion
+                        # Procedure finished: Loading Registers from Stack
+                            lw a0,0(sp)
+                            addi sp,sp,4
+                        # End of Stack Operations  
+                        
+                        # j BEAM_COLLISION_RIDLEY_HIT_DISABLE_BEAM
+
+                    BEAM_COLLISION_RIDLEY_HIT_DISABLE_BEAM:
+                        li t1,3           # Loads "Hit to be Disabled" 
+                        sb t1,0(a0)       # and stores it on enable byte
+                        sb zero,2(a0)     # Resets render counter
+                        j NEXT_IN_BEAM_COLLISION_LOOP  # Beam was deactivated, end procedure here         
+
+        BEAM_COLLISION_PLASMA_BREATH:       
+            la t0,PLASMA_BREATH_ARRAY  # Loads Plasma breath array
+
+            li t2,0 # resets counter
+            li t1,plasma_number # gets number of plasma breaths in game
+            BEAM_COLLISION_PLASMA_BREATH_LOOP:
+                lbu t3,0(t0) # Loads enable byte
+                bnez t3,BEAM_COLLISION_PLASMA_BREATH_LOOP_CONTINUE    # If enabled,
+                    j NEXT_IN_BEAM_COLLISION_PLASMA_BREATH_LOOP       # Otherwise, check other plasma breaths
+
+            BEAM_COLLISION_PLASMA_BREATH_LOOP_CONTINUE:
+                li tp, 3 # tp will start as 3 (random direction) 
+                lbu t3,6(t0)   # Loads plasma breath's current X
+                beq t3,a3,BEAM_COLLISION_PLASMA_BREATH_LOOP_SAME_X   # If plasma breath's X is the same as the beam's
+                addi t4,a3,1   # Checks beam's tile to the right
+                beq t3,t4,BEAM_COLLISION_PLASMA_BREATH_LOOP_RIGHT_X  # If plasma breath's X is to the right of beam
+                addi t4,a3,-1  # Checks beam's tile to the left
+                beq t3,t4,BEAM_COLLISION_PLASMA_BREATH_LOOP_LEFT_X   # If plasma breath's X is to the left of beam
+                j NEXT_IN_BEAM_COLLISION_PLASMA_BREATH_LOOP # Otherwise, plasma breath isn't near beam enough to deal damage, check next
+
+                    BEAM_COLLISION_PLASMA_BREATH_LOOP_SAME_X:
+                        lbu t3,3(t0)   # Loads plasma breath's X offset
+                        beq t3,a5,BEAM_COLLISION_PLASMA_BREATH_LOOP_CHECK_Y # If offsets are the same, continue to check Y
+                        li t4,12       # to be compared with 
+                        sub t3,a5,t3   # t3 = plasma breath's x offset - beam's x offset
+                        blt t3,t4,BEAM_COLLISION_PLASMA_BREATH_LOOP_CHECK_Y # If t3 < 12, continue
+                            j NEXT_IN_BEAM_COLLISION_PLASMA_BREATH_LOOP # Otherwise, plasma breath isn't near beam enough be hit, check next                  
+
+                    BEAM_COLLISION_PLASMA_BREATH_LOOP_LEFT_X: 
+                        lbu t3,3(t0)   # Loads plasma breath's X offset
+                        addi t3,t3,-8  # subtracts 4 from it
+                        bge t4,a5,BEAM_COLLISION_PLASMA_BREATH_LOOP_CHECK_Y # If t3 <= player offset, there wasn't a hit
+                            j NEXT_IN_BEAM_COLLISION_PLASMA_BREATH_LOOP # Otherwise, plasma breath isn't near beam enough be hit, check next
+
+                    BEAM_COLLISION_PLASMA_BREATH_LOOP_RIGHT_X: 
+                        lbu t3,3(t0)   # Loads plasma breath's X offset
+                        addi t3,t3,-8  # subtracts 4 from it
+                        bge t3,a5,BEAM_COLLISION_PLASMA_BREATH_LOOP_CHECK_Y # If t3 - 8 >= beam's offset, continue to check Y
+                            j NEXT_IN_BEAM_COLLISION_PLASMA_BREATH_LOOP # Otherwise, plasma breath isn't near beam enough be hit, check next
+
+                BEAM_COLLISION_PLASMA_BREATH_LOOP_CHECK_Y:
+                    lbu t3,8(t0)   # Loads plasma breath's current Y
+                    beq t3,a4,BEAM_COLLISION_PLASMA_BREATH_LOOP_SAME_Y    # If plasma breath's Y is the same as the beam's
+                    addi t4,a4,1   # Checks beam's base tile (Y + 1)
+                    beq t3,t4,BEAM_COLLISION_PLASMA_BREATH_LOOP_BELLOW  # If plasma breath's X is bellow beam
+                        j NEXT_IN_BEAM_COLLISION_PLASMA_BREATH_LOOP # Otherwise, plasma breath isn't near beam enough be hit, check next
+
+                    BEAM_COLLISION_PLASMA_BREATH_LOOP_BELLOW:
+                        lbu t3,4(t0)   # Loads plasma breath's Y offset
+                        addi t3,t3,8
+                        blt t3,a6,BEAM_COLLISION_PLASMA_BREATH_LOOP_HIT # If plasma breath's Y offset is less than the beam's Y offset deal damage
+                            j NEXT_IN_BEAM_COLLISION_PLASMA_BREATH_LOOP # Otherwise, plasma breath isn't near beam enough be hit, check next
+
+                    BEAM_COLLISION_PLASMA_BREATH_LOOP_SAME_Y:
+                        lbu t3,4(t0)   # Loads plasma breath's Y offset
+                        addi t3,t3,8   # 
+                        bge t3,a6,BEAM_COLLISION_PLASMA_BREATH_LOOP_HIT # If plasma breath's Y offset + 8 is greater than the beam's Y offset deal damage
+                            j NEXT_IN_BEAM_COLLISION_PLASMA_BREATH_LOOP # Otherwise, plasma breath isn't near beam enough be hit, check next
+
+                    BEAM_COLLISION_PLASMA_BREATH_LOOP_HIT:
+                    # Plasma Breath gets hit (both will be deactivated)
+                        sb zero,0(t0)     # Disables plasma breath
+                        li t1,3           # Loads "Hit to be Disabled" 
+                        sb t1,0(a0)       # and stores it on enable byte
+                        sb zero,2(a0)     # Resets render counter
+                        j NEXT_IN_BEAM_COLLISION_LOOP  # Beam was deactivated, end procedure here           
+
+            NEXT_IN_BEAM_COLLISION_PLASMA_BREATH_LOOP:                    
+                addi t0,t0,plasma_size  # Going to the next plasma breath's address                                  
+                addi t2,t2,1            # Iterating counter by 1                                   
+                bge t2,t1, NEXT_IN_BEAM_COLLISION_LOOP       # If all of the plasma breaths were checked, end loop                              
+                j BEAM_COLLISION_PLASMA_BREATH_LOOP # otherwise, go back to the loop's beginning 
+
+    NEXT_IN_BEAM_COLLISION_LOOP:                    
+            addi a0,a0,beams_size  # Going to the next beam's address                                  
+            addi a2,a2,1            # Iterating counter by 1                                   
+            bge a2,a1, END_BEAM_COLLISION # If all of the beams were checked, end loop (don't attack)                                
+            j BEAM_COLLISION_LOOP # otherwise, go back to the loop's beginning 
+
+
+    END_BEAM_COLLISION:
+    # Procedure finished: Loading Registers from Stack
+        lw ra,0(sp)
+        addi sp,sp,4
+    # End of Stack Operations   
+        ret 
+
+###########################       BOMB COLLISION       ##########################
+#           This procedure checks if bomb explosion has hit an enemy.           #
+#                  It ends immediately if enemy takes damage.                   # 
+#                              (takes no arguments)                             #     
+#                                                                               #
+#  ------------------             registers used            ------------------  #
+#    a0 = Current bomb's address                                                #
+#    a1 = Beam's matrix X                                                       #
+#    a2 = Beam's matrix Y                                                       #
+#    a3 = Beam's X offset                                                       #
+#    a4 = Beam's Y offset                                                       #    
+#                                                                               #
+#  ------------------          temporary registers          ------------------  #
+#    t0, t1 --> temporary registers                                             #
+#    t2 = PLYR_POS address (stores from a5 to let it be modified)               #
+#    t3 = Player's X/Y offset                                                   #
+#    tp = offset modifier (stores from a3 to let it be modified)                #
+#                                                                               #    
+#################################################################################     
+
+BOMB_COLLISION: 
+# Storing Registers on Stack
+    addi sp,sp,-4
+    sw ra,0(sp)
+# End of Stack Operations
+
+    # a0 has the current bomb's address
+    la a1,CURRENT_MAP    # Won't check for bombs when map is moving
+    lw a1,0(a1)          # Gets current map address
+    
+    # Preparations for check        
+    lbu a5,1(a1)     # Loads map's matrix width
+    lbu a6,5(a0)     # Loads Bomb's current X
+    lbu a7,7(a0)     # Loads Bomb's current Y
+
+    addi a1,a1,3     # Adds 3 to the Matrix's address so that it goes to the beginning of matrix
+    mul t0,a7,a5     # (Bomb's matrix Y + 3)  * Map Matrix's width
+    add t0,a6,t0     # t0 = Bomb's X related to matrix + (Bomb's matrix Y + 3)  * Map Matrix's width
+    add a1,a1,t0     # a1 = Map Matrix's address adjusted for Bomb's X and Y (+3) related to matrix       
+
+    # Will always check 3 tiles (up, current and down)
+    sub a1,a1,a5     # Moves matrix one tile up 
+    addi a7,a7,-1    # Moves Y one tile up
+        
+    # Checking Bomb's X for checking collision
+    lbu t3,3(a0)     # Loads Bomb's X offset
+    li t0, 8   # Loads number 8 for comparing with X offset 
+    blt t3,t0, START_BREAK_BOMB_COLLISION # If X offset < 8, just check one tile bellow, and consider right doors
+    blt t0,t3, BOMB_COLLISION_RIGHT # If X offset > 8, check one tile bellow to the right , and consider left doors
+    # If Bomb's X offset = 8 (will make one check now and one afterwards)
+        j START_BREAK_BOMB_COLLISION           
+
+    BOMB_COLLISION_RIGHT:
+        # If Bomb's X offset > 8, for ground on the tile to the Bomb's right
+        addi a1,a1, 1 # Looks to the tile on the right of Bomb's current tile
+        addi a6,a6,1  # Increments current X on matrix (+1 X)
+        # j START_BOMB_COLLISION 
+
+    START_BREAK_BOMB_COLLISION:
+    # Storing Registers on Stack
+        addi sp,sp,-20
+        sw a3,16(sp)
+        sw a2,12(sp)
+        sw a1,8(sp)
+        sw a0,4(sp)
+        sw ra,0(sp)
+    # End of Stack Operations
+        li a0,0  # Doesn't matter, since no doors will be checked
+        # a1 is already defined   
+        li a2, 3  # Will check 3 tiles
+        li a3, 0  # "Horizontal" check  -> will check 3 tiles in a vertical line
+        li a4, 0  # Base case: Don't consider doors
+        # a5 is already defined
+        # a6 is already defined
+        # a7 is already defined
+        li tp, 3  # Entity collision
+        call CHECK_MAP_COLLISION
+        mv t0,a0
+
+    # Procedure finished: Loading Registers from Stack
+        lw a3,16(sp)
+        lw a2,12(sp)
+        lw a1,8(sp)
+        lw a0,4(sp)
+        lw ra,0(sp)
+        addi sp,sp,20
+    # End of Stack Operations
+
+    lbu t3,3(a0)     # Loads Bomb's X offset
+    li t0, 8   # Loads number 8 for comparing with X offset 
+    bne t0,t3,SKIP_SECOND_BREAK_BOMB_COLLISION
+    # Otherwise, if offset is 8, check again, but now for the tile to the right
+    # Storing Registers on Stack
+        addi sp,sp,-20
+        sw a3,16(sp)
+        sw a2,12(sp)
+        sw a1,8(sp)
+        sw a0,4(sp)
+        sw ra,0(sp)
+    # End of Stack Operations
+        lbu a6,5(a0)     # Loads Bomb's current X
+        lbu a7,7(a0)     # Loads Bomb's current Y
+        addi a7,a7,-1
+        li a0,0  # Doesn't matter, since no doors will be checked
+        addi a1,a1,1  
+        li a2, 3  # Will check 3 tiles
+        li a3, 0  # "Horizontal" check  -> will check 3 tiles in a vertical line
+        li a4, 0  # Base case: Don't consider doors
+        # a5 is already defined
+        addi a6,a6,1
+        # a7 is already defined
+        li tp, 3  # Entity collision
+
+        call CHECK_MAP_COLLISION
+
+    # Procedure finished: Loading Registers from Stack
+        lw a3,16(sp)
+        lw a2,12(sp)
+        lw a1,8(sp)
+        lw a0,4(sp)
+        lw ra,0(sp)
+        addi sp,sp,20
+    # End of Stack Operations
+    SKIP_SECOND_BREAK_BOMB_COLLISION:
+
+    lbu a1, 5(a0)      # Loads Player's current X (matrix)
+    lbu a2, 7(a0)     # Loads Player's current Y (matrix)  
+    lbu a3, 3(a0)      # Loads Player's current X offset
+    lbu a4, 4(a0)      # Loads Player's current Y offset
+
+    la t0,CURRENT_MAP             # Loads map address
+    lbu t0,4(t0)                  # and from it, loads map's number
+    li t1,7                       # Loads 7 to compare with map's number
+    bne t0,t1,BOMB_COLLISION_SKIP_RIDLEY         # If not on map 7, skip Ridley and Plasma Breath >:D
+        j BOMB_COLLISION_RIDLEY # Otherwise, skip the rest of the checks
+    BOMB_COLLISION_SKIP_RIDLEY:
+
+    # Checking for zoomers
+    BOMB_COLLISION_ZOOMER:
+    la t0,Zoomers  # Loads Zoomers address
+    
+    lw t0,0(t0)    # Loads the ZoomersA address over the Zoomers address
+    bnez t0,CONTINUE_BOMB_COLLISION_ZOOMER  # If there are zoomers in this map
+        j BOMB_COLLISION_RIDLEY_SKIP        # If t0 = 0, there are no zoomers in this map
+
+    CONTINUE_BOMB_COLLISION_ZOOMER:
+    # Otherwise, continue
+    lbu t1,0(t0)   # Loads number of Zoomers in current map
+    li t2,0        # Counter for zoomers
+    addi t0,t0,1   # Goes to next byte (where zoomers from current map start)
+    
+    BOMB_COLLISION_ZOOMER_LOOP:
+        lb t3,0(t0) # Loads zoomer's health
+        blt zero,t3,CONTINUE_BOMB_COLLISION_ZOOMER_LOOP # If zoomer is alive
+        # Otherwise, skip this zoomer
+            j NEXT_IN_BOMB_COLLISION_ZOOMER_LOOP
+    
+    CONTINUE_BOMB_COLLISION_ZOOMER_LOOP:
+        lbu t3,4(t0)   # Loads zoomer's current X
+        beq t3,a1,BOMB_COLLISION_ZOOMER_LOOP_CHECK_Y   # If zoomer's X is the same as the beam
+        addi t4,a1,1   # Checks beam's tile to the right
+        beq t3,t4,BOMB_COLLISION_ZOOMER_LOOP_CHECK_Y  # If zoomer's X is to the right of beam
+        addi t4,a1,-1  # Checks beam's tile to the left
+        beq t3,t4,BOMB_COLLISION_ZOOMER_LOOP_CHECK_Y   # If zoomer's X is to the left of beam
+            j NEXT_IN_BOMB_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+        BOMB_COLLISION_ZOOMER_LOOP_CHECK_Y:
+            lbu t3,6(t0)   # Loads zoomer's current Y
+            beq t3,a2,BOMB_COLLISION_ZOOMER_LOOP_SAME_Y    # If zoomer's Y is the same as the beam's
+            addi t4,a2,1   # Checks beam's base tile (Y + 1)
+            beq t3,t4,BOMB_COLLISION_ZOOMER_LOOP_BELLOW  # If zoomer's Y on beam's base
+            j NEXT_IN_BOMB_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+            BOMB_COLLISION_ZOOMER_LOOP_BELLOW:
+                lbu t3,3(t0)   # Loads zoomer's Y offset
+                blt t3,a4,BOMB_COLLISION_ZOOMER_LOOP_HIT # If zoomer's Y offset is less than the beam's Y offset deal damage
+                    j NEXT_IN_BOMB_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+            BOMB_COLLISION_ZOOMER_LOOP_SAME_Y:
+                lbu t3,3(t0)   # Loads zoomer's Y 
+                addi t3,t3,8   # 
+                bge t3,a4,BOMB_COLLISION_ZOOMER_LOOP_HIT # If zoomer's Y offset + 8 is greater than the beam's Y offset deal damage
+                    j NEXT_IN_BOMB_COLLISION_ZOOMER_LOOP # Otherwise, zoomer isn't near beam enough be hit, check next
+
+            BOMB_COLLISION_ZOOMER_LOOP_HIT:
+            # Zoomer gets hit
+                lbu t3,0(t0)   # Loads zoomer's health
+                bnez t3,CONTINUE_BOMB_COLLISION_ZOOMER_LOOP_HIT    # Zoomer isn't dead 
+                    j END_BOMB_COLLISION  # Beam was deactivated, end procedure here   
+                CONTINUE_BOMB_COLLISION_ZOOMER_LOOP_HIT:
+                addi t3,t3,-6  # Takes 6 away from it
+                bge zero,t3,BOMB_COLLISION_ZOOMER_LOOP_HIT_DESTROY_ZOOMER  # If zoomer is killed
+                    sb t3,0(t0)    # and stores it back
+                    lbu t3,1(t0)   # Loads zoomer's type
+                    addi t3,t3,2   # Adds 2 to it ( will go to damage state)
+                    sb t3,1(t0)    # and stores it back
+                    j END_BOMB_COLLISION
+
+                BOMB_COLLISION_ZOOMER_LOOP_HIT_DESTROY_ZOOMER:
+                    sb zero,0(t0)  # Stores 0 to zoomer's health
+                    lbu a1,2(t0)   # Loads zoomer's X offset
+                    lbu a2,3(t0)   # Loads zoomer's Y offset
+                    lbu a3,4(t0)   # Loads zoomer's X 
+                    lbu a4,6(t0)   # Loads zoomer's Y
+                    li a5,4        # Delay
+                    # Storing Registers on Stack
+                        addi sp,sp,-4
+                        sw a0,0(sp)
+                    # End of Stack Operations
+                        li a0, 0       # Small explosion
+                        call EXPLOSION_SPAWN   # Summons explosion
+                    # Procedure finished: Loading Registers from Stack
+                        lw a0,0(sp)
+                        addi sp,sp,4
+                    # End of Stack Operations  
+                    
+                        j END_BOMB_COLLISION  # Beam was deactivated, end procedure here   
+          
+
+        NEXT_IN_BOMB_COLLISION_ZOOMER_LOOP: 
+            addi t0,t0,zoomer_size   # Going to the next zoomer's address                                  
+            addi t2,t2,1             # Iterating counter by 1                                   
+            bge t2,t1, BOMB_COLLISION_RIDLEY_SKIP # If all of the zoomers were checked, end loop                                  
+            j BOMB_COLLISION_ZOOMER_LOOP # otherwise, go back to the loop's beginning                     
+
+    BOMB_COLLISION_RIDLEY_SKIP:   # If checking for normal enemies, skip ridley check
+        j END_BOMB_COLLISION
+    
+    BOMB_COLLISION_RIDLEY:
+        la t0,RIDLEY_INFO
+        lb t1,0(t0) # Loads Ridley's health
+        blt zero,t1,CONTINUE_BOMB_COLLISION_RIDLEY # If Ridley is alive
+            j END_BOMB_COLLISION
+
+        CONTINUE_BOMB_COLLISION_RIDLEY:
+        li tp, 1 # tp will start as left
+        li t3,ridley_X   # Loads Ridley's current X
+        beq t3,a1,BOMB_COLLISION_RIDLEY_CHECK_Y   # If Ridley's X is the same as the beam's
+        addi t4,a1,1   # Checks beam's tile to the right
+        beq t3,t4,BOMB_COLLISION_RIDLEY_CHECK_Y  # If Ridley's X is to the right of beam
+        addi t4,a1,-1  # Checks beam's tile to the left
+        beq t3,t4,BOMB_COLLISION_RIDLEY_CHECK_Y   # If Ridley's X is to the left of beam
+        j END_BOMB_COLLISION # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath  
+
+        BOMB_COLLISION_RIDLEY_CHECK_Y:
+            lbu t3,3(t0)   # Loads Ridley's current Y
+            beq t3,a2,BOMB_COLLISION_RIDLEY_HIT    # If Ridley's Y is the same as the beam's (beam would basically be inside him)
+            addi t4,a2,1   # Checks beam's base tile (Y + 1)
+            beq t3,t4,BOMB_COLLISION_RIDLEY_BELLOW  # If Ridley's Y is bellow beam
+            
+            addi t3,t3,1   # Gets ridley's Y + 1
+            beq t3,a2,BOMB_COLLISION_RIDLEY_HIT    # If Ridley's Y + 1 is the same as the beam's, it's a hit (beam would basically be inside him)
+
+            addi t3,t3,1   # Gets ridley's Y + 2
+            beq t3,a2,BOMB_COLLISION_RIDLEY_SAME_Y    # If Ridley's Y + 2 is the same as the beam's
+
+            j END_BOMB_COLLISION # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath   
+
+            BOMB_COLLISION_RIDLEY_BELLOW:
+                lbu t3,2(t0)   # Loads Ridley's current Y offset
+                blt t3,a4,BOMB_COLLISION_RIDLEY_HIT # If Ridley's "Y offset" is less than the beam's Y offset deal damage
+                    j END_BOMB_COLLISION # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath   
+
+            BOMB_COLLISION_RIDLEY_SAME_Y:
+                lbu t3,2(t0)   # Loads Ridley's current Y offset
+                addi t3,t3,8   # 
+                bge t3,a4,BOMB_COLLISION_RIDLEY_HIT # If ridley's Y offset + 8 is greater than the beam's Y offset deal damage
+                    j END_BOMB_COLLISION # Otherwise, Ridley isn't near beam to be hit, check Plasma Breath   
+
+            BOMB_COLLISION_RIDLEY_HIT:
+            # Ridley gets hit
+                lbu t3,0(t0)   # Loads Ridley's health
+                beqz t3,BOMB_COLLISION_RIDLEY_HIT_DISABLE_BEAM
+                addi t3,t3,-6  # Takes 1 away from it
+                blez t3,BOMB_COLLISION_RIDLEY_HIT_DESTROY_RIDLEY  # If Ridley is killed
+                    sb t3,0(t0)    # and stores it back
+                    lbu t3,1(t0)   # Loads Ridley's type
+                    addi t3,t3,1   # Adds 1 to it ( will go to damage state)
+                    sb t3,1(t0)    # and stores it back
+                    j BOMB_COLLISION_RIDLEY_HIT_DISABLE_BEAM
+
+                BOMB_COLLISION_RIDLEY_HIT_DESTROY_RIDLEY:
+                    sb zero,0(t0)  # Stores 0 to Ridley's health
+                    li a1,ridley_X_Offset   # Loads Ridley's X offset
+                    lbu a2,2(t0)            # Loads Ridley's Y offset
+                    li a3,ridley_X          # Loads Ridley's X 
+                    lbu a4,3(t0)            # Loads Ridley's Y
+                    # Storing Registers on Stack
+                        addi sp,sp,-4
+                        sw a0,0(sp)
+                    # End of Stack Operations
+                        li a0, 1               # Big explosion
+                        li a5,4                # Delay
+                        call EXPLOSION_SPAWN   # Summons explosion
+
+                        la t0,RIDLEY_INFO
+                        li a1,ridley_X_Offset   # Loads Ridley's X offset
+                        lbu a2,2(t0)            # Loads Ridley's Y offset
+                        li a3,ridley_X          # Loads Ridley's X 
+                        addi a3,a3,1
+                        lbu a4,3(t0)            # Loads Ridley's Y
+                        addi a4,a4,1
+                        li a5,3                # Delay
+                        li a0, 1               # Big explosion
+                        call EXPLOSION_SPAWN   # Summons explosion
+
+                        la t0,RIDLEY_INFO
+                        li a1,ridley_X_Offset   # Loads Ridley's X offset
+                        lbu a2,2(t0)            # Loads Ridley's Y offset
+                        li a3,ridley_X          # Loads Ridley's X 
+                        addi a3,a3,-1
+                        lbu a4,3(t0)            # Loads Ridley's Y
+                        addi a4,a4,2
+                        li a5,4                # Delay
+                        li a0, 1               # Big explosion
+                        call EXPLOSION_SPAWN   # Summons explosion
+                    # Procedure finished: Loading Registers from Stack
+                        lw a0,0(sp)
+                        addi sp,sp,4
+                    # End of Stack Operations  
+                    
+                    # j BOMB_COLLISION_RIDLEY_HIT_DISABLE_BEAM
+
+                BOMB_COLLISION_RIDLEY_HIT_DISABLE_BEAM:
+                    j END_BOMB_COLLISION  # Beam was deactivated, end procedure here         
+
+    END_BOMB_COLLISION:
+    # Procedure finished: Loading Registers from Stack
+        lw ra,0(sp)
+        addi sp,sp,4
+    # End of Stack Operations   
+        ret 
+
+#######################              MOVE BEAM            #######################
+#    Tries to move beam in a new direction, disabling it if it hits something   #
+#                         and opening doors if necessary.                       #
+#                                                                               #
+#  ------------------           argument registers          ------------------  #
+#    a0 = Beam's address                                                        #
+#	 a1 = Current map's address                                                 #
+#                                                                               #
+#  ------------------             registers used            ------------------  #
+#    a2,a3,a4, a5, a6, a7 --> used as arguments for COLLISION_CHECK             #      
+#                                                                               #
+#  ------------------          temporary registers          ------------------  #
+#    t0, t1, t2 --> temporary registers                                         #
+#    tp = whether beam hit a door frame or not                                  #
 #                                                                               #    
 #################################################################################  
 MOVE_BEAM:
@@ -710,6 +1491,7 @@ MOVE_BEAM:
 
     lb t0, 1(a0) # loads direction
     beqz t0,MOVE_BEAM_CHECK_Y     # If direction is 0 (Up) 
+        li tp, 0 # If it's 0, it's on the first check
         j MOVE_BEAM_CHECK_X 
 
     MOVE_BEAM_CHECK_Y:
@@ -750,21 +1532,21 @@ MOVE_BEAM:
         li a4, 0  # Base case: Don't consider doors     
         lbu t0,4(a0)   # Loads beam's Y offset
         li t1, 4       # For comparision
-        blt t0,t1,CONTINUE_MOVE_BEAM_CHECK_X  # If less than 4, check current Y only
+        blt t0,t1,CONTINUE_MOVE_BEAM_CHECK_X_GET_DIRECTION  # If less than 4, check current Y only
         li t1, 8       # For comparision
         bge t0,t1,CONTINUE_MOVE_BEAM_CHECK_X_BELLOW  # If greater than or equal to 8, check Y bellow
             li a2,2    # Otherwise (4 <= Y offset < 8) check both tiles
-            j CONTINUE_MOVE_BEAM_CHECK_X
+            j CONTINUE_MOVE_BEAM_CHECK_X_GET_DIRECTION
 
     CONTINUE_MOVE_BEAM_CHECK_X_BELLOW:
         addi a7,a7,1  # Goes to tile bellow
         add a1,a1,a5  # as well as in matrix
         # j CONTINUE_MOVE_BEAM_CHECK_X
 
-    CONTINUE_MOVE_BEAM_CHECK_X:
-        lbu t0,3(a0)   # Loads beam's X offset
-        li t1,8        # Loads number 8 for comparing with X offset 
-        beq t0,t1,CONTINUE_MOVE_BEAM_CHECK_X_GET_DIRECTION  # Will check ignoring doors
+    #CONTINUE_MOVE_BEAM_CHECK_X:
+    #    lbu t0,3(a0)   # Loads beam's X offset
+    #    li t1,8        # Loads number 8 for comparing with X offset 
+    #    beq t0,t1,CONTINUE_MOVE_BEAM_CHECK_X_GET_DIRECTION  # Will check ignoring doors
 
 
     CONTINUE_MOVE_BEAM_CHECK_X_GET_DIRECTION:    
@@ -772,21 +1554,36 @@ MOVE_BEAM:
         addi t0,t0,-1 # if t0 == 1 (right) it'll be set to 0
         beqz t0,MOVE_BEAM_CHECK_X_RIGHT  # If beam is moving right
         # Otherwise, if beam is moving left
-        # When moving left, will check current tile
+        beqz tp,CONTINUE_MOVE_BEAM_CHECK_X_LEFT_FIRST_CHECK # If on first check
+        # When moving left, will check tile to the right (if on second check)
+            addi a1,a1, 1  # Looks to the tile on the right of beam's current tile
+            addi a6,a6,1   # Increments current X on matrix(+1 X)
+            li a2, 1  # Base case: Check only one tile       
+        CONTINUE_MOVE_BEAM_CHECK_X_LEFT_FIRST_CHECK:
+        # When moving left, will check current tile (if on first check)
             lbu t0,3(a0)   # Loads beam's X offset
             li t1,4        # Loads number 4 for comparing with X offset 
             beq t0,t1,CONTINUE_MOVE_BEAM_CHECK_X_LEFT_DOORS  # Will check considering only doors
             bnez t0,CONTINUE_MOVE_BEAM_CHECK_X_LEFT_SKIP_DOORS  # Will check considering only doors
+
             CONTINUE_MOVE_BEAM_CHECK_X_LEFT_DOORS: 
                 li a4,1   # Consider only doors
 
-            CONTINUE_MOVE_BEAM_CHECK_X_LEFT_SKIP_DOORS:
+            CONTINUE_MOVE_BEAM_CHECK_X_LEFT_SKIP_DOORS:            
                 j START_BEAM_COLLISION
-        
+            
         MOVE_BEAM_CHECK_X_RIGHT:
-        # When moving right, will check tile to the right
+        beqz tp,CONTINUE_MOVE_BEAM_CHECK_X_RIGHT_FIRST_CHECK # If on first check
+        # When moving right, will check current tile (if on second check)
+            addi a1,a1, -1  # Looks to the tile on the right of beam's current tile
+            addi a6,a6,-1   # Increments current X on matrix(+1 X)
+            li a2, 1  # Base case: Check only one tile   
+            j CONTINUE_MOVE_BEAM_CHECK_X_RIGHT
+        CONTINUE_MOVE_BEAM_CHECK_X_RIGHT_FIRST_CHECK:
+        # When moving right, will check tile to the right (if on first check)
             addi a1,a1, 1  # Looks to the tile on the right of beam's current tile
             addi a6,a6,1   # Increments current X on matrix(+1 X)
+        CONTINUE_MOVE_BEAM_CHECK_X_RIGHT:
             lbu t0,3(a0)   # Loads beam's X offset
             li t1,12        # Loads number 12 for comparing with X offset 
             beq t0,t1,CONTINUE_MOVE_BEAM_CHECK_X_RIGHT_DOORS  # Will check considering only doors
@@ -796,6 +1593,7 @@ MOVE_BEAM:
                 li a4,1   # Consider only doors
                 
             CONTINUE_MOVE_BEAM_CHECK_X_RIGHT_SKIP_DOORS:
+                beqz t0,MOVE_BEAM_X_PROPERLY # If offset is 0, skip collision check
                 j START_BEAM_COLLISION
 
     START_BEAM_COLLISION:
@@ -818,6 +1616,7 @@ MOVE_BEAM:
 
         call CHECK_MAP_COLLISION
         mv t0,a0
+        mv tp,a1
 
     # Procedure finished: Loading Registers from Stack
         lw a0,0(sp)
@@ -827,6 +1626,7 @@ MOVE_BEAM:
     # End of Stack Operations
     
     AFTER_BEAM_COLLISION:
+        bnez tp,CONTINUE_MOVE_BEAM_CHECK_X_GET_DIRECTION
         bnez t0,MOVE_BEAM_PROPERLY # If returning anything but 0, continue moving ripper
         # Otherwise,
         li t1,3           # Loads "Hit to be Disabled" 
@@ -2214,6 +3014,8 @@ MOVE_PLASMA_BREATH:
 ######################      CHECK MAP COLLISION      ######################    
 #   Checks the tile on the address given by a1, and returns whether the   #
 #                player can move (a0 = 1) or not (a0 = 0).                #
+#   It also returns a1 which stores whether there was a collision with a  #
+#    a door (0 - no door, 1 - right door, 2 - left door, 3 - door frame)  #
 #                                                                         #
 #  -----------------        argument registers        -----------------   #
 #    a0 = check right (0), left(1) or both (2) doors                      # 
@@ -2226,6 +3028,8 @@ MOVE_PLASMA_BREATH:
 #    a5 = map matrix width                                                #
 #    a6 = current X on matrix                                             #   
 #    a7 = current Y on matrix                                             #
+#    tp = 0 - player collision, 1 - enemy collision, 2 - beam collision   #
+#         3 - bomb (explosion)                                            #
 #                                                                         #
 #  -----------------          registers used           -----------------  #
 #    a0 = returns 0 (player can't move) or 1 (player can move)            # 
@@ -2246,6 +3050,8 @@ li t6,0  # Sets t6 to 0 (no doors detected)
     MAP_COLLISION_LOOP:
     # If a0 = 0, player can't move and the checking should stop
         bnez a0, CONTINUE_CHECK_MAP_COLLISION_1 # Otherwise, continue check
+        li t0,3
+        beq t0,t5,CONTINUE_CHECK_MAP_COLLISION_1 # If checking with bombs, ignore regular collision rules
         j END_COLLISON_MAP
 
         CONTINUE_CHECK_MAP_COLLISION_1:
@@ -2270,8 +3076,9 @@ li t6,0  # Sets t6 to 0 (no doors detected)
             SKIP_DOOR_CHECK_MAP_COLLISION:
                 li t0, 4      # Loads t0 = 4 for comparison
                 bge t1,t0,COLLISION_NOT_BACKGROUND # If tile isn't part of background or isn't breakable (t1 >= 4)
-                # If tile is breakable or part of background (0 <= t1 <= 3), a0 should still be 1, otherwise procedure would've ended before
-                    beq a0,t1, COLLISION_BREAKABLE   # If tile is breakable, there needs to be a check if it was broken
+                # If tile is breakable or part of background (0 <= t1 <= 3)
+                    li t0,1
+                    beq t0,t1, COLLISION_BREAKABLE   # If tile is breakable, there needs to be a check if it was broken
                     j CONTINUE_CHECK_MAP_COLLISION_3 # Otherwise, continue checking collision
 
             COLLISION_SPECIAL_1:
@@ -2309,8 +3116,50 @@ li t6,0  # Sets t6 to 0 (no doors detected)
                         j CONTINUE_CHECK_MAP_COLLISION_3
 
             COLLISION_BREAKABLE:
-            # ---> make breakable block work :)
-                # li a0, 0 # Player can't move  
+                la t0,NEXT_MAP # Loads NEXT_MAP address
+                lbu t0,10(t0)  # Gets the Render Next Map byte	
+                beqz t0, COLLISION_BREAKABLE_CURRENT   # If Render Next Map Door == 0, render current map's door
+                # Otherwise, Next Map == 1, so check next map's blocks
+                    la t0,Blocks_Next  # Loads blocks address
+                    lw t0,0(t0)        # and loads the breakable block address
+                    j CONTINUE_COLLISION_BREAKABLE
+                COLLISION_BREAKABLE_CURRENT:
+                # Checks current map's blocks
+                    la t0,Blocks  # Loads blocks address
+                    lw t0,0(t0)   # and loads the breakable block address
+                    # j CONTINUE_COLLISION_BREAKABLE
+
+                CONTINUE_COLLISION_BREAKABLE:
+                    beqz t0,COLLISION_BREAKABLE_NOT_BLOCKING
+		
+                    lbu t1,1(t0)  # Gets Y where blocks start
+                    sub t1,a7,t1  # Sets current Y to be related to Y where blocks start
+
+                    lbu t2,2(t0)  # Loads width
+                    mul t1,t1,t2  # and multiplies it by current Y	
+
+                    lbu t2,0(t0)  # Gets X where blocks start
+                    sub t2,a6,t2  # Sets current X to be related to X where blocks start
+
+                    add t1,t1,t2  # adds X to it
+
+                    addi t0,t0,4  # Skip first 4 information bytes
+                    add t0,t1,t0  # and adds t4 to it
+            
+                    lb t1,0(t0)  # Loads t0 
+                    bnez t1, COLLISION_BREAKABLE_NOT_BLOCKING  # If block is destroyed, can go through
+                    # Otherwise it's blocking
+                    li t1,3 # To check if it was colliding with exploding bomb
+                    bne t5,t1, COLLISION_BREAKABLE_BLOCKING
+                    # If colliding with exploding bomb, set block to be destroyed
+                        li t1,1
+                        sb t1,0(t0)  # Sets t0 to 1 (first phase of exploding) 
+                        j CONTINUE_CHECK_MAP_COLLISION_3     # Otherwise, finish this iteration's checks
+                    COLLISION_BREAKABLE_BLOCKING:
+                        j COLLISION_BLOCKED
+
+			COLLISION_BREAKABLE_NOT_BLOCKING:
+            # Block doesn't exist, can go through           
                 j CONTINUE_CHECK_MAP_COLLISION_3
             
             COLLISION_NOT_BACKGROUND:
@@ -2320,7 +3169,7 @@ li t6,0  # Sets t6 to 0 (no doors detected)
                     j COLLISION_BLOCKED # If tile isn't special (3 < t1 < 36)
             
             COLLISION_DOOR_FRAME:
-                bnez t5,COLLISION_BLOCKED  # If not player, consider this a solid object
+                bnez t5,COLLISION_DOOR_FRAME_COLLISION_BLOCKED  # If not player, consider this a solid object
                 mv t0,zero   # Resets counter
                 la t1, Frames # Loads Frames address
                 lw t1,0(t1)	 # Gets the current map's door frame address
@@ -2384,7 +3233,7 @@ li t6,0  # Sets t6 to 0 (no doors detected)
                         AFTER_COLLISION_DOOR_LOOP_DIRECTION_CHECK:
                             lbu t4, 2(t1) # Loads door's state
                             bnez t4, END_COLLISION_DOOR_LOOP # If door is open or opening, player can move through 
-                                li t4,2 # 1 is the threshold of when a door can be on right wall
+                                li t4,2 # Comparing if it's beam collision
                                 bne t5,t4,NOT_BEAM_COLLISION
                                     li t4,1       # Loads 1 (opening/closing)
                                     sb t4,2(t1)   # and stores it on door's state byte  
@@ -2407,6 +3256,8 @@ li t6,0  # Sets t6 to 0 (no doors detected)
                 # This is only reached if no door was found (error) or if door is open/opening, so player will be able to go through 
                     j CONTINUE_CHECK_MAP_COLLISION_3                                                                 
             
+            COLLISION_DOOR_FRAME_COLLISION_BLOCKED:
+                li t6,3  
             COLLISION_BLOCKED:
                 li a0,0 # Player can't move  
 
@@ -2426,5 +3277,5 @@ li t6,0  # Sets t6 to 0 (no doors detected)
                 j MAP_COLLISION_LOOP
 
 END_COLLISON_MAP:
-    mv a1,t6  # moves t6 (0 - no door, 1 - right door, 2 - left door)
+    mv a1,t6  # moves t6 (0 - no door, 1 - right door, 2 - left door, 3 - door frame)
     ret

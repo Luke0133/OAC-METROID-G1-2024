@@ -103,12 +103,36 @@ CHANGE_MAP:
 		la t0, Map1   # If next map is Map1
 		sw t0,0(t1)   # Store it into NEXT_MAP
 		la t2,Doors1  # Gets Doors1 address 
+
+		la t4,Zoomers_Next   # Zoomers address
+		la tp,Zoomers1       # Loads Zoomers1 address for Map 1
+		sw tp,0(t4)          # and stores it
+
+		la t4,Rippers_Next   # Rippers address
+		sw zero,0(t4)   # Stores 0 to it (no rippers)
+
+		la t4,Blocks_Next    # Blocks address
+		sw zero,0(t4)        # there are no blocks in this map
+
     	j CONTINUE_CHANGE_MAP
     SKIP_NEXT_MAP1:
         li t0, 2 
         bne t0, t2, SKIP_NEXT_MAP2 
 			la t0, Map2   # If next map is Map2
 			sw t0,0(t1)   # Store it into NEXT_MAP
+			
+			la t4,Zoomers_Next   # Zoomers address
+			la tp,Zoomers2       # Loads Zoomers2 address for Map 2
+			sw tp,0(t4)          # and stores it
+
+			la t4,Rippers_Next   # Rippers address
+			la tp,Rippers2       # Loads Rippers2 address for Map 2
+			sw tp,0(t4)          # and stores it
+
+			la t4,Blocks_Next    # Blocks address
+			la tp,Blocks2   # Loads Blocks2 address for Map 2
+			sw tp,0(t4)     # and stores it
+
 			la t2,Doors2  # Gets Doors2 address 
 			j CONTINUE_CHANGE_MAP
 
@@ -118,6 +142,17 @@ CHANGE_MAP:
 			la t0, Map3   # If next map is Map3
 			sw t0,0(t1)   # Store it into NEXT_MAP
 			la t2,Doors3  # Gets Doors3 address 
+
+			la t4,Zoomers_Next   # Zoomers address
+			la tp,Zoomers3       # Loads Zoomers3 address for Map 3
+			sw tp,0(t4)          # and stores it
+
+			la t4,Rippers_Next   # Rippers address
+			sw zero,0(t4)   # Stores 0 to it (no rippers)
+
+			la t4,Blocks_Next    # Blocks address
+			sw zero,0(t4)        # there are no blocks in this map
+
 			j CONTINUE_CHANGE_MAP
 
     SKIP_NEXT_MAP3:
@@ -125,7 +160,19 @@ CHANGE_MAP:
         bne t0, t2, SKIP_NEXT_MAP4 
 			la t0, Map4   # If next map is Map4
 			sw t0,0(t1)   # Store it into NEXT_MAP
-			la t2,Doors4  # Gets Doors4 address 
+			la t2,Doors4  # Gets Doors4 address  
+
+			la t4,Zoomers_Next   # Zoomers address
+			la tp,Zoomers4       # Loads Zoomers4 address for Map 4
+			sw tp,0(t4)          # and stores it
+
+			la t4,Rippers_Next   # Rippers address
+			la tp,Rippers4       # Loads Rippers4 address for Map 4
+			sw tp,0(t4)          # and stores it
+
+			la t4,Blocks_Next    # Blocks address
+			sw zero,0(t4)        # there are no blocks in this map
+			
 			j CONTINUE_CHANGE_MAP
     
     SKIP_NEXT_MAP4:
@@ -133,7 +180,18 @@ CHANGE_MAP:
         bne t0, t2, SKIP_NEXT_MAP5 
 			la t0, Map5   # If next map is Map5
 			sw t0,0(t1)   # Store it into NEXT_MAP
-			la t2,Doors5  # Gets Doors5 address 
+			la t2,Doors5  # Gets Doors5 address  
+
+			la t4,Zoomers_Next   # Zoomers address
+			la tp,Zoomers5       # Loads Zoomers5 address for Map 5
+			sw tp,0(t4)          # and stores it
+
+			la t4,Rippers_Next   # Rippers address
+			sw zero,0(t4)   # Stores 0 to it (no rippers)
+
+			la t4,Blocks_Next    # Blocks address
+			sw zero,0(t4)        # there are no blocks in this map
+			
 			j CONTINUE_CHANGE_MAP
     
     SKIP_NEXT_MAP5:
@@ -141,7 +199,17 @@ CHANGE_MAP:
         bne t0, t2, SKIP_NEXT_MAP6
 			la t0, Map6   # If next map is Map6
 			sw t0,0(t1)   # Store it into NEXT_MAP
-			la t2,Doors6  # Gets Doors6 address 
+			la t2,Doors6  # Gets Doors6 address  
+
+			la t4,Zoomers_Next   # Zoomers address
+			sw zero,0(t4)          # and stores it
+
+			la t4,Rippers_Next   # Rippers address
+			sw zero,0(t4)   # Stores 0 to it (no rippers)
+
+			la t4,Blocks_Next    # Blocks address
+			sw zero,0(t4)        # there are no blocks in this map
+			
 			j CONTINUE_CHANGE_MAP
 
     SKIP_NEXT_MAP6:
@@ -150,6 +218,16 @@ CHANGE_MAP:
 			la t0, Map7   # If next map is Map7
 			sw t0,0(t1)   # Store it into NEXT_MAP
 			la t2,Doors7  # Gets Doors7 address 
+
+			la t4,Zoomers_Next   # Zoomers address
+			sw zero,0(t4)          # and stores it
+
+			la t4,Rippers_Next   # Rippers address
+			sw zero,0(t4)   # Stores 0 to it (no rippers)
+
+			la t4,Blocks_Next    # Blocks address
+			sw zero,0(t4)        # there are no blocks in this map
+			 
 			j CONTINUE_CHANGE_MAP
 
 	SKIP_NEXT_MAP7:

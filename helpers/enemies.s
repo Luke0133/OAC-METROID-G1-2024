@@ -65,6 +65,11 @@ ZOOMER_OPERATIONS:
     li a2,0        # Counter for zoomers
     addi a0,a0,1   # Goes to next byte (where zoomers from current map start)
     ZOOMER_OPERATIONS_LOOP:
+        lb t0,0(a0) # Loads zoomer's health
+        blt zero,t0,CONTINUE_ZOOMER_OPERATIONS_LOOP # If zoomer is alive
+        # Otherwise, skip this zoomer
+            j NEXT_IN_ZOOMER_OPERATIONS_LOOP
+        CONTINUE_ZOOMER_OPERATIONS_LOOP:
         # Checking X
         lbu t0,6(tp) # Loads map's current X
         lbu a5,4(a0) # Loads zoomer's current X
@@ -153,6 +158,8 @@ ZOOMER_OPERATIONS:
                     j ZOOMER_OPERATIONS_LOOP_RENDER
                 ZOOMER_OPERATIONS_LOOP_DOWN_DAMAGE:
                 # If taking damage:
+                    addi t0,t0,-2 # Reverts its sprite back to normal
+                    sb t0,1(a0)   # and stores it back
                     la a0,Zoomer_Damage_Down
                     j ZOOMER_OPERATIONS_LOOP_RENDER
 
@@ -170,6 +177,8 @@ ZOOMER_OPERATIONS:
                     j ZOOMER_OPERATIONS_LOOP_RENDER
                 ZOOMER_OPERATIONS_LOOP_LEFT_DAMAGE:
                 # If taking damage:
+                    addi t0,t0,-2 # Reverts its sprite back to normal
+                    sb t0,1(a0)   # and stores it back
                     la a0,Zoomer_Damage_Left
                     j ZOOMER_OPERATIONS_LOOP_RENDER
 
@@ -187,6 +196,8 @@ ZOOMER_OPERATIONS:
                     j ZOOMER_OPERATIONS_LOOP_RENDER
                 ZOOMER_OPERATIONS_LOOP_UP_DAMAGE:
                 # If taking damage:
+                    addi t0,t0,-2 # Reverts its sprite back to normal
+                    sb t0,1(a0)   # and stores it back
                     la a0,Zoomer_Damage_Up
                     j ZOOMER_OPERATIONS_LOOP_RENDER
 
@@ -203,6 +214,8 @@ ZOOMER_OPERATIONS:
                     j ZOOMER_OPERATIONS_LOOP_RENDER
                 ZOOMER_OPERATIONS_LOOP_RIGHT_DAMAGE:
                 # If taking damage:
+                    addi t0,t0,-2 # Reverts its sprite back to normal
+                    sb t0,1(a0)   # and stores it back
                     la a0,Zoomer_Damage_Right
                     j ZOOMER_OPERATIONS_LOOP_RENDER
 
@@ -404,7 +417,14 @@ RIDLEY_OPERATIONS:
     
     la a0,RIDLEY_INFO  # Loads Ridley's address
     la tp, CURRENT_MAP # Loads CURRENT_MAP address
-    
+
+    lb t0,0(a0) # Loads Ridley's health
+    blt zero,t0,CONTINUE_RIDLEY_OPERATIONS # If Ridley is alive
+    # Otherwise, skip procedure
+        sb zero,0(a0) # Stores zero on Ridley's health
+        j END_RIDLEY_OPERATIONS
+
+    CONTINUE_RIDLEY_OPERATIONS:
 # Storing Registers on Stack
     addi sp,sp,-36
     sw s1,0(sp)
@@ -454,30 +474,32 @@ RIDLEY_OPERATIONS:
     sb a6,5(a0)       # and stores it back for using next time
 
     li t0, ridley_jump_animation              # Loads screen's Y threshold where jumping animation appears
-    lbu a0,1(a0)                              # Gets ridley's type number
+    lbu t1,1(a0)                              # Gets ridley's type number
     bge t0,a2,RIDLEY_OPERATIONS_RENDER_JUMP   # If Y (a2) <= 80, render jumping animation
     # If ridley isn't jumping:
         li a4,40   # 40 = height of rendering area
-        bnez a0,RIDLEY_OPERATIONS_RENDER_DAMAGE
+        bnez t1,RIDLEY_OPERATIONS_RENDER_DAMAGE
         # If ridley is normal
             la a0,Ridley
             j RIDLEY_OPERATIONS_RENDER
 
         RIDLEY_OPERATIONS_RENDER_DAMAGE:
         # If ridley is taking damage
+            sb zero,1(a0)             # Reverts to normal state
             la a0,Ridley_Damage
             j RIDLEY_OPERATIONS_RENDER
 
     RIDLEY_OPERATIONS_RENDER_JUMP:
     # If ridley is jumping:
         li a4,48   # 48 = height of rendering area
-        bnez a0,RIDLEY_OPERATIONS_RENDER_JUMP_DAMAGE
+        bnez t1,RIDLEY_OPERATIONS_RENDER_JUMP_DAMAGE
         # If ridley is normal
             la a0,Ridley_Jump
             j RIDLEY_OPERATIONS_RENDER
 
         RIDLEY_OPERATIONS_RENDER_JUMP_DAMAGE:
         # If ridley is taking damage  
+            sb zero,1(a0)             # Reverts to normal state
             la a0,Ridley_Damage_Jump
             # j RIDLEY_OPERATIONS_RENDER  
 

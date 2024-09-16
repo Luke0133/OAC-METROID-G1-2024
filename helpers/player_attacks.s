@@ -415,10 +415,13 @@ BOMBS_OPERATIONS:
                 lbu a2,4(a0) # Loads bomb's Y offset
                 lbu a3,5(a0) # Loads bomb's current X
                 lbu a4,7(a0) # Loads bomb's current Y
+                li a5,0      # No delay
             
                 li a0, 1   # 1 - Big  
                 call EXPLOSION_SPAWN
 
+                lw a0,0(sp)  # Restores a0 for bomb collision
+                call BOMB_COLLISION  # Will see if bomb hit an enemy/block
             # Procedure finished: Loading Registers from Stack
                 lw a0,0(sp)
                 lw a1,4(sp)
@@ -580,6 +583,7 @@ BOMBS_OPERATIONS:
 #    a2 = Y offset                                              #
 #    a3 = X (matrix)                                            #
 #    a4 = Y (matrix)                                            #
+#    a5 = delay (0 - none, any other positive number for delay) #
 #                                                               #
 #  ----------            registers used             ----------  #
 #    a0 = EXPLOSION_ARRAY address                               #
@@ -623,6 +627,8 @@ EXPLOSION_SPAWN:
             sb a4, 7(a0)     # Stores explosion's Y 
             sb a4, 8(a0)     # Stores explosion's old Y   
 
+            neg a5,a5        # If a5 > 0, a5 < 0
+            sb a5,2(a0)      # Sets counter (0 - normal / negative for delay)
             j END_EXPLOSION_SPAWN_LOOP # Break Loop       
 
         NEXT_IN_EXPLOSION_SPAWN_LOOP:
@@ -709,7 +715,8 @@ EXPLOSIONS_OPERATIONS:
             lbu t0,1(a0)      # Loads explosion type
             bnez t0,EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG  # If it's a big explosion
             # Otherwise it's a small explosion
-                lbu t0,2(a0)      # Gets number of times that it was rendered (counter)
+                lb t0,2(a0)      # Gets number of times that it was rendered (counter)
+                blt t0,zero,AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL  # If it has a delay
                 bnez t0,EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL_NOT_0  # If not on state 0
                 # If it's the first time rendering, get small explosion sprite
                     la a0, Explosions_1   # Small explosion sprite
@@ -738,7 +745,7 @@ EXPLOSIONS_OPERATIONS:
 
                 AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_SMALL:    
                     lw a0,16(sp)    # Restores a0
-                    lbu t0,2(a0)    # Gets number of times that it was rendered (counter)
+                    lb t0,2(a0)     # Gets number of times that it was rendered (counter)
                     addi t0,t0,1    # iterates it
                     sb t0,2(a0)     # and stores it back
                     li t1,small_explosion  # Loads number of times small explosion should render before being disabled
@@ -750,7 +757,8 @@ EXPLOSIONS_OPERATIONS:
 
             EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG:
             # If it's a big explosion
-                lbu t0,2(a0)      # Gets number of times that it was rendered (counter)
+                lb t0,2(a0)      # Gets number of times that it was rendered (counter)
+                blt t0,zero,AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG  # If it has a delay
                 bnez t0,EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG_NOT_0  # If not on state 0
                 # If it's the first time rendering, get bomb exploding sprite
                     la a0, Explosions_1   # Small explosion sprite
@@ -809,7 +817,7 @@ EXPLOSIONS_OPERATIONS:
 
                 AFTER_EXPLOSIONS_OPERATIONS_LOOP_RENDER_BIG:    
                     lw a0,16(sp)    # Restores a0
-                    lbu t0,2(a0)    # Gets number of times that it was rendered (counter)
+                    lb t0,2(a0)    # Gets number of times that it was rendered (counter)
                     addi t0,t0,1    # iterates it
                     sb t0,2(a0)     # and stores it back
                     li t1,big_explosion  # Loads number of times big explosion should render before being disabled

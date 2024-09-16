@@ -104,6 +104,9 @@ SETUP:
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
 
+        la t0,Blocks    # Blocks address
+        sw zero,0(t0)   # Stores 0 to it (no breakable blocks)
+
         la a0, Map1 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map1 address on CURRENT_MAP
@@ -187,6 +190,10 @@ SETUP:
         la t1,Rippers2  # Loads Rippers2 address for Map 2
         sw t1,0(t0)     # and stores it
         
+        la t0,Blocks    # Blocks address
+        la t1,Blocks2   # Loads Blocks2 address for Map 2
+        sw t1,0(t0)     # and stores it
+
         la a0, Map2 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map2 address on CURRENT_MAP
@@ -267,6 +274,9 @@ SETUP:
 
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
+
+        la t0,Blocks    # Blocks address
+        sw zero,0(t0)   # Stores 0 to it (no breakable blocks)
 
         la a0, Map3 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
@@ -350,7 +360,10 @@ SETUP:
         la t0,Rippers   # Rippers address
         la t1,Rippers4  # Loads Rippers4 address for Map 4
         sw t1,0(t0)     # and stores it
-        
+
+        la t0,Blocks    # Blocks address
+        sw zero,0(t0)   # Stores 0 to it (no breakable blocks)
+                
         la a0, Map4 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map4 address on CURRENT_MAP
@@ -432,6 +445,9 @@ SETUP:
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
 
+        la t0,Blocks    # Blocks address
+        sw zero,0(t0)   # Stores 0 to it (no breakable blocks)
+        
         la a0, Map5 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map5 address on CURRENT_MAP
@@ -512,6 +528,9 @@ SETUP:
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
 
+        la t0,Blocks    # Blocks address
+        sw zero,0(t0)   # Stores 0 to it (no breakable blocks)
+        
         la a0, Map6 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map6 address on CURRENT_MAP
@@ -591,6 +610,9 @@ SETUP:
         la t0,Rippers   # Rippers address
         sw zero,0(t0)   # Stores 0 to it (no rippers)
 
+        la t0,Blocks    # Blocks address
+        sw zero,0(t0)   # Stores 0 to it (no breakable blocks)
+        
         la a0, Map7 	# Map Address     
         la t0, CURRENT_MAP # Loads CURRENT_MAP address
         sw a0, 0(t0)    # Stores Map7 address on CURRENT_MAP

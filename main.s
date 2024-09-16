@@ -61,7 +61,7 @@ GAME_LOOP:
 ### Game operations
     xori s0,s0,1		    # Switches frame value (register)
 
-	#call MUSIC.PLAY
+	call MUSIC.PLAY
 
 	call INPUT_CHECK	    # Checks player's input
 
@@ -90,6 +90,8 @@ GAME_LOOP:
 	call RENDER_DOOR_FRAMES
 
 	call PLAYER_COLLISION  # Will see if player was hit by an enemy
+
+	call BEAM_COLLISION  # Will see if beam hit an enemy
 
 	# Switching Frame on Bitmap Display and getting current time to finish loop											
 	li t0,0xFF200604	# Loads Bitmap Display address

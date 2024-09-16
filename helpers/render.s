@@ -1167,11 +1167,13 @@ RENDER_MAP_LOOP:
 
 		li t0, 40      # Value where doors start
 		bge t1, t0, RENDER_DOOR # If it's a door
+		li t0,1
+		beq t0,t1, RENDER_BREAK_BLOCK
 		la t0, Tileset # Loads Tileset address to t0
 		addi t1,t1,-1  # t1 = Tile Number - 1 (so that if t1 = 1, 0 tiles will be skipped)
 		slli t1,t1,8   # t1 = (Tile Number - 1) x 256
-		add t0,t0,t1  # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles)
-		mv t4,zero    # t4 will hold the tile's sprite status (which will be zero)
+		add t0,t0,t1   # t0 will skip (Tile Number - 1) x 256 bytes (Tile Number - 1 tiles)
+		mv t4,zero     # t4 will hold the tile's sprite status (which will be zero)
 		j CONTINUE_RENDER_MAP
 	
 	RENDER_SPECIAL:
@@ -1189,6 +1191,67 @@ RENDER_MAP_LOOP:
 			# This is only reached if there was an error or tile is disabled
 			mv t1,zero # so background color will be rendered
 			j CONTINUE_RENDER_MAP
+
+	RENDER_BREAK_BLOCK:
+		la t4,NEXT_MAP # Loads NEXT_MAP address
+		lbu t5,10(t4)  # Gets the Render Next Map byte	
+		beqz t5, RENDER_BREAK_BLOCK_CURRENT   # If Render Next Map Door == 0, render current map's door
+		# Otherwise, Render Next Map Door == 1, so render next map's door
+			la t0,Blocks_Next  # Loads blocks address
+			lw t0,0(t0)        # and loads the breakable block address
+			j CONTINUE_RENDER_BREAK_BLOCK
+		RENDER_BREAK_BLOCK_CURRENT:
+		# Renders current map's door
+			la t0,Blocks  # Loads blocks address
+			lw t0,0(t0)   # and loads the breakable block address
+			# j CONTINUE_RENDER_BREAK_BLOCK
+
+		CONTINUE_RENDER_BREAK_BLOCK:
+			beqz t0,RENDER_BREAK_BLOCK_BACKGROUND
+		
+		RENDER_BREAK_BLOCK_CHECK:
+			lbu t5,1(t0)  # Gets Y where blocks start
+			sub t5,t2,t5  # Sets current Y to be related to Y where blocks start
+			add t5,t5,a2  # Corrects Y adding starting Y
+
+			lbu t4,2(t0)  # Loads width
+			mul t4,t4,t5  # and multiplies it by current Y	
+
+			lbu t5,0(t0)  # Gets X where blocks start
+			sub t5,t3,t5  # Sets current X to be related to X where blocks start
+			add t5,t5,a1  # Corrects X adding starting X
+
+			add t4,t5,t4  # adds X to it
+
+			addi t0,t0,4  # Skip first 4 information bytes
+			add t0,t4,t0  # and adds t4 to it
+			
+			lbu t4,0(t0)  # Loads t0 
+			bnez t4, RENDER_BREAK_BLOCK_CHECK_EXPLOSION # If block isn't full, see if it's exploding
+				la t0, Tileset # Loads Tileset address to t0
+				mv t4,zero     # t4 will hold the tile's sprite status (which will be zero)
+				j CONTINUE_RENDER_MAP  # Otherwise, render it
+
+			RENDER_BREAK_BLOCK_CHECK_EXPLOSION: li t5,1
+			bne t4, t5, RENDER_BREAK_BLOCK_CHECK_EXPLOSION_2 # If block isn't in the first phase of breaking, see if it's in the second phase
+				addi t4,t4,1 # Sets block up for next phase
+				sb t4,0(t0)  # and stores it
+				la t0, BreakBlock_Break1 # Loads BreakBlock_Break1 address to t0
+				mv t4,zero               # t4 will hold the tile's sprite status (which will be zero)
+				j CONTINUE_RENDER_MAP    # Otherwise, render it
+			
+			RENDER_BREAK_BLOCK_CHECK_EXPLOSION_2: li t5,1
+			bne t4, t5, RENDER_BREAK_BLOCK_BACKGROUND # If block is destroyed, don't render it
+				addi t4,t4,1 # Sets block up for next phase
+				sb t4,0(t0)  # and stores it
+				la t0, BreakBlock_Break2 # Loads BreakBlock_Break2 address to t0
+				mv t4,zero               # t4 will hold the tile's sprite status (which will be zero)
+				j CONTINUE_RENDER_MAP    # Otherwise, render it
+
+			RENDER_BREAK_BLOCK_BACKGROUND:
+				li t1,0   # Won't render
+				j CONTINUE_RENDER_MAP
+
 	RENDER_DOOR: 
 	# Storing tp on stack cuz we don't really have any registers to use anymore :/
 		addi sp,sp,-4

@@ -191,18 +191,27 @@ Explosion_7: 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled), explosion typ
 .eqv big_explosion 7      # Number of loops before freeing big explosion
 .eqv small_explosion 3    # Number of loops before freeing small explosion
 
+#####     Breakable block   ######
+Blocks: .word 0 # Holds the current "BlocksA" label based on the current map (0 if none exist in current map)
+Blocks_Next: .word 0 # Holds the current "BlocksA" label based on next map (0 if none exist on next map)
+
+# In this game, only map 2 has breakable blocks
+Blocks2:  .byte 4,6,12,3     # Starting X, starting Y, width and height
+          .byte -1,-1,0,0,0,0,-1,0,0,0,0,-1,              # 0 if blocked
+                -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,      # 1 -> 2 -> 3 if broken
+                0,0,0,0,0,-1,-1,-1,-1,0,0,0,              # -1 if not a breakable block
 
 
 ##############           Zoomer            ##############
 
 Zoomers: .word 0 # Holds the current "ZoomersA" label based on the current map (0 if none exist in current map)
-#Zoomers_Next: .word 0 # Holds the "ZoomersA" label based on the next map (0 if none exist in next map)  
+Zoomers_Next: .word 0 # Holds the "ZoomersA" label based on the next map (0 if none exist in next map)  
 #                     +-->   only changed when switching maps
 
 # With a varied amount of zoomers in each map, we have 432 + 5 bytes used (each zoomer is 12 bytes appart from each other)
 .eqv zoomer_size 12             # number of bytes per zoomer
-.eqv zoomer_normal_health 3     # number of shots for a normal zoomer to die
-.eqv zoomer_variant_health 6    # number of shots for a variant zoomer to die
+.eqv zoomer_normal_health 6     # number of shots for a normal zoomer to die
+.eqv zoomer_variant_health 12    # number of shots for a variant zoomer to die
 
 # type: 0 (normal), 1 (variant), 2 (normal damage), 3 (variant damage)
 .byte
@@ -362,7 +371,7 @@ Zoomer5_3: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y
 
 ##############           Ripper            ##############
 Rippers: .word 0 # Holds the current "RippersA" label based on the current map (0 if none exist in current map)
-#Rippers_Next: .word 0 # Holds the "RippersA" label based on the next map (0 if none exist in next map)  
+Rippers_Next: .word 0 # Holds the "RippersA" label based on the next map (0 if none exist in next map)  
 #                     +-->   only changed when switching maps
 
 # With 5 rippers in each map, we have 72 bytes used (each ripper is 7 bytes appart from each other)
@@ -606,11 +615,13 @@ Frame7_0: 19,5,2,2,0,30
 ################################################        Tiles        ################################################
 # Stores all tiles used in the game, that can be rendered by checking the value on the map matrixes (search "Matrixes")
 # 
-# --> Total ammount of data: 13,056 bytes (256 bytes per tile) or 12.75 KiB + word
+# --> Total ammount of data: 13,568 bytes (256 bytes per tile) or 13.25 KiB + word
 #
 # There is a total of 51 tiles looked by matrixes: 
 # The number 0 on matrixes is not a tile, and will be rendered as black
 #
+#  Obs.: BreakBlock_Break1 and BreakBlock_Break2 don't make part of the array 
+# 
 #  +------------------+-------------------+----------------------+
 #  | 01. BreakBlock   | 18. Tile2A        | 35. Tile3C           |
 #  | 02. Bush2A       | 19. Pipe2H        | 36. LavaB            |
@@ -632,6 +643,42 @@ Frame7_0: 19,5,2,2,0,30
 #  +------------------+-------------------+----------------------+
 
 .word 0 # Aligning bytes
+BreakBlock_Break1: # 16 x 16 = 256 bytes
+.byte 0,0,0,0,0,0,0,160,209,0,0,0,160,227,160,0,
+0,0,227,0,0,0,209,160,160,227,0,0,0,160,160,0,
+0,0,0,0,0,0,0,160,209,209,209,0,0,0,0,0,
+0,0,0,160,209,0,0,0,227,209,209,0,0,209,0,0,
+0,209,160,160,209,0,0,0,0,0,0,0,209,0,0,0,
+0,0,209,227,209,160,0,227,0,227,209,209,209,209,0,0,
+0,227,0,209,209,0,0,209,0,0,0,209,160,160,0,0,
+0,0,0,227,0,0,0,209,209,0,0,0,0,160,0,0,
+209,0,0,0,160,227,160,0,0,0,0,0,0,0,0,160,
+160,227,0,0,0,160,160,0,0,0,227,0,0,0,209,160,
+209,209,209,0,0,0,0,0,0,0,0,0,0,0,0,160,
+227,209,209,0,0,209,0,0,0,0,0,160,209,0,0,0,
+0,0,0,0,209,0,0,0,0,209,160,160,209,0,0,0,
+0,227,209,209,209,209,0,0,0,0,209,227,209,160,0,227,
+0,0,0,209,160,160,0,0,0,227,0,209,209,0,0,209,
+209,0,0,0,0,160,0,0,0,0,0,227,0,0,0,209,
+
+BreakBlock_Break2: # 16 x 16 = 256 bytes
+.byte 0,0,0,0,0,209,0,0,0,0,0,0,0,0,0,0,
+0,209,0,209,0,0,0,209,0,209,0,0,209,0,209,0,
+0,0,0,0,160,0,0,209,209,0,209,0,0,0,0,0,
+0,209,0,160,0,227,0,0,0,0,0,0,0,0,209,0,
+0,0,0,0,0,0,160,0,160,0,227,0,0,160,0,0,
+209,0,160,0,160,0,0,0,0,0,0,160,0,160,0,209,
+0,0,0,0,0,0,0,227,0,0,0,0,160,0,160,0,
+227,0,160,0,0,160,0,0,160,0,227,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,209,0,0,
+0,209,0,0,209,0,209,0,0,209,0,209,0,0,0,209,
+209,0,209,0,0,0,0,0,0,0,0,0,160,0,0,209,
+0,0,0,0,0,0,209,0,0,209,0,160,0,227,0,0,
+160,0,227,0,0,160,0,0,0,0,0,0,0,0,160,0,
+0,0,0,160,0,160,0,209,209,0,160,0,160,0,0,0,
+0,0,0,0,160,0,160,0,0,0,0,0,0,0,0,227,
+160,0,227,0,0,0,0,0,227,0,160,0,0,160,0,0,
+
 Tileset:
 BreakBlock: # 16 x 16 = 256 bytes
 .byte 0,0,227,227,0,227,227,0,227,227,227,227,227,0,0,0,
