@@ -714,6 +714,7 @@ END_SETUP:
             la t0, ITEM_CAPSULE_INFO
             sb zero,0(t0)              # Restores capsule
         SKIP_ABILITY_RESET:
+            li s3, 1       # If player's info was already reset
             la t0,MOVE_X
             sw zero,0(t0)  # Resets MOVE_X, MOVE_Y,JUMP byte and Player input byte
 

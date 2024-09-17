@@ -175,14 +175,51 @@ MENU2_LOOP:
 	
 	j MENU2_LOOP	# Returns to loop's beginning
 
-
-
 GAME_OVER_LOOP_PREP:
+	li a0,0               # Black
+	li a1,0               # Starting X (0)
+	li a2,0               # Starting Y (0)
+	li a3,screen_width    # Gets width
+	li a4,screen_height   # Gets height
+	li a5,0               # Gets frame
+	li a6,0               # Render per word
+	call RENDER_COLOR
+
+	la a0,GAME_OVER_TXT
+	li a1,120             # a1 = column
+	li a2,116             # a2 = row 
+	li a3,0x00ff          # a3 = colors 
+	li a4,0               # a4 = frame
+	li a5,1               # Font
+	li a7,104 # syscal for 'print integer'
+	ecall
+
+	li a0,0               # Black
+	li a1,0               # Starting X (0)
+	li a2,0               # Starting Y (0)
+	li a3,screen_width    # Gets width
+	li a4,screen_height   # Gets height
+	li a5,1               # Gets frame
+	li a6,0               # Render per word
+	call RENDER_COLOR
+
+	la a0,GAME_OVER_TXT
+	li a1,120             # a1 = column
+	li a2,116             # a2 = row 
+	li a3,0x00ff          # a3 = colors 
+	li a4,1               # a4 = frame
+	li a5,1               # Font
+	li a7,104 # syscal for 'print integer'
+	ecall
+
+	csrr s1,3073        # New time is stored in s1, in order to be compared later
+
+GAME_OVER_LOOP_PREP2:
 ### Frame rate check
     csrr a0,3073
     sub a0, a0, s1 				# a0 = current time - last frame's time
     li t0, 1000			# Loads frame rate (time (in ms) per frame)
-    bltu a0,t0, GAME_OVER_LOOP_PREP  # While a0 < minimum time for a frame, keep looping 
+    bltu a0,t0, GAME_OVER_LOOP_PREP2  # While a0 < minimum time for a frame, keep looping 
 
 GAME_OVER_LOOP:
 ### Frame rate check
@@ -195,24 +232,6 @@ GAME_OVER_LOOP:
     xori s0,s0,1		    # Switches frame value (register)
 
 	call INPUT_CHECK	    # Checks player's input
-
-	li a0,0               # Black
-	li a1,0               # Starting X (0)
-	li a2,0               # Starting Y (0)
-	li a3,screen_width    # Gets width
-	li a4,screen_height   # Gets height
-	mv a5,s0              # Gets frame
-	li a6,0               # Render per word
-	call RENDER_COLOR
-
-	la a0,GAME_OVER_TXT
-	li a1,120             # a1 = column
-	li a2,116             # a2 = row 
-	li a3,0x00ff          # a3 = colors 
-	mv a4,s0              # a4 = frame
-	li a5,1               # Font
-	li a7,104 # syscal for 'print integer'
-	ecall
 
 	# Switching Frame on Bitmap Display and getting current time to finish loop											
 	li t0,0xFF200604	# Loads Bitmap Display address

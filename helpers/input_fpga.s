@@ -38,12 +38,14 @@ INPUT_CHECK:
         j NO_CHEAT_INPUT 		        # otherwise no input was detected, but check for other non-cheat inputs 
 
     GAME_OVER_CHECK:
-        beqz t0, END_GAME_OVER_CHECK   # If no input is detected, end procedure
-        # If there was any input at all, change scene to menu
+        bnez t0, CONTINUE_GAME_OVER_CHECK   # If any input is detected, continue
+            j END_INPUT_CHECK               # end procedure
+        
+        CONTINUE_GAME_OVER_CHECK:
+        # If there was any input at all, change scene to menu2
             li s3,0
-            li s2,1   
-        END_GAME_OVER_CHECK:
-            j END_INPUT_CHECK          # end procedure
+            li s2,1  
+            j SETUP          # end procedure by going to setup
 
     MENU2_CHECK:
         bnez t0, CONTINUE_MENU2_CHECK       # If any input is detected, continue
@@ -72,8 +74,10 @@ INPUT_CHECK:
                 sb t1,0(t0)     # Map 1
                 la t0, MAP_INFO # Loads Map Info address
                 li t1,1         # Map 1
-                sb t1, 0 (t0)   # Stores map 1 number
-                li s2,2   
+                sb t1, 0(t0)    # Stores map 1 number
+                li t1,4         # 4 - Force switch
+                sb t1, 1(t0)    # Stores render byte
+                li s2,2  
                 j SETUP                         # end procedure by going to setup
 
 
