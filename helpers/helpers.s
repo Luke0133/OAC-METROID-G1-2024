@@ -1,6 +1,6 @@
 .text
-.include "input.s"        # When on PC
-#.include "input_fpga.s"        # When on FPGA
+#.include "input.s"        # When on PC
+.include "input_fpga.s"        # When on FPGA
 .include "setup.s"
 .include "physics.s"
 .include "render.s"		

@@ -250,7 +250,10 @@ DAMAGE_PLAYER:
                 la a0, PLYR_INFO_2	 # Loads address of the second part of PLYR_INFO 
                 sb t0, 4(a0)    # Stores new direction on DAMAGE_MOVE_X
 
-                
+        la t0,PLYR_INFO_2
+        lbu t0,0(t0)
+        bnez t0,END_DAMAGE_PLAYER
+               
 
         # Taking away damage:
         la t0,PLYR_INFO  # Loads PLYR_INFO

@@ -38,7 +38,7 @@ INPUT_CHECK:
         j NO_CHEAT_INPUT 		        # otherwise no input was detected, but check for other non-cheat inputs 
 
     GAME_OVER_CHECK:
-        bnez t0, CONTINUE_GAME_OVER_CHECK   # If any input is detected, continue
+             bnez t0, CONTINUE_GAME_OVER_CHECK   # If any input is detected, continue
             j END_INPUT_CHECK               # end procedure
         
         CONTINUE_GAME_OVER_CHECK:
@@ -48,7 +48,7 @@ INPUT_CHECK:
             j SETUP          # end procedure by going to setup
 
     MENU2_CHECK:
-        bnez t0, CONTINUE_MENU2_CHECK       # If any input is detected, continue
+       bnez t0, CONTINUE_MENU2_CHECK       # If any input is detected, continue
         MENU2_NO_INPUT:
             j END_INPUT_CHECK               # end procedure
 

@@ -1,4 +1,4 @@
-######## INPUT ###########################
+                              ######## INPUT ###########################
 # Uso de Registradores temporarios
 INPUT_CHECK:
     li t1,KDMMIO_ADDRESS  	  # KDMMIO Address
