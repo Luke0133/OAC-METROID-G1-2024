@@ -710,6 +710,9 @@ END_SETUP:
         bnez s3,SKIP_ABILITY_RESET   # If clicking on continue, habilities will be kept
             la t0,PLYR_INFO
             sb zero,1(t0)     # Resets ability information
+
+            la t0, ITEM_CAPSULE_INFO
+            sb zero,0(t0)              # Restores capsule
         SKIP_ABILITY_RESET:
             la t0,MOVE_X
             sw zero,0(t0)  # Resets MOVE_X, MOVE_Y,JUMP byte and Player input byte
@@ -719,6 +722,8 @@ END_SETUP:
             sw zero,4(t0)
                 
             call RESET_ENEMIES
+
+            call RESET_BLOCKS
 
     j GAME_LOOP
 
@@ -864,3 +869,22 @@ CHANGE_DOORS_STATE:
         li t2, 2       # t2 = 2 (map will be rendered again)
         sb t2, 5(tp)   # Stores t3 on CURRENT_MAP's rendering byte
         ret  # End of procedure, return    
+
+
+RESET_BLOCKS:
+    la a0, Blocks2
+    lbu t0,2(a0)
+    lbu t1,3(a0)
+    addi a0,a0,4
+    mul a1,t0,t1   # Total number of iterations
+    li t0,0
+    RESET_BLOCKS_LOOP:
+        lb t1,0(a0)
+        li t2,-1
+        beq t1,t2,NEXT_IN_RESET_BLOCKS_LOOP
+            sb zero,0(a0)
+        NEXT_IN_RESET_BLOCKS_LOOP:
+            addi a0,a0,1
+            addi t0,t0,1
+            blt t0,a1,RESET_BLOCKS_LOOP
+                ret        

@@ -421,6 +421,15 @@ SWITCH_MAP_PREP:
 	li a1,1   # Close them fast    :)
 	call CHANGE_DOORS_STATE
 
+	la t1,NEXT_MAP
+	li t2,1
+	sb t2,10(t1)      # Loads render Next Map's
+
+	call RESET_ENEMIES
+	
+	la t1,NEXT_MAP
+	sb zero,10(t1)      # Loads render Next Map's
+
 	# Setting rendering byte to 3 (switch map through door)
 	la t0,CURRENT_MAP
 	li t2,3

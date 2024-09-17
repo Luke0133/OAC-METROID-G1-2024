@@ -812,7 +812,6 @@ PLASMA_BREATH_OPERATIONS:
             addi sp,sp,36
         # End of Stack Operations
 
-
                 NEXT_IN_PLASMA_BREATH_OPERATIONS_LOOP:                    
                     addi a0,a0,plasma_size  # Going to the next plasma breath's address                                  
                     addi a2,a2,1            # Iterating counter by 1                                   
@@ -840,22 +839,881 @@ PLASMA_BREATH_OPERATIONS:
 #                                                                  #
 ####################################################################    
 RESET_ENEMIES:
-ret
-    la t0,CURRENT_MAP
-    lbu a7,4(t0)       # Loads current map's number
+    la tp,CURRENT_MAP
+    lbu a7,4(tp)       # Loads current map's number
+    la a0 Zoomers
 
     la t1,NEXT_MAP
-	lbu t2,10(t1)      # Loads render Next Map's Door
-    #beqz t2,
+	lbu t2,10(t1)      # Loads render Next Map's
+    beqz t2,NOT_NEXT_MAP
+        la tp,NEXT_MAP
+        lbu a7,4(tp)       # Loads current map's number
+        la a0,Zoomers_Next
+    NOT_NEXT_MAP:
+    
+    li t0,7        # Loads 7 for comparision
+    bne t0,a7, START_ZOOMERS_RESET
+        j RESET_RIDLEY
+    START_ZOOMERS_RESET:
+
+    lw a0,0(a0)    # Loads the ZoomersA address over the Zoomers address
+    bnez a0,CONTINUE_ZOOMER_RESET  # If there are zoomers in this map
+        j END_RESET_ZOOMER_LOOP    # If a0 = 0, there are no zoomers in this map
+
+    CONTINUE_ZOOMER_RESET:
+    # Otherwise, continue
+    lbu a1,0(a0)   # Loads number of Zoomers in current map
+    
+    li a2,0        # Counter for zoomers
+    addi a0,a0,1   # Goes to next byte (where zoomers from current map start)
+    RESET_ZOOMER_LOOP:
+        li t0, 1 
+        bne t0, a7, SKIP_MAP1_RESET_ZOOMER_LOOP 
+        j RESET_ZOOMER_LOOP_MAP1
+    
+        SKIP_MAP1_RESET_ZOOMER_LOOP:
+            li t0, 2 
+            bne t0, a7, SKIP_MAP2_RESET_ZOOMER_LOOP 
+            j RESET_ZOOMER_LOOP_MAP2
+
+        SKIP_MAP2_RESET_ZOOMER_LOOP:
+            li t0, 3 
+            bne t0, a7, SKIP_MAP3_RESET_ZOOMER_LOOP 
+            j RESET_ZOOMER_LOOP_MAP3
+
+        SKIP_MAP3_RESET_ZOOMER_LOOP:
+            li t0, 4
+            bne t0, a7, SKIP_MAP4_RESET_ZOOMER_LOOP 
+            j RESET_ZOOMER_LOOP_MAP4
+        
+        SKIP_MAP4_RESET_ZOOMER_LOOP:
+            j RESET_ZOOMER_LOOP_MAP5
+  					
+    
+        RESET_ZOOMER_LOOP_MAP1:
+            bnez a2,RESET_ZOOMER_LOOP_MAP1_NOT_0
+            # If it's Zoomer1_0
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,34
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,7
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                li t0,3
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP1_NOT_0: li t0,1
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP1_NOT_1
+            # If it's Zoomer1_1
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,32
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,5
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                li t0,1
+                sb t0,10(a0)
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            RESET_ZOOMER_LOOP_MAP1_NOT_1: li t0,2
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP1_NOT_2
+            # If it's Zoomer1_2
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,9
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,7
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb t0,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP1_NOT_2: li t0,3
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP1_NOT_3
+            # If it's Zoomer1_3
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,55
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,2
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                li t0,2
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            RESET_ZOOMER_LOOP_MAP1_NOT_3: li t0,4
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP1_NOT_4
+            # If it's Zoomer1_4
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,55
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,9
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                li t0,2
+                sb t0,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP1_NOT_4: # li t0,5
+            # If it's Zoomer1_5
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,48
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,12
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+        RESET_ZOOMER_LOOP_MAP2:
+        bnez a2,RESET_ZOOMER_LOOP_MAP2_NOT_0
+            # If it's Zoomer4_0
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,15
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,5
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP2_NOT_0: li t0,1
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP2_NOT_1
+            # If it's Zoomer2_1
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,9
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,7
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            RESET_ZOOMER_LOOP_MAP2_NOT_1: li t0,2
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP2_NOT_2
+            # If it's Zoomer2_2
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,4
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,9
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                li t0,1
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP2_NOT_2: li t0,3
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP2_NOT_3
+            # If it's Zoomer2_3
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,12
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,11
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            RESET_ZOOMER_LOOP_MAP2_NOT_3: li t0,4
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP2_NOT_4
+            # If it's Zoomer2_4
+                li t0,zoomer_variant_health
+                sb t0,0(a0)
+                li t0,1
+                sb t0,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,6
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,18
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                li t0,3
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP2_NOT_4: li t0,5
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP2_NOT_5
+            # If it's Zoomer2_5
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,12
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,22
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP   
+
+            RESET_ZOOMER_LOOP_MAP2_NOT_5: li t0,6
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP2_NOT_6
+            # If it's Zoomer2_6
+                li t0,zoomer_variant_health
+                sb t0,0(a0)
+                li t0,1
+                sb t0,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,4
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,28
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                sb zero,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP     
+            
+            RESET_ZOOMER_LOOP_MAP2_NOT_6: li t0,7
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP2_NOT_7
+            # If it's Zoomer2_7
+                li t0,zoomer_variant_health
+                sb t0,0(a0)
+                li t0,1
+                sb t0,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,7
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,33
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP  
+
+            RESET_ZOOMER_LOOP_MAP2_NOT_7: # li t0,8
+            # If it's Zoomer2_8
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,17
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,34
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                li t0,3
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP        
+
+        RESET_ZOOMER_LOOP_MAP3:
+        bnez a2,RESET_ZOOMER_LOOP_MAP3_NOT_0
+            # If it's Zoomer3_0
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,2
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,10
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                li t0,1
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP3_NOT_0: li t0,1
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP3_NOT_1
+            # If it's Zoomer3_1
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,18
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,12
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            RESET_ZOOMER_LOOP_MAP3_NOT_1: li t0,2
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP3_NOT_2
+            # If it's Zoomer3_2
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,31
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,2
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                li t0,3
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP3_NOT_2: li t0,3
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP3_NOT_3
+            # If it's Zoomer3_3
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,40
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,3
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                li t0,2
+                sb t0,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            RESET_ZOOMER_LOOP_MAP3_NOT_3: li t0,4
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP3_NOT_4
+            # If it's Zoomer3_4
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,43
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,12
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP3_NOT_4: # li t0,5
+            # If it's Zoomer3_5
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,48
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,1
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP    
+
+
+        RESET_ZOOMER_LOOP_MAP4:
+        bnez a2,RESET_ZOOMER_LOOP_MAP4_NOT_0
+            # If it's Zoomer4_0
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,5
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,41
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                li t0,3
+                sb t0,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP4_NOT_0: li t0,1
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP4_NOT_1
+            # If it's Zoomer4_1
+                li t0,zoomer_variant_health
+                sb t0,0(a0)
+                li t0,1
+                sb t0,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,15
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,38
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                sb zero,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            RESET_ZOOMER_LOOP_MAP4_NOT_1: li t0,2
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP4_NOT_2
+            # If it's Zoomer4_2
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,8
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,33
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                li t0,1
+                sb zero,10(a0)
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP4_NOT_2: li t0,3
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP4_NOT_3
+            # If it's Zoomer4_3
+                li t0,zoomer_variant_health
+                sb t0,0(a0)
+                li t0,1
+                sb t0,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,10
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,26
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                li t0,1
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            RESET_ZOOMER_LOOP_MAP4_NOT_3: li t0,4
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP4_NOT_4
+            # If it's Zoomer4_4
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,10
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,22
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP4_NOT_4: li t0,5
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP4_NOT_5
+            # If it's Zoomer4_5
+                li t0,zoomer_variant_health
+                sb t0,0(a0)
+                li t0,1
+                sb t0,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,4
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,21
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP   
+
+            RESET_ZOOMER_LOOP_MAP4_NOT_5: li t0,6
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP4_NOT_6
+            # If it's Zoomer4_6
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,17
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,21
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                li t0,3
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP     
+            
+            RESET_ZOOMER_LOOP_MAP4_NOT_6: li t0,7
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP4_NOT_7
+            # If it's Zoomer4_7
+                li t0,zoomer_variant_health
+                sb t0,0(a0)
+                li t0,1
+                sb t0,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,12
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,15
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                li t0,2
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP  
+
+            RESET_ZOOMER_LOOP_MAP4_NOT_7: li t0,8
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP4_NOT_8
+            # If it's Zoomer4_8
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,7
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,11
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP    
+            
+            RESET_ZOOMER_LOOP_MAP4_NOT_8: li t0,9
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP4_NOT_9
+            # If it's Zoomer4_9
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,5
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,8
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                li t0,1
+                sb t0,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP 
+
+            RESET_ZOOMER_LOOP_MAP4_NOT_9: #li t0,10
+            # If it's Zoomer4_10
+                li t0,zoomer_variant_health
+                sb t0,0(a0)
+                li t0,1
+                sb t0,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,8
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,3
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP     
+
+        RESET_ZOOMER_LOOP_MAP5:
+        bnez a2,RESET_ZOOMER_LOOP_MAP5_NOT_0
+            # If it's Zoomer5_0
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,30
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,12
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP5_NOT_0: li t0,1
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP5_NOT_1
+            # If it's Zoomer5_1
+                li t0,zoomer_variant_health
+                sb t0,0(a0)
+                li t0,1
+                sb t0,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,21
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,12
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                sb zero,9(a0)
+                sb zero,10(a0)
+                li t0,1
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            RESET_ZOOMER_LOOP_MAP5_NOT_1: li t0,2
+            bne t0,a2,RESET_ZOOMER_LOOP_MAP5_NOT_2
+            # If it's Zoomer5_2
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,19
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,12
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb zero,10(a0)
+                sb zero,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+
+            RESET_ZOOMER_LOOP_MAP5_NOT_2: # li t0,3
+            # If it's Zoomer5_3
+                li t0,zoomer_normal_health
+                sb t0,0(a0)
+                sb zero,1(a0)
+                sb zero,2(a0)
+                sb zero,3(a0)
+                li t0,9
+                sb t0,4(a0)
+                sb zero,5(a0)
+                li t0,8
+                sb t0,6(a0)
+                sb zero,7(a0)
+                sb zero,8(a0)
+                li t0,1
+                sb t0,9(a0)
+                sb t0,10(a0)
+                sb t0,11(a0)
+                j NEXT_IN_RESET_ZOOMER_LOOP
+            
+            
+
+        NEXT_IN_RESET_ZOOMER_LOOP: 
+            addi a0,a0,zoomer_size  # Going to the next zoomer's address                                  
+            addi a2,a2,1            # Iterating counter by 1                                   
+            bge a2,a1, END_RESET_ZOOMER_LOOP # If all of the zoomers were checked, end loop                                  
+            j RESET_ZOOMER_LOOP # otherwise, go back to the loop's beginning                     
+    
+    END_RESET_ZOOMER_LOOP:
+
+
+
+    # Rippers won't be reset (they basically just go back and forth, so who cares :P)
+
+    li t0,7
+    bne a7,t0,RESET_RIDLEY
+        j END_RESET_PLASMA_BREATH_LOOP
+
+    RESET_RIDLEY:
+        la t0, RIDLEY_INFO
+        li t1, ridley_health
+        sb t1, 0(t0)            # Restores Ridley's health points
+        li t1,10
+        sb t1,2(t0)             # Restores Ridley's Y offset
+        li t1,5
+        sb t1,3(t0)             # Restores Ridley's Y
+        sb t1,4(t0)             # Restores Ridley's old Y
+        sb zero,6(t0)           # Restores Ridley's ground position
+        sb zero,7(t0)           # Restores Ridley's MOVE_Y
+        sb zero,8(t0)           # Restores Ridley's JUMP
+        li t1, ridley_jump_cooldown
+        sb t1,9(t0)             # Restores Ridley's jump cooldown
+        li t1,ridley_attack_cooldown
+        sb t1,10(t0)            # Restores Ridley's attack cooldown
 
     la a0,PLASMA_BREATH_ARRAY  # Loads Plasma breath array
     li a2,0 # resets counter
     li a1,plasma_number # gets number of plasma breaths in game
-    #RESET_PLASMA_BREATH_LOOP:
+    RESET_PLASMA_BREATH_LOOP:
         sb zero,0(a0)   # Disables it
 
-        #NEXT_IN_RESET_PLASMA_BREATH_LOOP:                    
+        NEXT_IN_RESET_PLASMA_BREATH_LOOP:                    
             addi a0,a0,plasma_size  # Going to the next plasma breath's address                                  
             addi a2,a2,1            # Iterating counter by 1                                   
-        #    bge a2,a1, END_RESET_PLASMA_BREATH_LOOP # If all of the plasma breaths were checked, end loop (don't attack)                                
-        #W    j RESET_PLASMA_BREATH_LOOP # otherwise, go back to the loop's beginning 
+            bge a2,a1, END_RESET_PLASMA_BREATH_LOOP # If all of the plasma breaths were checked, end loop (don't attack)                                
+            j RESET_PLASMA_BREATH_LOOP # otherwise, go back to the loop's beginning 
+        
+    END_RESET_PLASMA_BREATH_LOOP:
+    ret

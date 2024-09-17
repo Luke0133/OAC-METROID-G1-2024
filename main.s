@@ -76,6 +76,10 @@ GAME_LOOP:
 	call MAP_MOVE_RENDER    # Renders map when necessary
 
 	call MARU_MARI_OPERATIONS
+
+	call BOMB_POWER_OPERATIONS
+
+	call ITEM_CAPSULE_OPERATIONS
 	
 	li a0,0
 	call ENEMY_OPERATIONS

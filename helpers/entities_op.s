@@ -1,4 +1,4 @@
-###################        LOOT SPAWN        ####################
+###################        MARU MARI OPERATIONS        ####################
 #              Spawns a loot animation if available,             #
 #                    otherwise end procedure.                    #
 #                                                                #
@@ -104,8 +104,207 @@ MARU_MARI_OPERATIONS:
     # End of Stack Operations   
         ret     
 
+###################        BOMB POWER OPERATIONS        ####################
+#              Spawns a loot animation if available,             #
+#                    otherwise end procedure.                    #
+#                                                                #
+#  ----------           argument registers           ----------  #
+#    a0 = loot type (0 - none, 1 - energy, 2 - energy or missile)#
+#    a1 = X offset                                              #
+#    a2 = Y offset                                              #
+#    a3 = X (matrix)                                            #
+#    a4 = Y (matrix)                                            #
+#                                                               #
+#  ----------            registers used             ----------  #
+#    a0 = LOOT_ARRAY address                                    #
+#    a1 = Number of bombs                                       #
+#    a2 = Loop counter                                          # 
+#                                                               #
+#  ----------         temporary registers           ----------  #
+#    t0 --> temporary register                                  #
+#    t3 = Explosion type (moved from a0)                        #
+#    t4 = X offset (moved from a1)                              #
+#    t5 = Y offset (moved from a2)                              #
+#                                                               #    
+#################################################################
 
+BOMB_POWER_OPERATIONS:
+ # Storing Registers on Stack
+    addi sp,sp,-4
+    sw ra,0(sp)
+# End of Stack Operations
+    la t0,MAP_INFO 
+    lbu t0,0(t0)
+    li t1,6
+    beq t0,t1,CONTINUE_BOMB_POWER_OPERATIONS
+        j END_BOMB_POWER_OPERATIONS
+        
+    CONTINUE_BOMB_POWER_OPERATIONS:
+        la t0,PLYR_INFO 
+        lbu t0,1(t0)                                # Loads player's number of abilities
+        li t1,3
+        bne t0,t1,CONTINUE_BOMB_POWER_OPERATIONS2   # Continue (ability wasn't aquired yet)
+            j END_BOMB_POWER_OPERATIONS             # otherwise don't render
 
+    CONTINUE_BOMB_POWER_OPERATIONS2:
+        la t0,BOMB_POWER_INFO 
+        lbu t0,0(t0)                                # Loads whether capsule has been broken or not
+        bnez t0,CONTINUE_BOMB_POWER_OPERATIONS3  # Continue (capsule was broken)
+            j END_BOMB_POWER_OPERATIONS             # otherwise don't render
+    
+    CONTINUE_BOMB_POWER_OPERATIONS3:
+        # Storing Registers on Stack
+            addi sp,sp,-16
+            sw s1,0(sp)
+            sw s2,4(sp)
+            sw s3,8(sp)
+            sw s4,12(sp)
+        # End of Stack Operations           
+            la tp,CURRENT_MAP
+            # Starting rendering procedure:
+            # Calculating maru mari's X related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+            li a1,bomb_power_x    # Loads maru mari's current X
+            lbu t0,6(tp) # Loads map's current X
+            sub a1,a1,t0 # Gets the X matrix related to the map's X (a1 = maru mari's X - map's X)
+            slli a1,a1,tile_size_shift # Multiplies a5 by 16 in order to get X related to screen
+            # There's no X offset
+            lbu t0,8(tp) # Loads map's X offset
+            sub a1,a1,t0 # and takes it from maru mari's position
+            
+            # Calculating maru mari's Y related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+            li a2,bomb_power_y    # Loads maru mari's current Y
+            lbu t1,7(tp) # Loads map's current Y
+            sub a2,a2,t1 # Gets the Y matrix related to the map's Y (a2 = maru mari's Y - map's Y)
+            slli a2,a2,tile_size_shift # Multiplies a2 by 16 in order to get Y related to screen
+            # There's no Y offset
+            lbu t1,9(tp) # Loads map's Y offset
+            sub a2,a2,t1 # and takes it from loot's position
+            
+            li a3,tile_size     # Loads width         
+            li a4,tile_size     # Loads height
+            mv a5,s0            # Gets frame to be rendered on
+            li a6,0             # No status
+            li a7,0             # Normal render
+
+            la a0,Bomb_Power
+            call RENDER_ENTITY  # Renders it
+
+        # Procedure finished: Loading Registers from Stack
+            lw s1,0(sp)
+            lw s2,4(sp)
+            lw s3,8(sp)
+            lw s4,12(sp)
+            addi sp,sp,16
+        # End of Stack Operations
+
+    END_BOMB_POWER_OPERATIONS:
+    # Procedure finished: Loading Registers from Stack
+        lw ra,0(sp)
+        addi sp,sp,4
+    # End of Stack Operations   
+        ret    
+
+###################        BOMB POWER OPERATIONS        ####################
+#              Spawns a loot animation if available,             #
+#                    otherwise end procedure.                    #
+#                                                                #
+#  ----------           argument registers           ----------  #
+#    a0 = loot type (0 - none, 1 - energy, 2 - energy or missile)#
+#    a1 = X offset                                              #
+#    a2 = Y offset                                              #
+#    a3 = X (matrix)                                            #
+#    a4 = Y (matrix)                                            #
+#                                                               #
+#  ----------            registers used             ----------  #
+#    a0 = LOOT_ARRAY address                                    #
+#    a1 = Number of bombs                                       #
+#    a2 = Loop counter                                          # 
+#                                                               #
+#  ----------         temporary registers           ----------  #
+#    t0 --> temporary register                                  #
+#    t3 = Explosion type (moved from a0)                        #
+#    t4 = X offset (moved from a1)                              #
+#    t5 = Y offset (moved from a2)                              #
+#                                                               #    
+#################################################################
+
+ITEM_CAPSULE_OPERATIONS:
+ # Storing Registers on Stack
+    addi sp,sp,-4
+    sw ra,0(sp)
+# End of Stack Operations
+    la t0,MAP_INFO 
+    lbu t0,0(t0)
+    li t1,6
+    beq t0,t1,CONTINUE_ITEM_CAPSULE_OPERATIONS1
+        j END_ITEM_CAPSULE_OPERATIONS
+        
+    CONTINUE_ITEM_CAPSULE_OPERATIONS1:
+        la t0,ITEM_CAPSULE_INFO 
+        lbu a6,0(t0)                                # Loads whether capsule has been broken or not
+        li t1,3
+        bne a6,t1,CONTINUE_ITEM_CAPSULE_OPERATIONS2   # Continue (capsule was broken)
+            j END_ITEM_CAPSULE_OPERATIONS             # otherwise don't render
+    
+    CONTINUE_ITEM_CAPSULE_OPERATIONS2:
+        # Storing Registers on Stack
+            addi sp,sp,-16
+            sw s1,0(sp)
+            sw s2,4(sp)
+            sw s3,8(sp)
+            sw s4,12(sp)
+        # End of Stack Operations           
+            la tp,CURRENT_MAP
+            # Starting rendering procedure:
+            # Calculating maru mari's X related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+            li a1,bomb_power_x    # Loads maru mari's current X
+            lbu t0,6(tp) # Loads map's current X
+            sub a1,a1,t0 # Gets the X matrix related to the map's X (a1 = maru mari's X - map's X)
+            slli a1,a1,tile_size_shift # Multiplies a5 by 16 in order to get X related to screen
+            # There's no X offset
+            lbu t0,8(tp) # Loads map's X offset
+            sub a1,a1,t0 # and takes it from maru mari's position
+            
+            # Calculating maru mari's Y related to screen (may be negative, but this will be fixed in RENDER_ENTITY)
+            li a2,bomb_power_y    # Loads maru mari's current Y
+            lbu t1,7(tp) # Loads map's current Y
+            sub a2,a2,t1 # Gets the Y matrix related to the map's Y (a2 = maru mari's Y - map's Y)
+            slli a2,a2,tile_size_shift # Multiplies a2 by 16 in order to get Y related to screen
+            # There's no Y offset
+            lbu t1,9(tp) # Loads map's Y offset
+            sub a2,a2,t1 # and takes it from loot's position
+            
+            li a3,tile_size     # Loads width         
+            li a4,tile_size     # Loads height
+            mv a5,s0            # Gets frame to be rendered on
+            li a7,0             # Normal render
+
+            la t0,ITEM_CAPSULE_INFO 
+            beqz a6, SKIP_CAPSULE_STATUS_UPDATE
+                addi a6,a6,1
+                sb a6,0(t0)    # Stores resulting status
+                li t0,3
+                beq t0,a6,AFTER_CAPSULE_RENDER
+            SKIP_CAPSULE_STATUS_UPDATE:
+            la a0,Item_Capsule
+            call RENDER_ENTITY  # Renders it
+
+            AFTER_CAPSULE_RENDER:
+
+        # Procedure finished: Loading Registers from Stack
+            lw s1,0(sp)
+            lw s2,4(sp)
+            lw s3,8(sp)
+            lw s4,12(sp)
+            addi sp,sp,16
+        # End of Stack Operations
+
+    END_ITEM_CAPSULE_OPERATIONS:
+    # Procedure finished: Loading Registers from Stack
+        lw ra,0(sp)
+        addi sp,sp,4
+    # End of Stack Operations   
+        ret    
 
 ###################        LOOT SPAWN        ####################
 #              Spawns a loot animation if available,             #

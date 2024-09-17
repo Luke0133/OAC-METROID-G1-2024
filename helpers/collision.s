@@ -312,20 +312,78 @@ PLAYER_COLLISION: # ebreak
     lbu a4, 16(t0)     # Loads Player's ball mode (0 - Disabled, 1 - Enabled)
 
 
+    # Checking for Bomb Power
+    la t0,CURRENT_MAP             # Loads map address
+    lbu t0,4(t0)                  # and from it, loads map's number
+    li t1,6                       # Loads 6 to compare with map's number
+    beq t0,t1,PLAYER_COLLISION_BOMB_POWER      # If on map 6, continue checking for Bomb Power
+        j PLAYER_COLLISION_MARU_MARI   # Otherwise, skip this check
+
+    PLAYER_COLLISION_BOMB_POWER:
+        la t3,PLYR_INFO  # Loads Bomb Power's info address
+        lbu t4,1(t3)     # Loads player's abilities
+        li t3,3
+        bne t3,t4, CONTINUE_PLAYER_COLLISION_BOMB_POWER
+            j PLAYER_COLLISION_MARU_MARI   # Otherwise, skip this check
+
+        CONTINUE_PLAYER_COLLISION_BOMB_POWER:
+        li t3,bomb_power_x   # Loads Bomb Power's current X
+        beq t3,a0,PLAYER_COLLISION_BOMB_POWER_SAME_X   # If Bomb Power's X is the same as the player's
+        addi t4,a0,1   # Checks player's tile to the right
+        beq t3,t4,PLAYER_COLLISION_BOMB_POWER_RIGHT_X  # If Bomb Power's X is to the right of player
+            j PLAYER_COLLISION_MARU_MARI   # Otherwise, Bomb Power isn't near player enough to be collected, check next
+        
+        PLAYER_COLLISION_BOMB_POWER_SAME_X:
+            li t4,12
+            blt a2,t4,PLAYER_COLLISION_BOMB_POWER_CHECK_Y # If player's X offset < 12, continue
+                j PLAYER_COLLISION_MARU_MARI # Otherwise, Bomb Power isn't near player enough to be collected, check next
+
+        PLAYER_COLLISION_BOMB_POWER_RIGHT_X:
+            li t3,4 
+            blt t3,a2,PLAYER_COLLISION_BOMB_POWER_CHECK_Y # If t3 < player offset, continue
+                j PLAYER_COLLISION_MARU_MARI     # Otherwise, Bomb Power isn't near player enough to be collected, check next
+
+        PLAYER_COLLISION_BOMB_POWER_CHECK_Y:
+            li t3,bomb_power_y   # Loads Bomb Power's current Y
+            addi t4,a1,1        # Checks player's base tile (Y + 1)
+            beq t3,t4,PLAYER_COLLISION_BOMB_POWER_HIT  # If Bomb Power's Y on player's base, it's collected
+            # If Bomb Power is above/bellow player, nothing happens
+                j PLAYER_COLLISION_MARU_MARI     # Otherwise, Bomb Power isn't near player enough to be collected, check next
+
+            PLAYER_COLLISION_BOMB_POWER_BELLOW:
+                li t3,2
+                blt t3,a3,PLAYER_COLLISION_BOMB_POWER_HIT # If Bomb Power's "Y offset" is less than the player's Y offset deal damage
+                    j PLAYER_COLLISION_MARU_MARI     # Otherwise, Bomb Power isn't near player enough to be collected, check next
+
+            PLAYER_COLLISION_BOMB_POWER_HIT:
+            # Player gets Bomb Power
+                la t3,PLYR_INFO  # Loads Maru Bomb Power's info address
+                li t4,3          # Loads 1 (1 - ball)
+                sb t4,1(t3)      # Loads player's abilities
+                    
+                csrr t1,3073                       # Gets current time for loop
+                PLAYER_COLLISION_BOMB_POWER_HIT_LOOP:
+                    csrr t0,3073                                      # Gets current time
+                    sub t0, t0, t1                                    # t0 = current time - last frame's time
+                    li t2, power_up_delay                             # Loads power_up_delay
+                    bltu t0,t2, PLAYER_COLLISION_BOMB_POWER_HIT_LOOP  # While t0 < minimum time for a frame, keep looping
+                    # j PLAYER_COLLISION_MARU_MARI
+
+    PLAYER_COLLISION_MARU_MARI:
     # Checking for MaruMari
     la t0,CURRENT_MAP             # Loads map address
     lbu t0,4(t0)                  # and from it, loads map's number
     li t1,1                       # Loads 1 to compare with map's number
-    beq t0,t1,PLAYER_COLLISION_MARU_MARI      # If on map 1, continue checking for MARU MARI
+    beq t0,t1,CONTINUE_PLAYER_COLLISION_MARU_MARI1      # If on map 1, continue checking for MARU MARI
         j PLAYER_COLLISION_LOOT   # Otherwise, skip this check
 
-    PLAYER_COLLISION_MARU_MARI:
+    CONTINUE_PLAYER_COLLISION_MARU_MARI1:
         la t3,PLYR_INFO  # Loads Maru Mari's info address
         lbu t4,1(t3)     # Loads player's abilities
-        beqz t4, CONTINUE_PLAYER_COLLISION_MARU_MARI
+        beqz t4, CONTINUE_PLAYER_COLLISION_MARU_MARI2
             j PLAYER_COLLISION_LOOT   # Otherwise, skip this check
 
-        CONTINUE_PLAYER_COLLISION_MARU_MARI:
+        CONTINUE_PLAYER_COLLISION_MARU_MARI2:
         li t3,maru_mari_x   # Loads MaruMari's current X
         beq t3,a0,PLAYER_COLLISION_MARU_MARI_SAME_X   # If MaruMari's X is the same as the player's
         addi t4,a0,1   # Checks player's tile to the right
@@ -361,11 +419,11 @@ PLAYER_COLLISION: # ebreak
                 sb t4,1(t3)      # Loads player's abilities
                     
                 csrr t1,3073                       # Gets current time for loop
-                COLLISION_SPECIAL_1_GET_LOOP:
-                    csrr t0,3073                              # Gets current time
-                    sub t0, t0, t1                            # t0 = current time - last frame's time
-                    li t2, power_up_delay                     # Loads power_up_delay
-                    bltu t0,t2, COLLISION_SPECIAL_1_GET_LOOP  # While t0 < minimum time for a frame, keep looping
+                PLAYER_COLLISION_MARU_MARI_HIT_LOOP:
+                    csrr t0,3073                                     # Gets current time
+                    sub t0, t0, t1                                   # t0 = current time - last frame's time
+                    li t2, power_up_delay                            # Loads power_up_delay
+                    bltu t0,t2, PLAYER_COLLISION_MARU_MARI_HIT_LOOP  # While t0 < minimum time for a frame, keep looping
                     # j PLAYER_COLLISION_LOOT
                 
     # Checking for loot
@@ -3246,6 +3304,24 @@ li t6,0  # Sets t6 to 0 (no doors detected)
 
         CONTINUE_CHECK_MAP_COLLISION_2:
             lbu t1, 0(a1) # Loads tile from current map
+            li t0,255
+            bne t0,t1, NOT_CAPSULE_CHECK
+            # There's only one capsule in this game, otherwise, it would follow a "Capsules/CapsulesA" logic
+                la t0, ITEM_CAPSULE_INFO
+                lbu t1,0(t0)
+                bnez t1, SKIP_CAPSULE_CHECK  # If broken
+                    li t1,2
+                    bne t1,t5,CAPSULE_CHECK_NOT_BEAM
+                        li t1,1
+                        sb t1,0(t0)
+                        la t0, BOMB_POWER_INFO
+                        sb t1,0(t0)
+                    CAPSULE_CHECK_NOT_BEAM:
+                        j COLLISION_BLOCKED      # Otherwise, it's blocked
+                    SKIP_CAPSULE_CHECK:
+                        j CONTINUE_CHECK_MAP_COLLISION_3
+                
+            NOT_CAPSULE_CHECK:
             beqz a4, SKIP_DOOR_CHECK_MAP_COLLISION  # If a4 = 0 (don't consider door), skip door check 
                 li t0,40   # Tile where doors start
                 blt t1,t0, NOT_DOOR_CHECK_MAP_COLLISION # If current tile isn't a door   

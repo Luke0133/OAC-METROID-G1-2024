@@ -118,6 +118,13 @@ JUMP_SPEED: .float -9
 .eqv maru_mari_y 9
 MARU_MARI_INFO: 0 # Sprite status (0 -> 1 -> 2 -> 3 -> 0)
 
+
+.eqv bomb_power_x 11
+.eqv bomb_power_y 3
+BOMB_POWER_INFO: 0 # Capsule status (0 - closed, 1 - open)
+
+ITEM_CAPSULE_INFO: 0 # Capsule status (0 - closed, 1 - breaking1, 2 - breaking, 3 - open )
+
 ## BEAM_ARRAY ##
 BEAMS_ARRAY: .byte 0   # Attack cooldown 
 BEAM_0_INFO: .byte 0, 0, 0      # Rendering (0 - Disabled, 1 - Enabled, 2 - To be disabled, 3 - Hit, to be disabled), Direction (0=up,1=right,-1=left), Number of times that has been rendered
@@ -258,7 +265,7 @@ Zoomer1_1: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer1_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            9, 0, 7, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 1, 1, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+           0, 1, 1, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer1_3: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            55, 0, 2, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
@@ -288,7 +295,7 @@ Zoomer2_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer2_3: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            12, 0, 11, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 1, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+           0, 1, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer2_4: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
            6, 0, 18, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
@@ -304,7 +311,7 @@ Zoomer2_6: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and 
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer2_7: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
            7, 0, 33, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 1, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+           0, 1, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer2_8: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            17, 0, 34, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
@@ -318,7 +325,7 @@ Zoomer3_0: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile)
 Zoomer3_1: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            18, 0, 12, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 1, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+           0, 1, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer3_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            31, 0, 2, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
@@ -340,7 +347,7 @@ Zoomer3_5: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y
 Zoomers4: 11
 Zoomer4_0: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            5, 0, 41, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 0, 3, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+           0, 0, 3, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile)
 Zoomer4_1: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
            15, 0, 38, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
@@ -360,7 +367,7 @@ Zoomer4_4: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer4_5: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
            4, 0, 21, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 0, 0, 10   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+           0, 0, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer4_6: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            17, 0, 21, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
@@ -380,7 +387,7 @@ Zoomer4_9: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer4_10: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
            8, 0, 3, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 1, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+           0, 1, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 
 Zoomers5: 4
@@ -390,7 +397,7 @@ Zoomer5_0: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile)
 Zoomer5_1: zoomer_variant_health, 1, 0, 0 # Zoomer's health points, type, X and Y offset
            21, 0, 12, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
-           0, 0, 0, 2   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
+           0, 0, 0, 1   # Sprite's Number, Movement Direction Clockwise (0=Clockwise,1=Counter-clockwise),
                         # Where is the platform (0 - Down, 1 - Left, 2 - Up, 3 - Right), Drop (0 - none, 1 - health, 2 - missile
 Zoomer5_2: zoomer_normal_health, 0, 0, 0 # Zoomer's health points, type, X and Y offset
            19, 0, 12, 0  # Stores Zoomer's top left new and old X and new and old Y respectively, all related to the map matrix 
@@ -1816,7 +1823,7 @@ Map6: # 20 x 15 (One Screen Map) -- 300 bytes
 .byte 5,11,5,5,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,18,
 5,7,5,12,18,0,0,0,18,0,0,0,0,0,0,0,0,0,0,18,
 12,5,5,5,18,0,0,0,18,21,22,0,0,0,0,0,0,0,0,20,
-5,5,7,5,20,0,0,0,20,23,24,0,0,0,0,0,0,0,0,20,
+5,5,7,5,20,0,0,0,20,23,24,255,0,0,0,0,0,0,0,20,
 5,11,5,5,20,0,0,0,20,25,26,27,0,0,0,0,0,0,0,18,
 5,7,5,12,17,17,17,17,17,17,17,17,18,18,0,0,0,0,46,4,
 12,5,5,5,17,17,17,17,17,17,17,17,0,0,0,0,0,0,48,4,
@@ -3902,6 +3909,76 @@ MaruMari: # 16 x 64, Height per sprite: 16
 199,199,199,199,199,199,183,183,183,183,199,199,199,199,199,199,
 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
 199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+
+Item_Capsule: # 16 x 48, Height per sprite: 16
+.byte 199,199,199,199,199,199,199,209,209,209,209,199,199,199,199,199,
+199,199,199,199,199,209,209,209,209,209,209,209,209,199,199,199,
+199,199,199,199,209,209,209,209,209,209,209,160,209,209,199,199,
+199,199,199,209,209,227,227,209,209,209,209,209,160,209,209,199,
+199,199,199,209,227,227,209,209,209,209,209,209,209,160,209,199,
+199,199,209,209,227,227,209,209,209,209,209,209,209,160,209,209,
+199,199,209,209,227,209,209,209,209,209,209,209,209,160,160,209,
+199,199,209,209,209,209,209,209,209,209,209,209,209,160,160,209,
+199,199,209,209,209,209,209,209,209,209,209,209,209,160,160,209,
+199,199,209,209,209,209,209,209,209,209,209,209,209,160,160,209,
+199,199,199,209,209,209,209,209,209,209,209,209,160,160,209,199,
+199,199,199,209,209,160,209,209,209,209,160,160,160,160,209,199,
+199,199,199,199,209,209,160,160,160,160,160,160,160,209,199,199,
+199,199,199,199,199,209,209,209,160,160,160,209,209,199,199,199,
+199,199,199,199,199,199,199,209,209,209,209,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,199,
+199,199,199,199,199,199,199,160,209,199,199,199,160,227,160,199,
+199,199,227,199,199,199,209,160,160,227,199,199,199,160,160,199,
+199,199,199,199,199,199,199,160,209,209,209,199,199,199,199,199,
+199,199,199,160,209,199,199,199,227,209,209,199,199,209,199,199,
+199,209,160,160,209,199,199,199,199,199,199,199,209,199,199,199,
+199,199,209,227,209,160,199,227,199,227,209,209,209,209,199,199,
+199,227,199,209,209,199,199,209,199,199,199,209,160,160,199,199,
+199,199,199,227,199,199,199,209,209,199,199,199,199,160,199,199,
+209,199,199,199,160,227,160,199,199,199,199,199,199,199,199,160,
+160,227,199,199,199,160,160,199,199,199,227,199,199,199,209,160,
+209,209,209,199,199,199,199,199,199,199,199,199,199,199,199,160,
+227,209,209,199,199,209,199,199,199,199,199,160,209,199,199,199,
+199,199,199,199,209,199,199,199,199,209,160,160,209,199,199,199,
+199,227,209,209,209,209,199,199,199,199,209,227,209,160,199,227,
+199,199,199,209,160,160,199,199,199,227,199,209,209,199,199,209,
+209,199,199,199,199,160,199,199,199,199,199,227,199,199,199,209,
+199,199,199,199,199,209,199,199,199,199,199,199,199,199,199,199,
+199,209,199,209,199,199,199,209,199,209,199,199,209,199,209,199,
+199,199,199,199,160,199,199,209,209,199,209,199,199,199,199,199,
+199,209,199,160,199,227,199,199,199,199,199,199,199,199,209,199,
+199,199,199,199,199,199,160,199,160,199,227,199,199,160,199,199,
+209,199,160,199,160,199,199,199,199,199,199,160,199,160,199,209,
+199,199,199,199,199,199,199,227,199,199,199,199,160,199,160,199,
+227,199,160,199,199,160,199,199,160,199,227,199,199,199,199,199,
+199,199,199,199,199,199,199,199,199,199,199,199,199,209,199,199,
+199,209,199,199,209,199,209,199,199,209,199,209,199,199,199,209,
+209,199,209,199,199,199,199,199,199,199,199,199,160,199,199,209,
+199,199,199,199,199,199,209,199,199,209,199,160,199,227,199,199,
+160,199,227,199,199,160,199,199,199,199,199,199,199,199,160,199,
+199,199,199,160,199,160,199,209,209,199,160,199,160,199,199,199,
+199,199,199,199,160,199,160,199,199,199,199,199,199,199,199,227,
+160,199,227,199,199,199,199,199,227,199,160,199,199,160,199,199,
+
+Bomb_Power: # 16 x 16
+.byte 199,199,199,32,32,32,32,32,32,32,32,32,32,199,199,199,
+199,199,32,199,199,199,199,199,199,199,199,199,199,32,199,199,
+199,199,32,199,103,199,199,199,199,199,199,199,199,32,199,199,
+199,32,199,103,199,199,199,199,199,199,199,199,199,199,32,199,
+199,32,199,199,199,199,14,14,14,14,199,199,199,199,32,199,
+199,32,199,199,199,14,103,14,14,14,14,199,199,199,32,199,
+199,32,199,199,14,14,14,14,199,199,14,14,199,199,32,199,
+199,32,199,199,14,14,199,199,32,32,199,14,199,199,32,199,
+199,32,199,199,14,14,199,199,32,32,199,14,199,199,32,199,
+199,32,199,199,14,14,14,14,199,199,14,14,199,199,32,199,
+199,32,199,199,199,14,103,14,14,14,14,199,199,199,32,199,
+199,32,199,199,199,199,14,14,14,14,199,199,199,199,32,199,
+199,32,199,199,199,199,199,199,199,199,199,199,199,199,32,199,
+199,32,199,199,199,199,199,32,32,199,199,199,199,199,32,199,
+199,103,103,103,103,103,103,103,103,103,103,103,103,103,103,199,
+199,199,199,103,103,103,103,103,103,103,103,103,103,199,199,199,
+
+
 
 
 ################################################        Enemies        ################################################
