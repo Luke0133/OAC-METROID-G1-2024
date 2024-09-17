@@ -253,10 +253,13 @@ DAMAGE_PLAYER:
                 
 
         # Taking away damage:
-        la t0,PLYR_INFO  # Loads PLYR_INFO
-        lbu t1,0(t0)     # and player's health
-        sub t1,t1,t5     # takes away hp
-        sb t1,0(t0)      # and stores it back
+        la t0,PLYR_INFO_2
+        lbu t0,0(t0)
+        bnez t0,END_DAMAGE_PLAYER
+            la t0,PLYR_INFO  # Loads PLYR_INFO
+            lbu t1,0(t0)     # and player's health
+            sub t1,t1,t5     # takes away hp
+            sb t1,0(t0)      # and stores it back
 
     END_DAMAGE_PLAYER:
     ret
