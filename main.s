@@ -116,6 +116,7 @@ GAME_LOOP:
 	j GAME_LOOP	        # Returns to loop's beginning
 
 
+## Start menu  ##
 MENU2_LOOP:
 	call RESET_MUSIC
 ### Frame rate check
@@ -244,6 +245,7 @@ GAME_OVER_LOOP:
 	csrr s1,3073        # New time is stored in s1, in order to be compared later		
 	
 	j GAME_OVER_LOOP	# Returns to loop's beginning
+
 .include "helpers/helpers.s"
 
 
