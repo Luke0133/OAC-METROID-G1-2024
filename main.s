@@ -177,6 +177,8 @@ MENU2_LOOP:
 	
 	j MENU2_LOOP	# Returns to loop's beginning
 
+
+
 GAME_OVER_LOOP_PREP:
 	li a0,0               # Black
 	li a1,0               # Starting X (0)

@@ -12,6 +12,7 @@ CHECK_LIFE:
     lb t0,0(t0)
     blt zero,t0,END_CHECK_LIFE   # If player is alive
     # Otherwise, player is dead, go to game over
+    j DEATH_LOOP_PREP
         li s2,3
         csrr s1,3073
         j SETUP
@@ -268,6 +269,257 @@ DAMAGE_PLAYER:
 
 
 
+DEATH_LOOP_PREP:
+
+#    ft0 = PLASMA_0's Y speed (same logic as the others)            #
+#    ft1 = PLASMA_1's Y speed (same logic as the others)            #
+#    ft2 = PLASMA_2's Y speed (same logic as the others)            #
+#    ft3 = PLASMA_3's Y speed (same logic as the others)            #
+#    ft4 = PLASMA_4's Y speed (same logic as the others)            #
+#    ft5 = BOMB_0's Y speed (same logic as the others)             #
+
+	la t0, PLYR_POS
+	lhu t2,0(t0)           # Loads Player's X
+	lbu t3,4(t0)           # Loads Player's Y
+
+	la t1, DEATH_1E_POS    # Loads 
+	sh t2,0(t1)
+	sh t3,2(t1)
+	li t4,-8
+	fcvt.s.w ft0 ,t4
+
+	la t1, DEATH_2E_POS    # Loads 
+	sh t2,0(t1)
+	addi t4,t3,8
+	sh t4,2(t1)
+	li t4,-5
+	fcvt.s.w ft0 ,t4
+
+	la t1, DEATH_3E_POS    # Loads 
+	sh t2,0(t1)
+	addi t4,t3,16
+	sh t4,2(t1)
+	li t4,-3
+	fcvt.s.w ft0 ,t4
+
+	la t1, DEATH_1D_POS    # Loads 
+	addi t4,t2,8
+	sh t4,0(t1)
+	sh t3,2(t1)
+	li t4,-8
+	fcvt.s.w ft0 ,t4
+
+	la t1, DEATH_2D_POS    # Loads 
+	addi t4,t2,8
+	sh t4,0(t1)
+	addi t4,t3,8
+	sh t4,2(t1)
+	li t4,-5
+	fcvt.s.w ft0 ,t4
+
+	la t1, DEATH_3D_POS    # Loads 
+	addi t4,t2,8
+	sh t4,0(t1)
+	addi t4,t3,16
+	sh t4,2(t1)
+	li t4,-3
+	fcvt.s.w ft0 ,t4
+
+	li s4,0         #   Counter
+	li s5,0
+
+DEATH_LOOP:
+	### Frame rate check
+    csrr a0,3073
+    sub a0, a0, s1          # a0 = current time - last frame's time
+    li t0, frame_rate	    # Loads frame rate (time (in ms) per frame)
+    bltu a0,t0, DEATH_LOOP  # While a0 < minimum time for a frame, keep looping 
+
+### Game operations
+    xori s0,s0,1		    # Switches frame value (register)
+
+	call UPDATE_DOORS       # Updates doors
+	call MAP_MOVE_RENDER    # Renders map when necessary
+
+	call MARU_MARI_OPERATIONS
+
+	call BOMB_POWER_OPERATIONS
+
+	call ITEM_CAPSULE_OPERATIONS
+	
+	li a0,0
+	call ENEMY_OPERATIONS
+
+	call BEAMS_OPERATIONS
+
+
+	la t1, DEATH_1E_POS    # Loads 
+	la a0, Death_E1
+	lhu a1,0(t1)
+	lhu a2,2(t1)
+
+	addi t2,a1,-10
+	fadd.s ft0,ft0,fs0    # ft0 = Death Sprite's current Y speed + gravity factor       
+    fcvt.w.s t3,ft0       # Sets t3 = floor(ft0)
+	add t3,a2,t3 
+	sh t2,0(t1)
+	sh t3,2(t1)
+
+	li a3,8
+	li a4,8
+	mv a5,s0
+	mv a6,s5
+	addi s5,s5,1
+	li t0,3
+	blt s5,t0,SKIP_STATUS_CORRECTION_1E
+		li s5,0
+	SKIP_STATUS_CORRECTION_1E:
+	li a7,0
+
+	call RENDER
+
+	la t1, DEATH_2E_POS    # Loads 
+	la a0, Death_E2
+	lhu a1,0(t1)
+	lhu a2,2(t1)
+
+	addi t2,a1,-10
+	fadd.s ft1,ft1,fs0    # ft1 = Death Sprite's current Y speed + gravity factor       
+    fcvt.w.s t3,ft1       # Sets t3 = floor(ft0)
+	add t3,a2,t3 
+	sh t2,0(t1)
+	sh t3,2(t1)
+
+	li a3,8
+	li a4,8
+	mv a5,s0
+	li t0,4
+	mv a6,s4
+	blt s4,t0,SKIP_STATUS_CORRECTION_2E
+		addi a6,a6,-4
+	SKIP_STATUS_CORRECTION_2E:
+	li a7,0
+
+	call RENDER
+
+	la t1, DEATH_3E_POS    # Loads
+	la a0, Death_E3 
+	lhu a1,0(t1)
+	lhu a2,2(t1)
+
+	addi t2,a1,-10
+	fadd.s ft2,ft2,fs0    # ft0 = Death Sprite's current Y speed + gravity factor       
+    fcvt.w.s t3,ft2       # Sets t3 = floor(ft0)
+	add t3,a2,t3 
+	sh t2,0(t1)
+	sh t3,2(t1)
+
+	li a3,8
+	li a4,8
+	mv a5,s0
+	li t0,4
+	mv a6,s4
+	blt s4,t0,SKIP_STATUS_CORRECTION_3E
+		addi a6,a6,-4
+	SKIP_STATUS_CORRECTION_3E:
+	li a7,0
+
+	call RENDER
+
+	la t1, DEATH_1D_POS    # Loads 
+	la a0, Death_D1
+	lhu a1,0(t1)
+	lhu a2,2(t1)
+
+	addi t2,a1,10
+	fadd.s ft3,ft3,fs0    # ft3 = Death Sprite's current Y speed + gravity factor       
+    fcvt.w.s t3,ft3       # Sets t3 = floor(ft3)
+	add t3,a2,t3 
+	sh t2,0(t1)
+	sh t3,2(t1)
+
+	li a3,8
+	li a4,8
+	mv a5,s0
+	li t0,4
+	mv a6,s4
+	blt s4,t0,SKIP_STATUS_CORRECTION_1D
+		addi a6,a6,-4
+	SKIP_STATUS_CORRECTION_1D:
+	li a7,0
+
+	call RENDER
+
+	la t1, DEATH_2D_POS    # Loads 
+	la a0, Death_D2
+	lhu a1,0(t1)
+	lhu a2,2(t1)
+
+	addi t2,a1,10
+	fadd.s ft4,ft4,fs0    # ft4 = Death Sprite's current Y speed + gravity factor       
+    fcvt.w.s t3,ft4       # Sets t3 = floor(ft4)
+	add t3,a2,t3 
+	sh t2,0(t1)
+	sh t3,2(t1)
+
+	li a3,8
+	li a4,8
+	mv a5,s0
+	li t0,4
+	mv a6,s4
+	blt s4,t0,SKIP_STATUS_CORRECTION_2D
+		addi a6,a6,-4
+	SKIP_STATUS_CORRECTION_2D:
+	li a7,0
+
+	call RENDER
+
+	la t1, DEATH_3D_POS    # Loads 
+	la a0, Death_D3
+	lhu a1,0(t1)
+	lhu a2,2(t1)
+
+	addi t2,a1,10
+	fadd.s ft5,ft5,fs0    # ft5 = Death Sprite's current Y speed + gravity factor       
+    fcvt.w.s t3,ft5       # Sets t3 = floor(ft5)
+	add t3,a2,t3 
+	sh t2,0(t1)
+	sh t3,2(t1)
+
+	li a3,8
+	li a4,8
+	mv a5,s0
+	li t0,4
+	mv a6,s4
+	blt s4,t0,SKIP_STATUS_CORRECTION_3D
+		addi a6,a6,-4
+	SKIP_STATUS_CORRECTION_3D:
+	li a7,0
+
+	call RENDER
+
+	call LOOT_OPERATIONS
+
+	call BOMBS_OPERATIONS
+	call EXPLOSIONS_OPERATIONS
+
+	call BEAM_COLLISION  # Will see if beam hit an enemy
+
+	li a0, 0     # Rendering UI operation
+	call RENDER_UI	
+
+	# Switching Frame on Bitmap Display and getting current time to finish loop											
+	li t0,0xFF200604	# Loads Bitmap Display address
+	sw s0,0(t0)         # Stores new frame value (from s0) on Bitmap Display
+
+	csrr s1,3073        # New time is stored in s1, in order to be compared later		
+	
+	addi s4,s4,1
+	li t0,6
+	blt s4,t0,DEATH_LOOP
+        li s2,3
+        csrr s1,3073
+        j SETUP
 
 
 
