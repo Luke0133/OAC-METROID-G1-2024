@@ -13,3 +13,4 @@
 .include "status_operations.s"
 .include "collision.s"
 .include "music.s"
+.include "music++.s"

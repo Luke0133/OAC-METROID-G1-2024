@@ -15,7 +15,11 @@
 ####################################################################
 
 SETUP:
-    call MUSIC.SETUP
+	li t1,1	
+	la t0,Brinstar
+	sb t1,0(t0)	
+
+    # call MUSIC.SETUP    # If using music.s
 
     # Checking scente
     li t1,1                # Menu 2 scene number

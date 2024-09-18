@@ -58,6 +58,7 @@ main:
 
 GAME_LOOP:
 ### Frame rate check
+	call PLAY_SOUND
     csrr a0,3073
     sub a0, a0, s1 #  # a0 = current time - last frame's time
     li t0, frame_rate	# Loads frame rate (time (in ms) per frame)
@@ -66,7 +67,7 @@ GAME_LOOP:
 ### Game operations
     xori s0,s0,1		    # Switches frame value (register)
 
-	call MUSIC.PLAY
+	
 
 	call INPUT_CHECK	    # Checks player's input
 
@@ -116,6 +117,7 @@ GAME_LOOP:
 
 
 MENU2_LOOP:
+	call RESET_MUSIC
 ### Frame rate check
     csrr a0,3073
     sub a0, a0, s1 				# a0 = current time - last frame's time

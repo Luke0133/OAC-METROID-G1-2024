@@ -299,6 +299,7 @@ ENTER_DOOR_ANIMATION_PREP:
 	call RENDER_PLAYER
 
 ENTER_DOOR_ANIMATION:
+	call PLAY_SOUND
 	# Frame loop for ENTER DOOR ANIMATION
 	csrr t0,3073                       # Gets current time
     sub t0, t0, s1                     # t0 = current time - last frame's time
@@ -436,6 +437,7 @@ SWITCH_MAP_PREP:
 	sb t2,5(t0)
 
 SWITCH_MAP:
+	call PLAY_SOUND
 	# Frame loop for SWITCH MAP
 	csrr t0,3073
     sub t0, t0, s1 #  # a0 = current time - last frame's time
@@ -651,6 +653,7 @@ LEAVE_DOOR_ANIMATION_PREP:
 		# j LEAVE_DOOR_ANIMATION
 
 LEAVE_DOOR_ANIMATION:
+	call PLAY_SOUND
 	# Frame loop for LEAVE DOOR ANIMATION
 	csrr t0,3073                       # Gets current time
     sub t0, t0, s1                     # t0 = current time - last frame's time

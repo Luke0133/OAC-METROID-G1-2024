@@ -360,13 +360,31 @@ PLAYER_COLLISION: # ebreak
                 la t3,PLYR_INFO  # Loads Maru Bomb Power's info address
                 li t4,3          # Loads 1 (1 - ball)
                 sb t4,1(t3)      # Loads player's abilities
-                    
-                csrr t1,3073                       # Gets current time for loop
-                PLAYER_COLLISION_BOMB_POWER_HIT_LOOP:
-                    csrr t0,3073                                      # Gets current time
-                    sub t0, t0, t1                                    # t0 = current time - last frame's time
-                    li t2, power_up_delay                             # Loads power_up_delay
-                    bltu t0,t2, PLAYER_COLLISION_BOMB_POWER_HIT_LOOP  # While t0 < minimum time for a frame, keep looping
+
+                # Storing Registers on Stack
+                    addi sp,sp,-16
+                    sw a0,0(sp)
+                    sw a1,4(sp)
+                    sw a2,8(sp)
+                    sw a3,12(sp)
+                # End of Stack Operations
+
+                call PLAY_ITEM_GET      
+
+                # Procedure finished: Loading Registers from Stack
+                    lw a0,0(sp)
+                    lw a1,4(sp)
+                    lw a2,8(sp)
+                    lw a3,12(sp)
+                    addi sp,sp,16
+                # End of Stack Operations  
+
+                #csrr t1,3073                       # Gets current time for loop
+                #PLAYER_COLLISION_BOMB_POWER_HIT_LOOP:
+                #    csrr t0,3073                                      # Gets current time
+                #    sub t0, t0, t1                                    # t0 = current time - last frame's time
+                #    li t2, power_up_delay                             # Loads power_up_delay
+                #    bltu t0,t2, PLAYER_COLLISION_BOMB_POWER_HIT_LOOP  # While t0 < minimum time for a frame, keep looping
                     # j PLAYER_COLLISION_MARU_MARI
 
     PLAYER_COLLISION_MARU_MARI:
@@ -417,14 +435,32 @@ PLAYER_COLLISION: # ebreak
                 la t3,PLYR_INFO  # Loads Maru Mari's info address
                 li t4,1          # Loads 1 (1 - ball)
                 sb t4,1(t3)      # Loads player's abilities
-                    
-                csrr t1,3073                       # Gets current time for loop
-                PLAYER_COLLISION_MARU_MARI_HIT_LOOP:
-                    csrr t0,3073                                     # Gets current time
-                    sub t0, t0, t1                                   # t0 = current time - last frame's time
-                    li t2, power_up_delay                            # Loads power_up_delay
-                    bltu t0,t2, PLAYER_COLLISION_MARU_MARI_HIT_LOOP  # While t0 < minimum time for a frame, keep looping
-                    # j PLAYER_COLLISION_LOOT
+
+                # Storing Registers on Stack
+                    addi sp,sp,-16
+                    sw a0,0(sp)
+                    sw a1,4(sp)
+                    sw a2,8(sp)
+                    sw a3,12(sp)
+                # End of Stack Operations
+
+                call PLAY_ITEM_GET      
+
+                # Procedure finished: Loading Registers from Stack
+                    lw a0,0(sp)
+                    lw a1,4(sp)
+                    lw a2,8(sp)
+                    lw a3,12(sp)
+                    addi sp,sp,16
+                # End of Stack Operations   
+
+                # csrr t1,3073                       # Gets current time for loop
+                # PLAYER_COLLISION_MARU_MARI_HIT_LOOP:
+                #    csrr t0,3073                                     # Gets current time
+                #    sub t0, t0, t1                                   # t0 = current time - last frame's time
+                #    li t2, power_up_delay                            # Loads power_up_delay
+                #    bltu t0,t2, PLAYER_COLLISION_MARU_MARI_HIT_LOOP  # While t0 < minimum time for a frame, keep looping
+                #    # j PLAYER_COLLISION_LOOT
                 
     # Checking for loot
     PLAYER_COLLISION_LOOT:
@@ -1261,10 +1297,35 @@ BEAM_COLLISION: # ebreak
                             li a5,0        # No Delay
                             li a0, 1               # Big explosion
                             call EXPLOSION_SPAWN   # Summons explosion
+
                         # Procedure finished: Loading Registers from Stack
                             lw a0,0(sp)
                             addi sp,sp,4
                         # End of Stack Operations  
+
+                            # Storing Registers on Stack
+                                addi sp,sp,-16
+                                sw a0,0(sp)
+                                sw a1,4(sp)
+                                sw a2,8(sp)
+                                sw a3,12(sp)
+                            # End of Stack Operations
+
+                            call PLAY_ITEM_GET      
+
+                            # Procedure finished: Loading Registers from Stack
+                                lw a0,0(sp)
+                                lw a1,4(sp)
+                                lw a2,8(sp)
+                                lw a3,12(sp)
+                                addi sp,sp,16
+                            # End of Stack Operations 
+
+                            # If there was any input at all, change scene to menu2
+                                li s3,0
+                                li s2,1  
+                                j SETUP          # end procedure by going to setup
+
                         
                         # j BEAM_COLLISION_RIDLEY_HIT_DISABLE_BEAM
 
@@ -1692,8 +1753,29 @@ BOMB_COLLISION:
                     # Procedure finished: Loading Registers from Stack
                         lw a0,0(sp)
                         addi sp,sp,4
-                    # End of Stack Operations  
-                    
+                    # End of Stack Operations 
+                    # Storing Registers on Stack
+                        addi sp,sp,-16
+                        sw a0,0(sp)
+                        sw a1,4(sp)
+                        sw a2,8(sp)
+                        sw a3,12(sp)
+                    # End of Stack Operations
+
+                    call PLAY_ITEM_GET      
+
+                    # Procedure finished: Loading Registers from Stack
+                        lw a0,0(sp)
+                        lw a1,4(sp)
+                        lw a2,8(sp)
+                        lw a3,12(sp)
+                        addi sp,sp,16
+                    # End of Stack Operations 
+
+                    # If there was any input at all, change scene to menu2
+                        li s3,0
+                        li s2,1  
+                        j SETUP          # end procedure by going to setup
                     # j BOMB_COLLISION_RIDLEY_HIT_DISABLE_BEAM
 
                 BOMB_COLLISION_RIDLEY_HIT_DISABLE_BEAM:
