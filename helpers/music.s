@@ -53,3 +53,4 @@ MUSIC.LAST.PLAYED:	beqz		t2, MUSIC.SETUP	# nota == 0 e duracao == 0, recomeca
 			sw		t0, 4(a0)	# salva proxima nota
 
 MUSIC.RET:		ret
+

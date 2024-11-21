@@ -246,6 +246,19 @@ INPUT_CHECK:
             lbu t1,0(t0)          # Loads missile enable byte
             xori t1,t1,1          # Switches its value
             sb t1,0(t0)           # and stores it back
+
+            addi sp,sp,-12
+            sw ra,0(sp)
+            sw t0,4(sp)
+            sw t2,8(sp)
+        # End of Stack Operations
+            call SWITCH_SOUNDTRACK      # Switches Music 
+        # Procedure finished: Loading Registers from Stack
+            lw ra,0(sp)
+            lw t0,4(sp)
+            lw t2,8(sp)
+            addi sp,sp,12
+
         SKIP_ENABLE_MISSILE:
             xori t2,t2,1      # Switches cooldown value
             sb t2,1(t0)       # and stores it back

@@ -15,9 +15,6 @@
 ####################################################################
 
 SETUP:
-	li t1,1	
-	la t0,Brinstar
-	sb t1,0(t0)	
 
     # call MUSIC.SETUP    # If using music.s
 
@@ -725,6 +722,22 @@ END_SETUP:
             la t0,PLYR_INFO_2
             sw zero,0(t0)
             sw zero,4(t0)
+
+            la t0,CURRENT_SOUNDTRACK     
+            lw t1,0(t0)                 # Loads current soundtrack
+
+            la t2,Brinstar
+            beq t1,t2,SKIP_MUSIC_RESET  # If already on Brinstar, don't change soundtrack
+            # Otherwise, reset the soundtracks and play Brinstar
+                sw t2,0(t0)
+                call MUSIC_REST
+                
+                li t1,1	
+                la t0,Brinstar
+                sb t1,0(t0)	
+
+            SKIP_MUSIC_RESET:
+        
                 
             call RESET_ENEMIES
 
